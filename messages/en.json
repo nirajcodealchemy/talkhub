@@ -1,0 +1,58 @@
+{
+  "auth": {
+    "LoginPage": {
+      "title": "Login",
+      "Logging": "Logging in...",
+      "loginFailed": "Login failed:",
+      "createAccount": "Create account",
+      "forgotPassword": "Forgot password?",
+      "message": "Login failed. Please try again.",
+      "noAccount": "Don't have an account?",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password"
+    },
+    "SignUpPage": {
+      "title": "Signup",
+      "alreadyHaveAccount": "Already have an account?",
+      "goToLogin": "Go to Login",
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter your name",
+      "phoneLabel": "Phone",
+      "phonePlaceholder": "Enter 10-digit phone number",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Create a password",
+      "signingUp": "Signing up...",
+      "signupButton": "Signup",
+      "registrationFailed": "Registration Failed",
+      "ok": "Okay",
+      "registrationFailedMessage": "Registration failed. Please try again."
+    },
+    "AuthInput": {
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
+    },
+    "AuthBrand": {
+      "tagline": "Real-time chatting made simple"
+    }
+  },
+  "screen": {
+    "chat": {
+      "ChatScreen": {
+        "chats": "Chats",
+        "moreOptions": "More options",
+        "logout": "Logout",
+        "logoutConfirmTitle": "Logout",
+        "logoutConfirmMessage": "Are you sure you want to log out of your account?",
+        "logoutConfirmButton": "Logout",
+        "noConversationsTitle": "No Conversations Yet",
+        "noConversationsDescription": "Start a new chat or invite others to join the conversation.",
+        "welcomeTitle": "Welcome to Your Conversations",
+        "welcomeDescription": "Select a chat from the list to start exploring your messages or begin a new conversation"
+      }
+    }
+  }
+}
