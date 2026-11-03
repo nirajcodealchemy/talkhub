@@ -1,5 +1,15 @@
-import ChatScreen from "@/src/screen/chat/ChatScreen";
+import { redirect } from "next/navigation";
+import { createClient } from "@/src/lib/supabase/server";
 
-export default function Home() {
-  return <ChatScreen />;
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/chat");
+  } else {
+    redirect("/login");
+  }
 }

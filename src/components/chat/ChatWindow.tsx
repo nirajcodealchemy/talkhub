@@ -19,7 +19,7 @@ export default function ChatWindow({
   onAttachment,
 }: Props) {
   return (
-    <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#f7f7f8]">
+    <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white">
       <ChatHeader conversation={conversation} />
 
       <MessageList

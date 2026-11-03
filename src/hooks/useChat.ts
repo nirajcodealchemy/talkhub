@@ -102,6 +102,7 @@ export function useMessages(conversationId: string) {
 
   return useQuery({
     queryKey: ["messages", conversationId],
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("messages")
@@ -110,8 +111,36 @@ export function useMessages(conversationId: string) {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data;
+
+      // Generate signed URLs for attachments
+      const messagesWithAttachments = await Promise.all(
+        (data ?? []).map(async (message) => {
+          if (!message.attachment_path) {
+            return {
+              ...message,
+              attachment_url: null,
+            };
+          }
+
+          const { data: signedData, error: signedError } =
+            await supabase.storage
+              .from("chat-attachments")
+              .createSignedUrl(message.attachment_path, 3600);
+
+          if (signedError) {
+            console.error("Signed URL error:", signedError);
+          }
+
+          return {
+            ...message,
+            attachment_url: signedData?.signedUrl ?? null,
+          };
+        }),
+      );
+
+      return messagesWithAttachments;
     },
+
     enabled: !!conversationId,
   });
 }
@@ -146,6 +175,88 @@ export function useSendMessage() {
         queryKey: ["messages", variables.conversationId],
       });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+export function useSendAttachment() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["sendAttachment"],
+
+    mutationFn: async ({
+      conversationId,
+      file,
+    }: {
+      conversationId: string;
+      file: File;
+    }) => {
+      // Get authenticated user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error("You must be logged in to send attachments.");
+      }
+
+      // Create unique storage path
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+      const filePath = `${conversationId}/${user.id}/${crypto.randomUUID()}-${safeFileName}`;
+
+      // Upload file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("chat-attachments")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || "application/octet-stream",
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Insert attachment message into database
+      const isImage = file.type.startsWith("image/");
+
+      const { data, error: insertError } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          content: file.name,
+          message_type: isImage ? "image" : "file",
+          attachment_path: filePath,
+          attachment_name: file.name,
+          attachment_type: file.type,
+          attachment_size: file.size,
+        })
+        .select()
+        .single();
+
+      // Remove uploaded file if database insertion fails
+      if (insertError) {
+        await supabase.storage.from("chat-attachments").remove([filePath]);
+
+        throw insertError;
+      }
+
+      return data;
+    },
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["messages", variables.conversationId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["conversations"],
+      });
     },
   });
 }

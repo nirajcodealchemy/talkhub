@@ -3,12 +3,15 @@ export type ChatMessage = {
   conversation_id: string;
   sender_id: string;
   content: string;
-  message_type: "text" | "image" | "file";
+  last_message_type?: "text" | "image" | "file" | "video";
   attachment_url?: string | null;
   created_at: string;
   status?: "sent" | "delivered" | "read";
   reactions?: string[];
   reply_count?: number;
+  read_at?: string | null;
+  delivered_at?: string | null;
+  last_message_read?: boolean;
 };
 
 export type ChatConversation = {
@@ -17,6 +20,9 @@ export type ChatConversation = {
   avatar: string;
   last_message: string;
   last_message_time: string;
+  last_message_type?: "text" | "image" | "file" | "video";
+  last_message_read?: boolean;
+  other_user_id?: string | null;
   unread_count: number;
   online: boolean;
   is_group?: boolean;

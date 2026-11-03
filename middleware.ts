@@ -3,6 +3,15 @@ import { proxy } from "./src/proxy";
 export const middleware = proxy;
 
 export const config = {
-  matcher: ["/chat/:path*", "/chat", "/login", "/register"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (images, svgs, etc.)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
 

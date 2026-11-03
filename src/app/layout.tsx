@@ -1,13 +1,25 @@
-import { Geist, Geist_Mono, Public_Sans, Instrument_Sans } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Public_Sans,
+  Instrument_Sans,
+} from "next/font/google";
+
 import type { ReactNode } from "react";
 import "./globals.css";
 import { NextIntlClientProvider } from "next-intl";
 import QueryProvider from "../providers/QueryProvider";
 import { cn } from "@/lib/utils";
 
-const instrumentSansHeading = Instrument_Sans({subsets:['latin'],variable:'--font-heading'});
+const instrumentSansHeading = Instrument_Sans({
+  subsets: ["latin"],
+  variable: "--font-instrument",
+});
 
-const publicSans = Public_Sans({subsets:['latin'],variable:'--font-sans'});
+const publicSans = Public_Sans({
+  subsets: ["latin"],
+  variable: "--font-public",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +35,13 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
   return (
     <html
       lang="en"
-      className={cn("antialiased", geistSans.variable, geistMono.variable, "font-sans", publicSans.variable, instrumentSansHeading.variable)}
+      className={cn(
+        "antialiased font-sans",
+        geistSans.variable,
+        geistMono.variable,
+        publicSans.variable,
+        instrumentSansHeading.variable,
+      )}
     >
       <body>
         <QueryProvider>
@@ -33,4 +51,5 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
     </html>
   );
 };
+
 export default RootLayout;

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 import { useSignup } from "@/src/hooks/useSignup";
@@ -12,6 +13,7 @@ import { Confirmation } from "@/src/components/modal/ConfirmationModal";
 import { SignupFormData } from "@/src/types/form";
 
 export default function SignupPage() {
+  const router = useRouter();
   const t = useTranslations("auth.SignUpPage");
   const [error, setError] = useState<
     Partial<Record<keyof SignupFormData, string>>
@@ -85,18 +87,16 @@ export default function SignupPage() {
       console.log(data);
       const result = await signupMutation.mutateAsync(data);
 
-      //   setMessage(result.message);
+      setData({
+        name: "",
+        email: "",
+        phone: "",
+        password: "",
+      });
+      setError({});
 
-      if (result.status !== "confirmation_required") {
-        setData({
-          name: "",
-          email: "",
-          phone: "",
-          password: "",
-        });
-
-        setError({});
-      }
+      // Successfully registered, replace route to /login
+      router.replace("/login");
     } catch (err: unknown) {
       const message =
         err instanceof Error
