@@ -1,6 +1,6 @@
 // "use client";
 
-// import { useEffect, useMemo, useState } from "react";
+// import { useEffect, useMemo, useRef, useState } from "react";
 // import { useQueryClient } from "@tanstack/react-query";
 
 // import type { ChatConversation } from "@/src/types/chat";
@@ -41,8 +41,7 @@
 //   const {
 //     data: dbConversations,
 //     isLoading,
-//     refetch: refetchConversations,
-//   } = useConversations(currentUserId);
+// //   } = useConversations(currentUserId);
 
 //   // React Query is the single source of truth
 //   const conversations = (dbConversations ?? []) as ChatConversation[];
@@ -63,6 +62,7 @@
 //   // ==========================================
 
 //   const [selectedId, setSelectedId] = useState<string>("");
+  const lastReadRequestKey = useRef<string | null>(null);
 
 //   // ==========================================
 //   // MESSAGES
@@ -76,54 +76,57 @@
 
 //   // ==========================================
 //   // MARK INCOMING MESSAGES AS READ
-//   // ==========================================
 
-//   useEffect(() => {
-//     if (!selectedId || !currentUserId || !dbMessages) return;
+  const unreadMessageIds = (dbMessages ?? [])
+    .filter(
+      (message) => message.sender_id !== currentUserId && !message.read_at,
+    )
+    .map((message) => message.id);
 
-//     let cancelled = false;
+  const unreadMessageKey = unreadMessageIds.join(",");
 
-//     const markMessagesAsRead = async () => {
-//       try {
-//         const { data, error } = await supabase.rpc(
-//           "mark_conversation_messages_read",
-//           {
-//             p_conversation_id: selectedId,
-//           },
-//         );
+  useEffect(() => {
+    if (!selectedId || !currentUserId || !unreadMessageKey) return;
 
-//         if (error) {
-//           return;
-//         }
+    const requestKey = `${selectedId}:${unreadMessageKey}`;
 
-//         if (cancelled) return;
+    if (lastReadRequestKey.current === requestKey) return;
 
-//         // Refresh only when messages were actually updated
-//         if (data > 0) {
-//           await Promise.all([
-//             queryClient.invalidateQueries({
-//               queryKey: ["messages", selectedId],
-//             }),
+    lastReadRequestKey.current = requestKey;
+    let cancelled = false;
 
-//             queryClient.invalidateQueries({
-//               queryKey: ["conversations", currentUserId],
-//             }),
-//           ]);
-//         }
-//       } catch (error) {
-//         console.error("Read receipt error:", error);
-//       }
-//     };
+    const markMessagesAsRead = async () => {
+      const { error } = await supabase.rpc(
+        "mark_conversation_messages_read",
+        {
+          p_conversation_id: selectedId,
+        },
+      );
 
-//     markMessagesAsRead();
+      if (error) {
+        console.error("Read receipt error:", error);
+        if (lastReadRequestKey.current === requestKey) {
+          lastReadRequestKey.current = null;
+        }
+        return;
+      }
 
-//     return () => {
-//       cancelled = true;
-//     };
-//   }, [selectedId, currentUserId, dbMessages, supabase, queryClient]);
+      if (cancelled) return;
+    };
 
-//   // ==========================================
-//   // SELECTED CONVERSATION DATA
+    void markMessagesAsRead().catch((error) => {
+      console.error("Read receipt error:", error);
+      if (lastReadRequestKey.current === requestKey) {
+        lastReadRequestKey.current = null;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, currentUserId, unreadMessageKey, supabase]);
+
+  // SELECTED CONVERSATION DATA
 //   // ==========================================
 
 //   const selectedConversation = conversations.find(
@@ -158,9 +161,7 @@
 //       const conversationId = await createDirectConversation(userId);
 
 //       // Refresh sidebar
-//       await refetchConversations();
-
-//       // Open conversation
+// //       // Open conversation
 //       setSelectedId(conversationId);
 //     } catch (error) {
 //       console.error("Failed to start conversation:", error);
