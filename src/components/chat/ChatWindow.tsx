@@ -10,6 +10,7 @@ type Props = {
   currentUserId: string;
   onSend: (message: string) => void;
   onAttachment?: (file: File) => void;
+  onBack?: () => void;
 };
 
 export default function ChatWindow({
@@ -17,10 +18,11 @@ export default function ChatWindow({
   currentUserId,
   onSend,
   onAttachment,
+  onBack,
 }: Props) {
   return (
-    <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white">
-      <ChatHeader conversation={conversation} />
+    <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-chat-window-background">
+      <ChatHeader conversation={conversation} onBack={onBack} />
 
       <MessageList
         messages={conversation.messages}

@@ -64,15 +64,12 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      console.log("Attempting login...");
-
       const result = await loginMutation.mutateAsync({
         email: data.email.trim(),
         password: data.password,
       });
 
       if (result?.user) {
-        console.log("Login successful:", result.user.id);
         router.push("/chat");
       }
     } catch (err: unknown) {

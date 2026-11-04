@@ -1,19 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
-import {
-  Plus,
-  Mic,
-  Smile,
-  StickyNote,
-  Send,
-  X,
-  FileText,
-  Image as ImageIcon,
-  File,
-  Paperclip,
-} from "lucide-react";
-import type { DragEvent } from "react";
+import { useRef, useState, DragEvent, useEffect } from "react";
+import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
+import SendIcon from "@/src/components/icons/SendIcon";
+import PlusIcon from "../icons/PlusIcon";
+import MicIcon from "../icons/MicIcon";
+import EmojiIcon from "../icons/EmojiIcon";
+import FileIcon from "../icons/FileIcon";
+import { X, FileText, Image as ImageIcon, File, Paperclip } from "lucide-react";
 
 type Props = {
   onSend: (message: string) => void;
@@ -25,11 +19,33 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
 
+  const emojiRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
 
-  // Format file size
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        emojiRef.current &&
+        !emojiRef.current.contains(event.target as Node)
+      ) {
+        setEmojiOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setMessage((previous) => previous + emojiData.emoji);
+  };
+
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -37,7 +53,6 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // Get file icon
   const getFileIcon = (file: File) => {
     if (file.type.startsWith("image/")) {
       return <ImageIcon size={20} />;
@@ -54,7 +69,6 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
     return <File size={20} />;
   };
 
-  // Add selected files
   const addFiles = (files: FileList | File[]) => {
     const newFiles = Array.from(files);
 
@@ -75,23 +89,19 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
     setAttachmentOpen(false);
   };
 
-  // Remove attachment
   const removeFile = (index: number) => {
     setSelectedFiles((previous) => previous.filter((_, i) => i !== index));
   };
 
-  // Send message and attachments
   const handleSend = () => {
     const value = message.trim();
 
     if (!value && selectedFiles.length === 0) return;
 
-    // Send attachments
     selectedFiles.forEach((file) => {
       onAttachment?.(file);
     });
 
-    // Send text
     if (value) {
       onSend(value);
     }
@@ -100,7 +110,6 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
     setSelectedFiles([]);
   };
 
-  // Drag and drop handlers
   const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     dragCounter.current += 1;
@@ -135,18 +144,19 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
     }
   };
 
+  const canSend = !!message.trim() || selectedFiles.length > 0;
+
   return (
     <div
-      className="relative shrink-0 border-t border-[#f0f0f0] bg-white px-6 py-3"
+      className="relative m-3 shrink-0 rounded-md bg-background px-6 py-3"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Drag and drop overlay */}
       {isDragging && (
-        <div className="absolute inset-2 z-50 flex items-center justify-center rounded-xl border-2 border-dashed border-[#6246ea] bg-[#6246ea]/5">
-          <div className="flex flex-col items-center gap-2 text-[#6246ea]">
+        <div className="absolute inset-2 z-50 flex items-center justify-center rounded-xl border-2 border-dashed border-chart-4 bg-chart-4/5">
+          <div className="flex flex-col items-center gap-2 text-chart-4">
             <Paperclip size={28} />
             <p className="text-sm font-semibold">Drop files here</p>
           </div>
@@ -154,34 +164,32 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
       )}
 
       <div className="flex flex-col gap-2">
-        {/* Attached files preview */}
         {selectedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 pb-1">
             {selectedFiles.map((file, index) => (
               <div
                 key={`${file.name}-${file.lastModified}-${index}`}
-                className="group relative flex max-w-[220px] items-center gap-2 rounded-xl border border-gray-200 bg-[#f9fafb] px-3 py-2"
+                className="group relative flex max-w-[220px] items-center gap-2 rounded-xl border border-grey-200 bg-grey-50 px-3 py-2"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#6246ea]/10 text-[#6246ea]">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-chart-4/10 text-chart-4">
                   {getFileIcon(file)}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-[#222]">
+                  <p className="truncate text-xs font-medium text-foreground">
                     {file.name}
                   </p>
 
-                  <p className="text-[10px] text-gray-400">
+                  <p className="text-[10px] text-grey-400">
                     {formatFileSize(file.size)}
                   </p>
                 </div>
 
-                {/* Remove attachment */}
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
                   aria-label={`Remove ${file.name}`}
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 transition hover:bg-red-100 hover:text-red-500"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-grey-200 text-grey-600 transition hover:bg-logout-red-light hover:text-destructive"
                 >
                   <X size={13} />
                 </button>
@@ -190,7 +198,6 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
           </div>
         )}
 
-        {/* Message input */}
         <input
           type="text"
           value={message}
@@ -202,29 +209,29 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
             }
           }}
           placeholder="Type your message..."
-          className="w-full bg-transparent text-[14px] text-[#222] outline-none placeholder:text-[#a1a1aa]"
+          className="w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
         />
 
-        {/* Bottom actions */}
+        <hr className="-mx-6 w-auto border-0 border-t border-border" />
+
         <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-3 text-[#a1a1aa]">
-            {/* Attachment button */}
+          <div className="flex items-center gap-3 text-muted-foreground">
             <div className="relative">
               <button
                 type="button"
                 aria-label="Add attachment"
                 onClick={() => setAttachmentOpen(!attachmentOpen)}
-                className="rounded-full cursor-pointer p-1 text-[#9ca3af] transition-colors hover:text-[#6246ea]"
+                className="cursor-pointer rounded-full p-1 text-grey-400 transition-colors hover:text-chart-4"
               >
-                {attachmentOpen ? <X size={20} /> : <Plus size={20} />}
+                {attachmentOpen ? <X size={20} /> : <PlusIcon />}
               </button>
 
               {attachmentOpen && (
-                <div className="absolute bottom-9 left-0 z-30 w-40 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg">
+                <div className="absolute bottom-9 left-0 z-30 w-40 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-100"
+                    className="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
                   >
                     <Paperclip size={15} />
                     Attach files
@@ -233,7 +240,6 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
               )}
             </div>
 
-            {/* Hidden file input */}
             <input
               ref={fileRef}
               type="file"
@@ -248,44 +254,75 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
               }}
             />
 
-            {/* Voice */}
             <button
               type="button"
               aria-label="Voice message"
-              className="rounded-full p-1 cursor-pointer text-[#9ca3af] transition-colors hover:text-[#4b5563]"
+              disabled
+              className="cursor-not-allowed rounded-full p-1 text-grey-400 transition-colors hover:text-grey-600"
             >
-              <Mic size={19} />
+              <MicIcon />
             </button>
 
-            {/* Emoji */}
-            <button
-              type="button"
-              aria-label="Insert emoji"
-              onClick={() => setMessage((value) => value + "😊")}
-              className="rounded-full cursor-pointer p-1 text-[#9ca3af] transition-colors hover:text-[#4b5563]"
-            >
-              <Smile size={19} />
-            </button>
+            <div className="relative" ref={emojiRef}>
+              <button
+                type="button"
+                aria-label="Insert emoji"
+                aria-expanded={emojiOpen}
+                onClick={() => setEmojiOpen((previous) => !previous)}
+                className="cursor-pointer rounded-full p-1 text-grey-400 transition-colors hover:text-chart-4"
+              >
+                <EmojiIcon />
+              </button>
 
-            {/* Sticker */}
+              {emojiOpen && (
+                <div
+                  className="
+                    fixed bottom-[90px] left-1/2 z-[100]
+                    w-[calc(100vw-24px)] max-w-[270px]
+                    -translate-x-1/2
+                    sm:absolute sm:bottom-12 sm:left-0
+                    sm:w-[350px] sm:translate-x-0
+                  "
+                >
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiClick}
+                    width="100%"
+                    height={300}
+                    searchPlaceholder="Search emoji..."
+                    previewConfig={{
+                      showPreview: false,
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               aria-label="Sticker"
-              className="rounded-full cursor-pointer p-1 text-[#9ca3af] transition-colors hover:text-[#4b5563]"
+              disabled
+              className="cursor-not-allowed rounded-full p-1 text-grey-400 transition-colors hover:text-grey-600"
             >
-              <StickyNote size={19} />
+              <FileIcon />
             </button>
           </div>
 
-          {/* Send button */}
           <button
             type="button"
             aria-label="Send message"
             onClick={handleSend}
-            disabled={!message.trim() && selectedFiles.length === 0}
-            className={`flex h-9 w-9 items-center justify-center rounded-full  text-[#9ca3af] transition hover:bg-[#6246ea] cursor-pointer hover:text-white disabled:cursor-not-allowed disabled:bg-[#f3f4f6] disabled:text-[#d1d5db] ${!message.trim() && selectedFiles.length === 0 ? "" : "bg-[#6246ea] text-white"}`}
+            disabled={!canSend}
+            className={`flex cursor-pointer items-center justify-center rounded-full transition-colors ${
+              canSend
+                ? "bg-chart-4 text-white hover:bg-chart-5"
+                : "bg-grey-100 text-grey-300"
+            } disabled:cursor-not-allowed`}
           >
-            <Send size={16} />
+            {message.length === 0 && selectedFiles.length === 0 ? (
+              <SendIcon color={null} />
+            ) : (
+              <SendIcon color="var(--chart-4)" />
+            )}
           </button>
         </div>
       </div>

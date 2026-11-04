@@ -10,11 +10,6 @@ export type ChatUser = {
   avatar_url: string | null;
 };
 
-/**
- * Loads every profile from the `profiles` table, including the currently
- * logged-in user. Filtering/searching is done on the client so the list is
- * available immediately after the first fetch.
- */
 export function useUsers() {
   const supabase = createClient();
 

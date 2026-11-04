@@ -84,8 +84,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      console.log(data);
-      const result = await signupMutation.mutateAsync(data);
+      await signupMutation.mutateAsync(data);
 
       setData({
         name: "",

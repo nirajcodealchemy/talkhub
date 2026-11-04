@@ -1,145 +1,3 @@
-// "use client";
-
-// import { useQuery } from "@tanstack/react-query";
-// import { createClient } from "@/src/lib/supabase/client";
-// import { useRealtimeConversations } from "./useRealtimeChat";
-
-// export function useConversations(userId: string) {
-//   const supabase = createClient();
-
-//   useRealtimeConversations(userId);
-
-//   return useQuery({
-//     queryKey: ["conversations", userId],
-//     queryFn: async () => {
-//       const { data: memberships, error: memberError } = await supabase
-//         .from("conversation_members")
-//         .select("conversation_id, role")
-//         .eq("user_id", userId);
-
-//       if (memberError) throw memberError;
-//       if (!memberships || memberships.length === 0) return [];
-
-//       const conversationIds = memberships.map((m) => m.conversation_id);
-
-//       const { data: conversations, error: convError } = await supabase
-//         .from("conversations")
-//         .select(
-//           `
-//           id,
-//           title,
-//           is_group,
-//           created_by,
-//           created_at,
-//           updated_at
-//         `,
-//         )
-//         .in("id", conversationIds)
-//         .order("updated_at", { ascending: false });
-
-//       if (convError) throw convError;
-
-//       const conversationsWithDetails = await Promise.all(
-//         (conversations || []).map(async (conv) => {
-//           const { data: members } = await supabase
-//             .from("conversation_members")
-//             .select("user_id, role")
-//             .eq("conversation_id", conv.id);
-
-//           let name = conv.title || "Chat";
-//           let avatar =
-//             "https://ui-avatars.com/api/?name=Chat&background=6545db&color=fff";
-//           let otherUserId: string | null = null;
-
-//           if (!conv.is_group && members) {
-//             const otherMember = members.find((m) => m.user_id !== userId);
-//             if (otherMember) {
-//               otherUserId = otherMember.user_id;
-//               const { data: profile } = await supabase
-//                 .from("profiles")
-//                 .select("full_name, username, avatar_url")
-//                 .eq("id", otherMember.user_id)
-//                 .single();
-//               if (profile) {
-//                 name = profile.full_name || profile.username || "User";
-//                 avatar =
-//                   profile.avatar_url ||
-//                   `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6545db&color=fff`;
-//               }
-//             }
-//           } else if (conv.is_group) {
-//             name = conv.title || "Group";
-//             avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6545db&color=fff`;
-//           }
-
-//           const { data: lastMsg } = await supabase
-//             .from("messages")
-//             .select("*")
-//             .eq("conversation_id", conv.id)
-//             .order("created_at", { ascending: false })
-//             .limit(1)
-//             .maybeSingle();
-
-//           const { data: messages } = await supabase
-//             .from("messages")
-//             .select("*")
-//             .eq("conversation_id", conv.id)
-//             .order("created_at", { ascending: true });
-
-//           const unreadCount = (messages || []).filter(
-//             (message) =>
-//               message.sender_id !== userId && message.read_at === null,
-//           ).length;
-
-//           const lastMessagePreview =
-//             lastMsg?.message_type === "image"
-//               ? "Photo"
-//               : lastMsg?.message_type === "video"
-//                 ? "Video"
-//                 : lastMsg?.message_type === "file"
-//                   ? lastMsg.attachment_name || lastMsg.content || "Document"
-//                   : lastMsg?.content || "";
-
-//           return {
-//             id: conv.id,
-//             name,
-//             avatar,
-
-//             last_message: lastMessagePreview,
-
-//             last_message_time: lastMsg
-//               ? new Date(lastMsg.created_at).toLocaleTimeString([], {
-//                   hour: "numeric",
-//                   minute: "2-digit",
-//                 })
-//               : "",
-
-//             last_message_type: lastMsg?.message_type || "text",
-
-//             last_message_read: !!lastMsg?.read_at,
-
-//             unread_count: unreadCount,
-
-//             online: false,
-//             is_group: conv.is_group,
-//             other_user_id: otherUserId,
-
-//             last_message_sender:
-//               lastMsg?.sender_id === userId ? "You" : undefined,
-
-//             messages: messages || [],
-//           };
-//         }),
-//       );
-
-//       return conversationsWithDetails;
-//     },
-//     enabled: !!userId,
-//     staleTime: 1000,
-//     refetchOnMount: true,
-//   });
-// }
-
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -147,14 +5,16 @@ import { useMemo } from "react";
 
 import { createClient } from "@/src/lib/supabase/client";
 import { useRealtimeConversations } from "./useRealtimeChat";
+import { useOnlineUsers } from "./useOnlineUsers";
 
 export function useConversations(userId: string) {
   const supabase = useMemo(() => createClient(), []);
 
+  const onlineUserIds = useOnlineUsers(userId);
   // Global listener must stay active on every page
   useRealtimeConversations(userId);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ["conversations", userId],
 
     queryFn: async () => {
@@ -250,10 +110,7 @@ export function useConversations(userId: string) {
         const lastMessage = messages[messages.length - 1];
 
         const unreadCount = messages.filter(
-          (message) =>
-            message.conversation_id === conv.id &&
-            message.sender_id !== userId &&
-            message.read_at === null,
+          (message) => message.sender_id !== userId && message.read_at === null,
         ).length;
 
         const otherMember = members.find((member) => member.user_id !== userId);
@@ -277,7 +134,6 @@ export function useConversations(userId: string) {
           other_user_id: otherMember?.user_id || null,
 
           last_message: lastMessage?.content || "",
-
           last_message_type: lastMessage?.message_type || "text",
 
           last_message_time: lastMessage
@@ -287,11 +143,15 @@ export function useConversations(userId: string) {
               })
             : "",
 
-          last_message_sender:
-            lastMessage?.sender_id === userId ? "You" : undefined,
+          last_message_timestamp: lastMessage?.created_at ?? "",
 
-          last_message_read:
-            lastMessage?.sender_id === userId ? !!lastMessage.read_at : false,
+          last_message_sender: lastMessage?.sender_id ?? undefined,
+
+          last_message_is_mine: lastMessage?.sender_id === userId,
+
+          last_message_delivered: !!lastMessage?.delivered_at,
+
+          last_message_read: !!lastMessage?.read_at,
 
           unread_count: unreadCount,
 
@@ -302,7 +162,21 @@ export function useConversations(userId: string) {
     },
 
     enabled: !!userId,
-    staleTime: 0,
-    refetchOnMount: true,
+    staleTime: 30_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
+  const conversations = useMemo(() => {
+    return (query.data ?? []).map((conversation) => ({
+      ...conversation,
+      online: conversation.other_user_id
+        ? onlineUserIds.has(conversation.other_user_id)
+        : false,
+    }));
+  }, [query.data, onlineUserIds]);
+
+  return {
+    ...query,
+    data: conversations,
+  };
 }

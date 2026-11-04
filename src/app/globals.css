@@ -75,6 +75,18 @@
   --color-dark-gray: var(--dark-gray);
   --color-white-30: var(--white-30);
   --color-white: var(--white);
+  --color-online: var(--online);
+  --color-chat-window-background: var(--chat-window-background);
+
+  --color-conversation-item-border: var(--conversation-item-border);
+  --color-conversation-item-hover: var(--conversation-item-hover);
+  --color-conversation-item-time: var(--conversation-item-time);
+  --color-conversation-item-read: var(--conversation-item-read);
+  --color-conversation-item-reads: var(--conversation-item-reads);
+  --color-conversation-item-unread-tick: var(--conversation-item-unread-tick);
+  --color-conversation-item-unread-text: var(--conversation-item-unread-text);
+  --color-conversation-item-preview: var(--conversation-item-preview);
+  --color-conversation-item-bg: var(--conversation-item-bg);
 }
 
 :root {
@@ -127,11 +139,23 @@
   --grey-900: oklch(0.21 0.034 264.665);
   --light-gray: oklch(0.894 0 0);
   --dark-gray: oklch(0.794 0 0);
+  --chat-window-background: #f4f4f4;
 
   --chat-bubble-back: oklch(0.885 0.007 240);
   --chat-bubble-front: oklch(0.845 0.009 240);
   --logout-red: oklch(0.577 0.245 27.325);
   --logout-red-light: oklch(0.971 0.03 17.9);
+  --online: #22c55e;
+
+  --conversation-item-bg: #e6e6e6;
+  --conversation-item-border: #f0f0f0;
+  --conversation-item-hover: #fafafa;
+  --conversation-item-time: #888888;
+  --conversation-item-read: #6246ea;
+  --conversation-item-reads: #75beee;
+  --conversation-item-unread-tick: #9ca3af;
+  --conversation-item-unread-text: #333333;
+  --conversation-item-preview: #777777;
 
   --white-30: oklch(1 0 0 / 30%);
   --white: oklch(1 0 0);

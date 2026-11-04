@@ -4,7 +4,7 @@ import {
   Loader2,
   LogOut,
   MoreVertical,
-  Plus,
+  UserRoundPen,
   Search,
   Users,
   X,
@@ -14,11 +14,10 @@ import { useRouter } from "next/navigation";
 import type { ChatConversation } from "@/src/types/chat";
 import { useUsers } from "@/src/hooks/useUsers";
 import { useLogout } from "@/src/hooks/useLogout";
+import EditProfileModal from "./EditProfileModal";
 import { Confirmation } from "@/src/components/modal/ConfirmationModal";
-import ChatListItem from "./ChatListItem";
 import CreateGroupModal from "./CreateGroupModal";
 import UserListItem from "./UserListItem";
-import ConversationListItem from "./ConversationListItem";
 
 type Props = {
   conversations: ChatConversation[];
@@ -30,7 +29,6 @@ type Props = {
 
 export default function ChatSidebar({
   conversations,
-  selectedId,
   onSelect,
   currentUserId,
   onStartChat,
@@ -42,15 +40,17 @@ export default function ChatSidebar({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [openingUserId, setOpeningUserId] = useState<string | null>(null);
+
   const menuRef = useRef<HTMLDivElement>(null);
 
   const {
     data: users = [],
     isLoading: areUsersLoading,
     isError: usersFailed,
-    error: usersError,
   } = useUsers();
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -70,17 +70,17 @@ export default function ChatSidebar({
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
 
-    // Deduplicate profiles by user id
     const uniqueUsersMap = new Map<string, (typeof users)[number]>();
+
     for (const user of users) {
       if (user?.id && !uniqueUsersMap.has(user.id)) {
         uniqueUsersMap.set(user.id, user);
       }
     }
+
     const uniqueUsers = Array.from(uniqueUsersMap.values());
 
     return uniqueUsers.filter((user) => {
-      // Exclude the currently logged-in user
       if (user.id === currentUserId) return false;
 
       if (!term) return true;
@@ -119,9 +119,9 @@ export default function ChatSidebar({
   }
 
   return (
-    <aside className="flex h-full min-h-0 w-full flex-col overflow-hidden border-r border-[#e5e5e5] bg-white">
-      <header className="flex h-[64px] shrink-0 items-center justify-between border-b border-[#e5e5e5] px-4">
-        <h1 className="text-[22px] font-bold tracking-tight text-[#171717]">
+    <aside className="flex h-full min-h-0 w-full flex-col overflow-hidden border-r border-border bg-background">
+      <header className="flex h-[64px] shrink-0 items-center justify-between border-b border-border px-4">
+        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
           Chats
         </h1>
 
@@ -131,20 +131,20 @@ export default function ChatSidebar({
             aria-label="More chat options"
             aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="rounded-full p-1.5 cursor-pointer text-[#222] hover:bg-gray-100"
+            className="cursor-pointer rounded-full p-1.5 text-foreground transition-colors hover:bg-accent"
           >
             <MoreVertical size={20} />
           </button>
 
           {isMenuOpen && (
-            <div className="absolute  right-0 top-10 z-30 w-48 rounded-xl border border-gray-100 bg-white py-1.5 shadow-lg">
+            <div className="absolute right-0 top-10 z-30 w-48 rounded-xl border border-border bg-popover py-1.5 text-popover-foreground shadow-lg">
               <button
                 type="button"
                 onClick={() => {
                   setIsMenuOpen(false);
                   setIsCreateGroupOpen(true);
                 }}
-                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
                 <Users className="h-4 w-4" />
                 <span>Create Group</span>
@@ -154,9 +154,21 @@ export default function ChatSidebar({
                 type="button"
                 onClick={() => {
                   setIsMenuOpen(false);
+                  setIsEditProfileOpen(true);
+                }}
+                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
+              >
+                <UserRoundPen className="h-4 w-4" />
+                <span>Edit Profile</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
                   setShowLogoutModal(true);
                 }}
-                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-destructive transition-colors hover:bg-logout-red-light"
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>
@@ -165,17 +177,17 @@ export default function ChatSidebar({
           )}
         </div>
       </header>
-      {/* Search */}
-      <div className="shrink-0 border-b border-[#f0f0f0] px-4 py-3">
-        <div className="flex items-center gap-2 rounded-lg bg-[#f4f4f5] px-3 py-2">
-          <Search size={17} className="shrink-0 text-gray-400" />
+
+      <div className="shrink-0 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
+          <Search size={17} className="shrink-0 text-muted-foreground" />
 
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search users or conversations..."
-            className="w-full bg-transparent text-sm outline-none placeholder:text-gray-400"
+            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
 
           {search && (
@@ -184,20 +196,21 @@ export default function ChatSidebar({
               onClick={() => setSearch("")}
               aria-label="Clear search"
             >
-              <X size={16} className="text-gray-400" />
+              <X size={16} className="text-muted-foreground cursor-pointer" />
             </button>
           )}
         </div>
       </div>
+
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {areUsersLoading && (
           <div className="flex justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-[#6545db]" />
+            <Loader2 className="h-5 w-5 animate-spin text-chart-4" />
           </div>
         )}
 
         {!areUsersLoading && usersFailed && (
-          <div className="px-4 py-8 text-center text-sm text-gray-500">
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
             Could not load users.
           </div>
         )}
@@ -219,7 +232,24 @@ export default function ChatSidebar({
                   key={user.id}
                   user={user}
                   isCurrentUser={user.id === currentUserId}
+                  currentUserId={currentUserId}
                   isOpening={openingUserId === user.id}
+                  unreadCount={existingConversation?.unread_count ?? 0}
+                  lastMessage={existingConversation?.last_message ?? null}
+                  lastMessageAt={
+                    existingConversation?.last_message_timestamp ?? null
+                  }
+                  lastMessageSenderId={
+                    existingConversation?.last_message_sender ?? null
+                  }
+                  lastMessageDeliveredAt={
+                    existingConversation?.last_message_delivered
+                      ? "delivered"
+                      : null
+                  }
+                  lastMessageReadAt={
+                    existingConversation?.last_message_read ? "read" : null
+                  }
                   onClick={() => {
                     if (existingConversation) {
                       onSelect(existingConversation.id);
@@ -231,7 +261,7 @@ export default function ChatSidebar({
               );
             })
           ) : (
-            <div className="px-4 py-10 text-center text-sm text-gray-500">
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">
               No users found.
             </div>
           ))}
@@ -242,6 +272,14 @@ export default function ChatSidebar({
           isOpen={isCreateGroupOpen}
           onClose={() => setIsCreateGroupOpen(false)}
           currentUserId={currentUserId}
+        />
+      )}
+
+      {currentUserId && (
+        <EditProfileModal
+          isOpen={isEditProfileOpen}
+          onClose={() => setIsEditProfileOpen(false)}
+          userId={currentUserId}
         />
       )}
 

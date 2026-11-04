@@ -45,11 +45,11 @@ export const Confirmation = ({
         aria-modal="true"
         aria-labelledby="confirmation-title"
         aria-describedby="confirmation-message"
-        className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl"
+        className="w-full max-w-sm rounded-xl bg-background p-6 shadow-xl"
       >
         <h2
           id="confirmation-title"
-          className="flex justify-between text-base font-semibold text-gray-900"
+          className="flex justify-between text-base font-semibold text-foreground"
         >
           {title}
 
@@ -58,7 +58,7 @@ export const Confirmation = ({
             aria-label="Close modal"
             onClick={onCancel}
             disabled={loading}
-            className="text-black disabled:opacity-50 bg-white hover:bg-white cursor-pointer"
+            className="cursor-pointer bg-background text-foreground hover:bg-background disabled:opacity-50"
           >
             <X size={20} />
           </Button>
@@ -66,7 +66,7 @@ export const Confirmation = ({
 
         <p
           id="confirmation-message"
-          className="mt-2 break-words text-sm leading-5 text-gray-500"
+          className="mt-2 break-words text-sm leading-5 text-muted-foreground"
         >
           {message}
         </p>
@@ -78,7 +78,7 @@ export const Confirmation = ({
               variant="outline"
               onClick={onCancel}
               disabled={loading}
-              className="!h-9 !min-w-[76px] cursor-pointer rounded-lg border border-gray-200 bg-white !px-4 !py-0 text-xs font-medium text-gray-700 shadow-none hover:bg-gray-50 hover:text-gray-700 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-50"
+              className="!h-9 !min-w-[76px] cursor-pointer rounded-lg border border-border bg-background !px-4 !py-0 text-xs font-medium text-foreground shadow-none hover:bg-muted hover:text-foreground disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </Button>
@@ -91,7 +91,7 @@ export const Confirmation = ({
             type="button"
             onClick={handleConfirm}
             disabled={loading}
-            className="!h-9 !min-w-[76px] cursor-pointer rounded-lg bg-red-500 !px-5 !py-0 text-sm font-medium text-white shadow-none hover:bg-red-600 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-60"
+            className="!h-9 !min-w-[76px] cursor-pointer rounded-lg bg-destructive !px-5 !py-0 text-sm font-medium text-white shadow-none hover:bg-destructive/90 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />

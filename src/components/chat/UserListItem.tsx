@@ -1,12 +1,19 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Check, CheckCheck, Loader2 } from "lucide-react";
 import type { ChatUser } from "@/src/hooks/useUsers";
 
 type Props = {
   user: ChatUser;
   isCurrentUser: boolean;
   isOpening?: boolean;
+  unreadCount?: number;
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
+  lastMessageSenderId?: string | null;
+  lastMessageDeliveredAt?: string | null;
+  lastMessageReadAt?: string | null;
+  currentUserId?: string;
   onClick: () => void;
 };
 
@@ -14,52 +21,106 @@ export default function UserListItem({
   user,
   isCurrentUser,
   isOpening = false,
+  unreadCount = 0,
+  lastMessage,
+  lastMessageAt,
+  lastMessageSenderId,
+  lastMessageDeliveredAt,
+  lastMessageReadAt,
+  currentUserId,
   onClick,
 }: Props) {
   const name = user.full_name || user.username || "User";
+
   const avatar =
     user.avatar_url ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6545db&color=fff`;
+
+  const isOwnMessage = !!currentUserId && lastMessageSenderId === currentUserId;
+
+  const formatTime = (date?: string | null) => {
+    if (!date) return "";
+
+    const messageDate = new Date(date);
+
+    if (Number.isNaN(messageDate.getTime())) return "";
+
+    return messageDate.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const renderMessageStatus = () => {
+    if (!isOwnMessage) return null;
+
+    if (lastMessageReadAt) {
+      return (
+        <CheckCheck
+          size={15}
+          className="shrink-0 text-conversation-item-reads"
+        />
+      );
+    }
+
+    if (lastMessageDeliveredAt) {
+      return <CheckCheck size={15} className="shrink-0 text-grey-400" />;
+    }
+
+    return <Check size={15} className="shrink-0 text-grey-400" />;
+  };
 
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={isCurrentUser || isOpening}
-      className="flex h-[68px] w-full cursor-pointer bg-white items-center gap-3 border-b border-[#f0f0f0] px-4 text-left transition-colors hover:bg-[#f9f9f9] disabled:cursor-default disabled:hover:bg-white"
+      className="flex h-[68px] w-full cursor-pointer items-center gap-3 bg-background px-4 text-left transition-colors hover:bg-muted disabled:cursor-default disabled:hover:bg-background"
     >
-      <div className="relative h-[48px] w-[48px] shrink-0">
+      <div className="relative h-[48px] w-[48px] shrink-0 ">
         <img
           src={avatar}
           alt={name}
-          className="h-full w-full rounded-full object-cover"
+          className="h-full w-full rounded-full object-cover "
         />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="truncate text-[15px] font-semibold text-[#171717]">
+          <h3 className="truncate text-[15px] font-semibold text-foreground">
             {name}
           </h3>
 
-          {isCurrentUser && (
-            <span className="shrink-0 rounded-full bg-[#6545db]/10 px-2 py-0.5 text-[11px] font-medium text-[#6545db]">
-              You
-            </span>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {lastMessageAt && (
+              <span className="text-[11px] text-muted-foreground">
+                {formatTime(lastMessageAt)}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-[13px] text-[#6b6b6b]">
-            {user.username ? `@${user.username}` : "Start a conversation"}
-          </p>
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-1">
+            {renderMessageStatus()}
 
-          {isOpening && (
-            <Loader2
-              size={15}
-              className="shrink-0 animate-spin text-[#6545db]"
-            />
-          )}
+            <p className="truncate text-[12px] text-muted-foreground">
+              {lastMessage || (user.username ? `@${user.username}` : "")}
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            {unreadCount > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-chart-4 px-1.5 text-[11px] font-semibold text-primary-foreground">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+
+            {isOpening && (
+              <Loader2 size={15} className="animate-spin text-chart-4" />
+            )}
+          </div>
         </div>
       </div>
     </button>

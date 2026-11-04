@@ -1,8 +1,9 @@
 import { signupSchema, loginSchema } from "../schemas/auth";
 import type { SignupFormData, LoginFormData } from "../types/form";
+import { userRegex } from "./regex";
 
 export const validation = (
-  data: Partial<SignupFormData> | SignupFormData
+  data: Partial<SignupFormData> | SignupFormData,
 ): Partial<Record<keyof SignupFormData, string>> => {
   const isPartial = Object.keys(data).length < 4;
   const schema = isPartial ? signupSchema.partial() : signupSchema;
@@ -26,7 +27,7 @@ export const validation = (
 };
 
 export const loginValidation = (
-  data: Partial<LoginFormData> | LoginFormData
+  data: Partial<LoginFormData> | LoginFormData,
 ): Partial<Record<keyof LoginFormData, string>> => {
   const isPartial = Object.keys(data).length < 2;
   const schema = isPartial ? loginSchema.partial() : loginSchema;
@@ -47,4 +48,19 @@ export const loginValidation = (
   }
 
   return {};
+};
+
+export const nameValidation = (data: string) => {
+  let newError = "";
+
+  // Full Name
+
+  if (!data) {
+    newError = "Name is required.";
+  } else if (!userRegex.test(data)) {
+    newError =
+      "Name must start with a letter and contain at least 3 characters. Only letters, numbers, and spaces are allowed.";
+  }
+
+  return newError;
 };
