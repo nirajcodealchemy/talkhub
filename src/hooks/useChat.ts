@@ -3,37 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/src/lib/supabase/client";
 
-export function useConversations(userId: string) {
-  const supabase = createClient();
-
-  return useQuery({
-    queryKey: ["conversations", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("conversations")
-        .select(
-          `
-          id,
-          title,
-          is_group,
-          created_by,
-          created_at,
-          updated_at,
-          conversation_members!inner(
-            user_id,
-            role
-          )
-        `,
-        )
-        .order("updated_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId,
-  });
-}
-
 export function useCreateDirectConversation() {
   const supabase = createClient();
   const queryClient = useQueryClient();
@@ -222,16 +191,10 @@ export function useSendMessage() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["messages", variables.conversationId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    },
   });
 }
 
-export function useSendAttachment() {
+export function useSendAttachment/() {
   const supabase = createClient();
   const queryClient = useQueryClient();
 
@@ -299,16 +262,6 @@ export function useSendAttachment() {
       }
 
       return data;
-    },
-
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["messages", variables.conversationId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["conversations"],
-      });
     },
   });
 }
