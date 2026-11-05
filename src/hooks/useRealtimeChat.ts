@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { createClient } from "@/src/lib/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@/src/lib/supabase/client";
 
 export function useRealtimeMessages(conversationId: string | null) {
   const supabase = useMemo(() => createClient(), []);

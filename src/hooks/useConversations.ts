@@ -1,11 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-
+import { useQuery } from "@tanstack/react-query";
+import { useOnlineUsers } from "./useOnlineUsers";
 import { createClient } from "@/src/lib/supabase/client";
 import { useRealtimeConversations } from "./useRealtimeChat";
-import { useOnlineUsers } from "./useOnlineUsers";
 
 export function useConversations(userId: string) {
   const supabase = useMemo(() => createClient(), []);
@@ -90,7 +89,7 @@ export function useConversations(userId: string) {
       const { data: profiles, error: profilesError } = otherUserIds.length
         ? await supabase
             .from("profiles")
-            .select("id, full_name, username, avatar_url")
+            .select("id, full_name, username, avatar_url, phone")
             .in("id", otherUserIds)
         : { data: [], error: null };
 
@@ -123,7 +122,7 @@ export function useConversations(userId: string) {
 
         const avatar =
           profile?.avatar_url ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6545db&color=fff`;
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=8b34d7&color=fff`;
 
         return {
           id: conv.id,
@@ -132,6 +131,9 @@ export function useConversations(userId: string) {
 
           is_group: conv.is_group,
           other_user_id: otherMember?.user_id || null,
+          other_user_phone: profile?.phone || null,
+          other_user_username: profile?.username || null,
+          other_user_avatar: profile?.avatar_url || null,
 
           last_message: lastMessage?.content || "",
           last_message_type: lastMessage?.message_type || "text",

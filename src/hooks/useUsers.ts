@@ -1,14 +1,8 @@
 "use client";
 
+import { ChatUser } from "../types/chat";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/src/lib/supabase/client";
-
-export type ChatUser = {
-  id: string;
-  username: string | null;
-  full_name: string | null;
-  avatar_url: string | null;
-};
 
 export function useUsers() {
   const supabase = createClient();

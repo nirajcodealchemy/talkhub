@@ -1,40 +1,36 @@
 "use client";
-
-import { Check, CheckCheck, Loader2 } from "lucide-react";
-import type { ChatUser } from "@/src/hooks/useUsers";
-
-type Props = {
-  user: ChatUser;
-  isCurrentUser: boolean;
-  isOpening?: boolean;
-  unreadCount?: number;
-  lastMessage?: string | null;
-  lastMessageAt?: string | null;
-  lastMessageSenderId?: string | null;
-  lastMessageDeliveredAt?: string | null;
-  lastMessageReadAt?: string | null;
-  currentUserId?: string;
-  onClick: () => void;
-};
+import { UserListItemProps } from "@/src/types/chat";
+import { useLocale, useTranslations } from "next-intl";
+import {
+  Check,
+  CheckCheck,
+  Loader2,
+  Image as ImageIcon,
+  FileText,
+} from "lucide-react";
 
 export default function UserListItem({
   user,
-  isCurrentUser,
-  isOpening = false,
-  unreadCount = 0,
+  onClick,
   lastMessage,
+  isCurrentUser,
   lastMessageAt,
+  currentUserId,
+  unreadCount = 0,
+  lastMessageType,
+  isOpening = false,
+  lastMessageReadAt,
   lastMessageSenderId,
   lastMessageDeliveredAt,
-  lastMessageReadAt,
-  currentUserId,
-  onClick,
-}: Props) {
-  const name = user.full_name || user.username || "User";
+}: UserListItemProps) {
+  const t = useTranslations("screen.chat.UserListItem");
+  const locale = useLocale();
+
+  const name = user.full_name || user.username || t("defaultUser");
 
   const avatar =
     user.avatar_url ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6545db&color=fff`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=8b34d7&color=fff`;
 
   const isOwnMessage = !!currentUserId && lastMessageSenderId === currentUserId;
 
@@ -45,7 +41,7 @@ export default function UserListItem({
 
     if (Number.isNaN(messageDate.getTime())) return "";
 
-    return messageDate.toLocaleTimeString("en-US", {
+    return messageDate.toLocaleTimeString(locale, {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
@@ -71,6 +67,33 @@ export default function UserListItem({
     return <Check size={15} className="shrink-0 text-grey-400" />;
   };
 
+  const renderLastMessage = () => {
+    if (!lastMessage) return user.username ? `@${user.username}` : "";
+
+    // Image message
+    if (lastMessageType === "image" || lastMessage.startsWith("[Image]")) {
+      return (
+        <span className="flex items-center gap-1">
+          <ImageIcon size={13} className="shrink-0" />
+          <span>{t("image")}</span>
+        </span>
+      );
+    }
+
+    // File message
+    if (lastMessageType === "file") {
+      return (
+        <span className="flex items-center gap-1">
+          <FileText size={13} className="shrink-0" />
+          <span>{t("document")}</span>
+        </span>
+      );
+    }
+
+    // Normal text message
+    return lastMessage;
+  };
+
   return (
     <button
       type="button"
@@ -78,11 +101,11 @@ export default function UserListItem({
       disabled={isCurrentUser || isOpening}
       className="flex h-[68px] w-full cursor-pointer items-center gap-3 bg-background px-4 text-left transition-colors hover:bg-muted disabled:cursor-default disabled:hover:bg-background"
     >
-      <div className="relative h-[48px] w-[48px] shrink-0 ">
+      <div className="relative h-[48px] w-[48px] shrink-0">
         <img
           src={avatar}
           alt={name}
-          className="h-full w-full rounded-full object-cover "
+          className="h-full w-full rounded-full object-cover"
         />
       </div>
 
@@ -91,23 +114,18 @@ export default function UserListItem({
           <h3 className="truncate text-[15px] font-semibold text-foreground">
             {name}
           </h3>
-
-          <div className="flex shrink-0 items-center gap-2">
-            {lastMessageAt && (
-              <span className="text-[11px] text-muted-foreground">
-                {formatTime(lastMessageAt)}
-              </span>
-            )}
-          </div>
+          {lastMessageAt && (
+            <span className="shrink-0 text-[11px] text-muted-foreground">
+              {formatTime(lastMessageAt)}
+            </span>
+          )}
         </div>
 
         <div className="mt-1 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-1">
+          <div className="flex min-w-0 flex-1 items-center gap-1 text-muted-foreground">
             {renderMessageStatus()}
 
-            <p className="truncate text-[12px] text-muted-foreground">
-              {lastMessage || (user.username ? `@${user.username}` : "")}
-            </p>
+            <p className="truncate text-[12px]">{renderLastMessage()}</p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">

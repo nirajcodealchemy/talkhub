@@ -1,30 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, X } from "lucide-react";
-import { createClient } from "@/src/lib/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { userRegex } from "@/src/utils/regex";
+import { Camera, Loader2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { EditProfileProps } from "@/src/types/profile";
+import { createClient } from "@/src/lib/supabase/client";
 
-type Props = {
-  isOpen: boolean;
-  onClose: () => void;
-  userId: string;
-};
-
-export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
-  const supabase = createClient();
-  const fileRef = useRef<HTMLInputElement>(null);
-
+export default function EditProfileModal({
+  userId,
+  isOpen,
+  onClose,
+}: EditProfileProps) {
   const [name, setName] = useState("");
+  const [error, setError] = useState("");
   const [oldName, setOldName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [fetching, setFetching] = useState(false);
-  const [error, setError] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const t = useTranslations("screen.chat.EditProfileModal");
+  const supabase = createClient();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -80,12 +81,12 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setError("Please select a valid image.");
+      setError(t("selectValidImage"));
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image size must be less than 5 MB.");
+      setError(t("imageSizeError"));
       return;
     }
 
@@ -95,7 +96,7 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("Name is required.");
+      setError(t("nameRequired"));
       return;
     }
 
@@ -151,9 +152,7 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
         onClose();
       }, 700);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to update profile.",
-      );
+      setError(err instanceof Error ? err.message : t("updateFailed"));
     } finally {
       setLoading(false);
     }
@@ -163,8 +162,8 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
 
   const nameError = !isNameValid
     ? name.trim().length === 0
-      ? "Name is required."
-      : "Name must start with a letter and contain at least 3 characters. Only letters, numbers and spaces are allowed."
+      ? t("nameRequired")
+      : t("invalidName")
     : "";
 
   const displayedAvatar = preview || avatarUrl;
@@ -172,15 +171,17 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-2xl bg-background p-6 shadow-xl">
+        {/* Modal Header */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
-            Edit Profile
+            {t("title")}
           </h2>
 
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
+            aria-label={t("closeModal")}
             className="cursor-pointer rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent"
           >
             <X size={20} />
@@ -193,6 +194,7 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
           </div>
         ) : (
           <>
+            {/* Profile Photo */}
             <div className="mb-6 flex flex-col items-center">
               <div
                 className="relative cursor-pointer"
@@ -201,9 +203,9 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
                 <img
                   src={
                     displayedAvatar ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=6545db&color=fff`
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=8b34d7&color=fff`
                   }
-                  alt="Profile"
+                  alt={t("profileAlt")}
                   className="h-24 w-24 rounded-full border-4 border-gray-100 object-cover"
                 />
 
@@ -221,7 +223,7 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
                 onClick={() => fileRef.current?.click()}
                 className="mt-3 cursor-pointer text-sm font-medium text-chart-4 transition-colors hover:text-chart-5"
               >
-                Change profile photo
+                {t("changePhoto")}
               </button>
 
               <input
@@ -233,12 +235,13 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
               />
             </div>
 
+            {/* Name */}
             <div className="space-y-2">
               <label
                 htmlFor="name"
                 className="text-sm font-medium text-foreground"
               >
-                Full Name
+                {t("nameLabel")}
               </label>
 
               <input
@@ -248,7 +251,7 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
                   setName(event.target.value);
                   setError("");
                 }}
-                placeholder="Enter your name"
+                placeholder={t("namePlaceholder")}
                 maxLength={80}
                 className={`w-full rounded-lg border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors ${
                   nameError
@@ -262,8 +265,10 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
               )}
             </div>
 
+            {/* Error */}
             {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
 
+            {/* Footer Buttons */}
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
@@ -271,7 +276,7 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
                 disabled={loading}
                 className="cursor-pointer rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
               >
-                Cancel
+                {t("cancel")}
               </button>
 
               <button
@@ -283,7 +288,8 @@ export default function EditProfileModal({ isOpen, onClose, userId }: Props) {
                 className="flex cursor-pointer items-center gap-2 rounded-lg bg-chart-4 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-chart-5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
               >
                 {loading && <Loader2 size={16} className="animate-spin" />}
-                Save Changes
+
+                {loading ? t("saving") : t("saveChanges")}
               </button>
             </div>
           </>

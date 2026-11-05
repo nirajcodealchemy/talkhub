@@ -1,25 +1,27 @@
-import { ChatMessage } from "@/src/types/chat";
+"use client";
+
 import { Check, CheckCheck } from "lucide-react";
+import { MessageItemProps } from "@/src/types/chat";
+import { useLocale, useTranslations } from "next-intl";
 
-type Props = {
-  message: ChatMessage;
-  isMine: boolean;
-};
+export default function MessageItem({ message, isMine }: MessageItemProps) {
+  const t = useTranslations("screen.chat.MessageItem");
+  const locale = useLocale();
 
-export default function MessageItem({ message, isMine }: Props) {
-  const time = new Date(message.created_at).toLocaleTimeString("en-US", {
+  const time = new Date(message.created_at).toLocaleTimeString(locale, {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   });
 
   const isRead = !!message.read_at || message.status === "read";
+
   const isDelivered =
     isRead || !!message.delivered_at || message.status === "delivered";
 
   return (
     <div className={`flex w-full ${isMine ? "justify-end" : "justify-start"}`}>
-      <div className="max-w-[70%] sm:max-w-[60%]">
+      <div className="max-w-[55%]">
         <div
           className={`relative rounded-[18px] shadow-sm ${
             isMine
@@ -33,7 +35,7 @@ export default function MessageItem({ message, isMine }: Props) {
             <div className="mb-2 overflow-hidden rounded-xl bg-background">
               <img
                 src={message.attachment_url}
-                alt="Shared attachment"
+                alt={t("sharedAttachment")}
                 loading="lazy"
                 className="max-h-[320px] w-full rounded-lg object-contain"
               />
@@ -50,7 +52,8 @@ export default function MessageItem({ message, isMine }: Props) {
               <span className="min-w-0 flex-1 truncate text-sm font-medium">
                 {message.content}
               </span>
-              <span className="text-xs">Download</span>
+
+              <span className="text-xs">{t("download")}</span>
             </a>
           )}
 
@@ -113,7 +116,7 @@ export default function MessageItem({ message, isMine }: Props) {
         {message.reply_count ? (
           <div className="mt-1.5 flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
             <span className="text-[13px]">↳</span>
-            <span>{message.reply_count} Replies</span>
+            <span>{t("replies", { count: message.reply_count })}</span>
           </div>
         ) : null}
       </div>

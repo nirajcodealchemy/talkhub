@@ -2,9 +2,9 @@
 
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmationModalData } from "@/src/types/modals";
-import { Button } from "@/components/ui/button";
 
 export const Confirmation = ({
   title,

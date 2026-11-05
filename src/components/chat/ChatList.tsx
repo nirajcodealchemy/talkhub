@@ -1,19 +1,15 @@
 "use client";
 
-import { ChatConversation } from "@/src/types/chat";
 import ChatListItem from "./ChatListItem";
-
-type Props = {
-  conversations: ChatConversation[];
-  selectedId: string;
-  onSelect: (id: string) => void;
-};
+import { useTranslations } from "next-intl";
+import { ChatListProps } from "@/src/types/chat";
 
 export default function ChatList({
-  conversations,
-  selectedId,
   onSelect,
-}: Props) {
+  selectedId,
+  conversations,
+}: ChatListProps) {
+  const t = useTranslations("screen.chat.ChatScreen");
   return (
     <div className="h-full overflow-y-auto overscroll-contain">
       {conversations.map((conversation) => (
@@ -27,7 +23,8 @@ export default function ChatList({
 
       {conversations.length === 0 && (
         <div className="px-4 py-10 text-center text-sm text-gray-500">
-          No conversations yet.
+          {/* No conversations yet. */}
+          {t("noConversationsTitle")}
         </div>
       )}
     </div>

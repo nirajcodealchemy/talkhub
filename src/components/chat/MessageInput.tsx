@@ -1,29 +1,33 @@
 "use client";
 
+import MicIcon from "../icons/MicIcon";
+import PlusIcon from "../icons/PlusIcon";
+import FileIcon from "../icons/FileIcon";
+import EmojiIcon from "../icons/EmojiIcon";
+import { useTranslations } from "next-intl";
+import { MessageInputProps } from "@/src/types/chat";
+import SendIcon from "@/src/components/icons/SendIcon";
 import { useRef, useState, DragEvent, useEffect } from "react";
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
-import SendIcon from "@/src/components/icons/SendIcon";
-import PlusIcon from "../icons/PlusIcon";
-import MicIcon from "../icons/MicIcon";
-import EmojiIcon from "../icons/EmojiIcon";
-import FileIcon from "../icons/FileIcon";
 import { X, FileText, Image as ImageIcon, File, Paperclip } from "lucide-react";
 
-type Props = {
-  onSend: (message: string) => void;
-  onAttachment?: (file: File) => void;
-};
-
-export default function MessageInput({ onSend, onAttachment }: Props) {
+export default function MessageInput({
+  conversationId,
+  onSend,
+  onAttachment,
+}: MessageInputProps) {
   const [message, setMessage] = useState("");
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [emojiOpen, setEmojiOpen] = useState(false);
 
+  const dragCounter = useRef(0);
   const emojiRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const dragCounter = useRef(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const t = useTranslations("screen.chat.MessageInput");
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -42,15 +46,37 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
     };
   }, []);
 
+  // Reset input whenever the active conversation changes
+  useEffect(() => {
+    setMessage("");
+    setSelectedFiles([]);
+    setAttachmentOpen(false);
+    setEmojiOpen(false);
+    setIsDragging(false);
+
+    dragCounter.current = 0;
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "24px";
+    }
+  }, [conversationId]);
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, [conversationId]);
+
   const handleEmojiClick = (emojiData: EmojiClickData) => {
     setMessage((previous) => previous + emojiData.emoji);
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024) return `${bytes} ${t("fileSizeBytes")}`;
 
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} ${t("fileSizeKilobytes")}`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(1)} ${t("fileSizeMegabytes")}`;
   };
 
   const getFileIcon = (file: File) => {
@@ -158,7 +184,7 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
         <div className="absolute inset-2 z-50 flex items-center justify-center rounded-xl border-2 border-dashed border-chart-4 bg-chart-4/5">
           <div className="flex flex-col items-center gap-2 text-chart-4">
             <Paperclip size={28} />
-            <p className="text-sm font-semibold">Drop files here</p>
+            <p className="text-sm font-semibold">{t("dropFiles")}</p>
           </div>
         </div>
       )}
@@ -188,8 +214,8 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
-                  aria-label={`Remove ${file.name}`}
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-grey-200 text-grey-600 transition hover:bg-logout-red-light hover:text-destructive"
+                  aria-label={t("removeFile", { name: file.name })}
+                  className="flex h-6 w-6 cursor-pointer shrink-0 items-center justify-center rounded-full bg-grey-200 text-grey-600 transition hover:bg-logout-red-light hover:text-destructive"
                 >
                   <X size={13} />
                 </button>
@@ -198,7 +224,7 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
           </div>
         )}
 
-        <input
+        {/* <input
           type="text"
           value={message}
           onChange={(event) => setMessage(event.target.value)}
@@ -210,6 +236,52 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
           }}
           placeholder="Type your message..."
           className="w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
+        /> */}
+
+        <textarea
+          ref={textareaRef}
+          value={message}
+          onChange={(event) => {
+            setMessage(event.target.value);
+
+            // Auto resize textarea
+            event.target.style.height = "auto";
+            event.target.style.height = `${Math.min(
+              event.target.scrollHeight,
+              120,
+            )}px`;
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") return;
+
+            // Shift + Enter = New line
+            if (event.shiftKey) {
+              event.stopPropagation();
+              return;
+            }
+
+            // Don't send while composing text (IME)
+            if (event.nativeEvent.isComposing) return;
+
+            // Enter = Send message
+            event.preventDefault();
+            event.stopPropagation();
+            handleSend();
+          }}
+          placeholder={t("typeMessage")}
+          rows={1}
+          className="
+    w-full
+    max-h-[120px]
+    min-h-[24px]
+    resize-none
+    overflow-y-auto
+    bg-transparent
+    text-[14px]
+    text-foreground
+    outline-none
+    placeholder:text-muted-foreground
+  "
         />
 
         <hr className="-mx-6 w-auto border-0 border-t border-border" />
@@ -219,7 +291,7 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
             <div className="relative">
               <button
                 type="button"
-                aria-label="Add attachment"
+                aria-label={t("addAttachment")}
                 onClick={() => setAttachmentOpen(!attachmentOpen)}
                 className="cursor-pointer rounded-full p-1 text-grey-400 transition-colors hover:text-chart-4"
               >
@@ -234,7 +306,7 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
                     className="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
                   >
                     <Paperclip size={15} />
-                    Attach files
+                    {t("attachFiles")}
                   </button>
                 </div>
               )}
@@ -256,7 +328,7 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
 
             <button
               type="button"
-              aria-label="Voice message"
+              aria-label={t("voiceMessage")}
               disabled
               className="cursor-not-allowed rounded-full p-1 text-grey-400 transition-colors hover:text-grey-600"
             >
@@ -266,7 +338,7 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
             <div className="relative" ref={emojiRef}>
               <button
                 type="button"
-                aria-label="Insert emoji"
+                aria-label={t("insertEmoji")}
                 aria-expanded={emojiOpen}
                 onClick={() => setEmojiOpen((previous) => !previous)}
                 className="cursor-pointer rounded-full p-1 text-grey-400 transition-colors hover:text-chart-4"
@@ -288,7 +360,7 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
                     onEmojiClick={handleEmojiClick}
                     width="100%"
                     height={300}
-                    searchPlaceholder="Search emoji..."
+                    searchPlaceholder={t("searchEmoji")}
                     previewConfig={{
                       showPreview: false,
                     }}
@@ -299,7 +371,7 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
 
             <button
               type="button"
-              aria-label="Sticker"
+              aria-label={t("sticker")}
               disabled
               className="cursor-not-allowed rounded-full p-1 text-grey-400 transition-colors hover:text-grey-600"
             >
@@ -309,7 +381,7 @@ export default function MessageInput({ onSend, onAttachment }: Props) {
 
           <button
             type="button"
-            aria-label="Send message"
+            aria-label={t("sendMessage")}
             onClick={handleSend}
             disabled={!canSend}
             className={`flex cursor-pointer items-center justify-center rounded-full transition-colors ${

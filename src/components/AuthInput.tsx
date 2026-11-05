@@ -1,36 +1,23 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ChangeEvent, useState } from "react";
-
-type AuthInputProps = {
-  id: string;
-  name: string;
-  label: string;
-  type: "text" | "email" | "tel" | "password";
-  value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  placeholder: string;
-  error?: string;
-  autoComplete?: string;
-  inputMode?: "text" | "numeric" | "email" | "tel";
-  maxLength?: number;
-};
+import { Input } from "@/components/ui/input";
+import { AuthInputProps } from "../types/form";
+import { Button } from "@/components/ui/button";
 
 const AuthInput = ({
   id,
   name,
-  label,
   type,
+  label,
   value,
-  onChange,
-  placeholder,
   error,
-  autoComplete,
+  onChange,
   inputMode,
   maxLength,
+  placeholder,
+  autoComplete,
 }: AuthInputProps) => {
   const t = useTranslations("auth.AuthInput");
   const [showPassword, setShowPassword] = useState(false);
@@ -53,13 +40,13 @@ const AuthInput = ({
         <Input
           id={id}
           name={name}
-          type={inputType}
           value={value}
+          type={inputType}
           onChange={onChange}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
           inputMode={inputMode}
           maxLength={maxLength}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
           className={`${inputClass} ${isPassword ? "pr-12" : ""}`}

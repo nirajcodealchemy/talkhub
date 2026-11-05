@@ -1,8 +1,8 @@
 "use client";
 
+import { SignupFormData } from "@/src/types/form";
 import { useMutation } from "@tanstack/react-query";
 import { createClient } from "@/src/lib/supabase/client";
-import { SignupFormData } from "@/src/types/form";
 
 export const useSignup = () => {
   return useMutation({

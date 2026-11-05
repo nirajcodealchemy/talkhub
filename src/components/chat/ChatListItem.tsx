@@ -1,19 +1,13 @@
 "use client";
 
-import { ChatConversation } from "@/src/types/chat";
 import { CheckCheck } from "lucide-react";
-
-type Props = {
-  conversation: ChatConversation;
-  selected: boolean;
-  onClick: () => void;
-};
+import { ChatListItemProps } from "@/src/types/chat";
 
 export default function ChatListItem({
-  conversation,
-  selected,
   onClick,
-}: Props) {
+  selected,
+  conversation,
+}: ChatListItemProps) {
   return (
     <button
       type="button"

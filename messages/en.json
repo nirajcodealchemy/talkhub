@@ -2,33 +2,33 @@
   "auth": {
     "LoginPage": {
       "title": "Login",
+      "emailLabel": "Email",
       "Logging": "Logging in...",
+      "passwordLabel": "Password",
       "loginFailed": "Login failed:",
       "createAccount": "Create account",
       "forgotPassword": "Forgot password?",
-      "message": "Login failed. Please try again.",
       "noAccount": "Don't have an account?",
-      "emailLabel": "Email",
       "emailPlaceholder": "Enter your email",
-      "passwordLabel": "Password",
-      "passwordPlaceholder": "Enter your password"
+      "passwordPlaceholder": "Enter your password",
+      "message": "Login failed. Please try again."
     },
     "SignUpPage": {
-      "title": "Signup",
-      "alreadyHaveAccount": "Already have an account?",
-      "goToLogin": "Go to Login",
-      "nameLabel": "Name",
-      "namePlaceholder": "Enter your name",
-      "phoneLabel": "Phone",
-      "phonePlaceholder": "Enter 10-digit phone number",
-      "emailLabel": "Email",
-      "emailPlaceholder": "Enter your email",
-      "passwordLabel": "Password",
-      "passwordPlaceholder": "Create a password",
-      "signingUp": "Signing up...",
-      "signupButton": "Signup",
-      "registrationFailed": "Registration Failed",
       "ok": "Okay",
+      "title": "Signup",
+      "nameLabel": "Name",
+      "phoneLabel": "Phone",
+      "emailLabel": "Email",
+      "signupButton": "Signup",
+      "goToLogin": "Go to Login",
+      "passwordLabel": "Password",
+      "signingUp": "Signing up...",
+      "namePlaceholder": "Enter your name",
+      "emailPlaceholder": "Enter your email",
+      "passwordPlaceholder": "Create a password",
+      "registrationFailed": "Registration Failed",
+      "alreadyHaveAccount": "Already have an account?",
+      "phonePlaceholder": "Enter 10-digit phone number",
       "registrationFailedMessage": "Registration failed. Please try again."
     },
     "AuthInput": {
@@ -36,6 +36,7 @@
       "hidePassword": "Hide password"
     },
     "AuthBrand": {
+      "talkhub": "Talkhub",
       "tagline": "Real-time chatting made simple"
     }
   },
@@ -43,15 +44,111 @@
     "chat": {
       "ChatScreen": {
         "chats": "Chats",
-        "moreOptions": "More options",
         "logout": "Logout",
+        "moreOptions": "More options",
         "logoutConfirmTitle": "Logout",
-        "logoutConfirmMessage": "Are you sure you want to log out of your account?",
         "logoutConfirmButton": "Logout",
         "noConversationsTitle": "No Conversations Yet",
-        "noConversationsDescription": "Start a new chat or invite others to join the conversation.",
         "welcomeTitle": "Welcome to Your Conversations",
+        "logoutConfirmMessage": "Are you sure you want to log out of your account?",
+        "noConversationsDescription": "Start a new chat or invite others to join the conversation.",
         "welcomeDescription": "Select a chat from the list to start exploring your messages or begin a new conversation"
+      },
+      "ChatHeader": {
+        "online": "Online",
+        "offline": "Offline",
+        "videoCall": "Video Call",
+        "voiceCall": "Voice Call",
+        "chatTools": "Chat Tools",
+        "backAriaLabel": "Back to chats",
+        "videoCallAriaLabel": "Video call",
+        "voiceCallAriaLabel": "Voice call",
+        "chatToolsAriaLabel": "Chat tools",
+        "chatOptionsAriaLabel": "Chat options",
+        "conversationInfo": "Conversation Info",
+        "conversationInfoAriaLabel": "Conversation information"
+      },
+      "ChatSidebar": {
+        "chats": "Chats",
+        "logout": "Logout",
+        "createGroup": "Create Group",
+        "editProfile": "Edit Profile",
+        "clearSearch": "Clear search",
+        "logoutConfirmTitle": "Logout",
+        "logoutConfirmButton": "Logout",
+        "noUsersFound": "No users found.",
+        "moreOptions": "More chat options",
+        "loadingUsers": "Loading users...",
+        "usersLoadError": "Could not load users.",
+        "searchPlaceholder": "Search users or conversations...",
+        "logoutConfirmMessage": "Are you sure you want to log out?"
+      },
+      "ConversationListItem": {
+        "you": "You",
+        "photo": "Photo",
+        "video": "Video",
+        "defaultName": "User",
+        "document": "Document",
+        "startConversation": "Start a conversation"
+      },
+      "CreateGroupModal": {
+        "cancel": "Cancel",
+        "title": "Create Group",
+        "creating": "Creating...",
+        "groupName": "Group Name",
+        "closeModal": "Close modal",
+        "addMembers": "Add Members",
+        "searching": "Searching...",
+        "createGroup": "Create Group",
+        "removeMember": "Remove {name}",
+        "selectedMembers": "Selected Members",
+        "groupNamePlaceholder": "Enter group name",
+        "searchUsersPlaceholder": "Search users..."
+      },
+      "EditProfileModal": {
+        "cancel": "Cancel",
+        "nameLabel": "Name",
+        "saving": "Saving...",
+        "title": "Edit Profile",
+        "profileAlt": "Profile",
+        "closeModal": "Close modal",
+        "saveChanges": "Save Changes",
+        "nameRequired": "Name is required.",
+        "namePlaceholder": "Enter your name",
+        "changePhoto": "Change profile photo",
+        "updateFailed": "Failed to update profile.",
+        "selectValidImage": "Please select a valid image.",
+        "imageSizeError": "Image size must be less than 5 MB.",
+        "invalidName": "Name must start with a letter and contain at least 3 characters. Only letters, numbers and spaces are allowed."
+      },
+      "MessageInput": {
+        "sticker": "Sticker",
+        "fileSizeBytes": "B",
+        "fileSizeMegabytes": "MB",
+        "fileSizeKilobytes": "KB",
+        "attachFiles": "Attach files",
+        "insertEmoji": "Insert emoji",
+        "sendMessage": "Send message",
+        "removeFile": "Remove {name}",
+        "dropFiles": "Drop files here",
+        "voiceMessage": "Voice message",
+        "searchEmoji": "Search emoji...",
+        "addAttachment": "Add attachment",
+        "typeMessage": "Type your message..."
+      },
+      "MessageItem": {
+        "download": "Download",
+        "sharedAttachment": "Shared attachment",
+        "replies": "{count, plural, one {# Reply} other {# Replies}}"
+      },
+      "MessageList": {
+        "today": "Today",
+        "emptyMessage": "No messages yet. Send a message to start the conversation!"
+      },
+      "UserListItem": {
+        "image": "Image",
+        "defaultUser": "User",
+        "document": "Document"
       }
     }
   }

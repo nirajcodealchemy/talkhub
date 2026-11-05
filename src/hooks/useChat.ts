@@ -1,6 +1,10 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { createClient } from "@/src/lib/supabase/client";
 
 export function useCreateDirectConversation() {
@@ -81,7 +85,6 @@ export function useSearchUsers() {
 
 //       if (error) throw error;
 
-//       // Generate signed URLs for attachments
 //       const messagesWithAttachments = await Promise.all(
 //         (data ?? []).map(async (message) => {
 //           if (!message.attachment_path) {
@@ -111,26 +114,42 @@ export function useSearchUsers() {
 //     },
 
 //     enabled: !!conversationId,
+
+//     staleTime: 60_000,
+//     gcTime: 5 * 60 * 1000,
+//     refetchOnMount: false,
+//     refetchOnWindowFocus: false,
 //   });
 // }
 
 export function useMessages(conversationId: string) {
   const supabase = createClient();
+  const PAGE_SIZE = 15;
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["messages", conversationId],
+    initialPageParam: null as string | null,
 
-    queryFn: async () => {
-      const { data, error } = await supabase
+    queryFn: async ({ pageParam }) => {
+      let request = supabase
         .from("messages")
         .select("*")
         .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false })
+        .limit(PAGE_SIZE);
+
+      if (pageParam) {
+        request = request.lt("created_at", pageParam);
+      }
+
+      const { data, error } = await request;
 
       if (error) throw error;
 
-      const messagesWithAttachments = await Promise.all(
-        (data ?? []).map(async (message) => {
+      const messages = [...(data ?? [])].reverse();
+
+      return Promise.all(
+        messages.map(async (message) => {
           if (!message.attachment_path) {
             return {
               ...message,
@@ -153,12 +172,15 @@ export function useMessages(conversationId: string) {
           };
         }),
       );
+    },
 
-      return messagesWithAttachments;
+    getNextPageParam: (lastPage) => {
+      if (lastPage.length < PAGE_SIZE) return undefined;
+
+      return lastPage[0]?.created_at;
     },
 
     enabled: !!conversationId,
-
     staleTime: 60_000,
     gcTime: 5 * 60 * 1000,
     refetchOnMount: false,
@@ -168,7 +190,6 @@ export function useMessages(conversationId: string) {
 
 export function useSendMessage() {
   const supabase = createClient();
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationKey: ["sendMessage"],
@@ -194,9 +215,8 @@ export function useSendMessage() {
   });
 }
 
-export function useSendAttachment/() {
+export function useSendAttachment() {
   const supabase = createClient();
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationKey: ["sendAttachment"],
@@ -221,7 +241,12 @@ export function useSendAttachment/() {
       // Create unique storage path
       const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
 
-      const filePath = `${conversationId}/${user.id}/${crypto.randomUUID()}-${safeFileName}`;
+      const randomId = Array.from(
+        crypto.getRandomValues(new Uint8Array(16)),
+        (byte) => byte.toString(16).padStart(2, "0"),
+      ).join("");
+
+      const filePath = `${conversationId}/${user.id}/${randomId}-${safeFileName}`;
 
       // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
