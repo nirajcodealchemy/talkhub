@@ -71,6 +71,10 @@ export default function LoginPage() {
 
       if (result?.user) {
         router.push("/chat");
+        setData({
+          email: "",
+          password: "",
+        });
       }
     } catch (err: unknown) {
       console.error(t("loginFailed"), err);

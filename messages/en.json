@@ -139,7 +139,9 @@
       "MessageItem": {
         "download": "Download",
         "sharedAttachment": "Shared attachment",
-        "replies": "{count, plural, one {# Reply} other {# Replies}}"
+        "replies": "{count, plural, one {# Reply} other {# Replies}}",
+        "readMore": "Read more",
+        "readLess": "Read less"
       },
       "MessageList": {
         "today": "Today",

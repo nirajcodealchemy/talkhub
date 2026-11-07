@@ -9,6 +9,7 @@ import SparklesIcon from "../icons/SparklesIcon";
 import type { HeaderProps } from "@/src/types/chat";
 import { ArrowLeft, MoreVertical, X } from "lucide-react";
 import ConversationInfoModal from "../modal/ConversationInfoModal";
+import { Button } from "@/components/ui/button";
 
 export default function ChatHeader({ conversation, onBack }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,14 +21,16 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
       {/* User details */}
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         {/* Mobile back button */}
-        <button
+        <Button
           type="button"
           onClick={onBack}
           aria-label={t("backAriaLabel")}
-          className="shrink-0 rounded-full p-1.5 text-foreground transition-colors hover:bg-accent sm:hidden"
+          variant="ghost"
+          size="icon-xs"
+          className="h-8 w-8 shrink-0 cursor-pointer rounded-full bg-white text-foreground hover:bg-accent md:hidden"
         >
-          <ArrowLeft size={22} />
-        </button>
+          <ArrowLeft className="size-6" />
+        </Button>
 
         {/* User avatar */}
         <div
@@ -58,95 +61,98 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
 
       {/* Desktop actions */}
       <div className="hidden shrink-0 items-center gap-4 text-foreground sm:flex">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-lg"
           aria-label={t("videoCallAriaLabel")}
-          disabled
-          className="cursor-not-allowed rounded-full p-1 text-muted-foreground"
+          className=" bg-white rounded-full p-1 text-muted-foreground cursor-not-allowed hover:bg-white"
         >
-          <VideoIcon />
-        </button>
+          <VideoIcon className="size-6 cursor-not-allowed " />
+        </Button>
 
-        <button
+        <Button
           type="button"
           aria-label={t("voiceCallAriaLabel")}
-          disabled
-          className="cursor-not-allowed rounded-full p-1 text-muted-foreground"
+          className=" bg-white rounded-full p-1 text-muted-foreground cursor-not-allowed hover:bg-white"
         >
-          <PhoneIcon />
-        </button>
+          <PhoneIcon className="size-6 cursor-not-allowed " />
+        </Button>
 
-        <button
+        <Button
           type="button"
           aria-label={t("chatToolsAriaLabel")}
-          disabled
-          className="cursor-not-allowed rounded-full p-1 text-muted-foreground"
+          className=" bg-white rounded-full p-1 text-muted-foreground cursor-not-allowed hover:bg-white"
         >
-          <SparklesIcon />
-        </button>
+          <SparklesIcon className="size-6 cursor-not-allowed " />
+        </Button>
 
-        <button
+        <Button
           type="button"
           onClick={() => setIsInfoOpen(true)}
           aria-label={t("conversationInfoAriaLabel")}
-          className="rounded-full cursor-pointer p-1 text-foreground transition-colors hover:bg-accent"
+          className=" bg-white rounded-full p-1 text-muted-foreground cursor-pointer hover:bg-white"
         >
-          <InfoIcon />
-        </button>
+          <InfoIcon className="size-6 cursor-not-allowed " />
+        </Button>
       </div>
 
       {/* Mobile menu */}
       <div className="relative sm:hidden">
-        <button
+        <Button
           type="button"
           aria-label={t("chatOptionsAriaLabel")}
           aria-expanded={isMenuOpen}
           onClick={() => setIsMenuOpen((previous) => !previous)}
-          className="rounded-full p-2 text-foreground transition-colors hover:bg-accent"
+          className="rounded-full p-2 text-foreground transition-colors bg-white hover:bg-accent cursor-pointer"
         >
-          {isMenuOpen ? <X size={21} /> : <MoreVertical size={21} />}
-        </button>
+          {isMenuOpen ? (
+            <X size={21} className="size-5 " />
+          ) : (
+            <MoreVertical size={21} className="size-5 " />
+          )}
+        </Button>
 
         {isMenuOpen && (
           <div className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-border bg-popover py-1.5 text-popover-foreground shadow-lg">
-            <button
+            <Button
               type="button"
               disabled
-              className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-3 text-sm text-muted-foreground"
+              className="flex w-full cursor-not-allowed bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
             >
-              <VideoIcon />
+              <VideoIcon className="size-6 cursor-not-allowed " />
               {t("videoCall")}
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
               disabled
-              className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-3 text-sm text-muted-foreground"
+              className="flex w-full cursor-not-allowed bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
             >
-              <PhoneIcon />
+              <PhoneIcon className="size-6 cursor-not-allowed " />
               {t("voiceCall")}
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
               disabled
-              className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-3 text-sm text-muted-foreground"
+              className="flex w-full cursor-not-allowed bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
             >
-              <SparklesIcon />
+              <SparklesIcon className="size-6 cursor-not-allowed " />
               {t("chatTools")}
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
               onClick={() => {
                 setIsMenuOpen(false);
                 setIsInfoOpen(true);
               }}
-              className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-sm text-foreground transition-colors hover:bg-accent"
+              className="flex w-full cursor-pointer bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground hover:bg-white"
             >
-              <InfoIcon />
+              <InfoIcon className="size-6 " />
               {t("conversationInfo")}
-            </button>
+            </Button>
           </div>
         )}
       </div>

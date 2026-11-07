@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import type { ChatConversation } from "@/src/types/chat";
 
@@ -20,6 +21,7 @@ import {
   useSendAttachment,
   useMessages,
   useCreateDirectConversation,
+  useSendImageGroup,
 } from "@/src/hooks/useChat";
 
 type Props = {
@@ -28,7 +30,7 @@ type Props = {
 
 export default function ChatScreen({ currentUserId = "" }: Props) {
   const t = useTranslations("screen.chat.ChatScreen");
-
+  const queryClient = useQueryClient();
   const supabase = useMemo(() => createClient(), []);
 
   const {
@@ -41,6 +43,7 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
 
   const { mutateAsync: sendMessage } = useSendMessage();
   const { mutateAsync: sendAttachment } = useSendAttachment();
+  const { mutateAsync: sendImageGroup } = useSendImageGroup();
 
   const { mutateAsync: createDirectConversation } =
     useCreateDirectConversation();
@@ -63,16 +66,46 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
   useRealtimeMessages(selectedId || null);
 
   // MARK INCOMING MESSAGES AS READ
-
   useEffect(() => {
     if (!selectedId || !currentUserId || !dbMessages?.length) return;
 
-    const hasUnreadMessages = dbMessages.some(
+    const unreadMessages = dbMessages.filter(
       (message) => message.sender_id !== currentUserId && !message.read_at,
     );
 
-    if (!hasUnreadMessages) return;
+    if (unreadMessages.length === 0) return;
 
+    // 1. Immediately update React Query cache
+    queryClient.setQueryData(
+      ["conversations", currentUserId],
+      (oldData: ChatConversation[] | undefined) => {
+        if (!oldData) return oldData;
+
+        return oldData.map((conversation) => {
+          if (conversation.id !== selectedId) return conversation;
+
+          return {
+            ...conversation,
+            unread_count: 0,
+            messages: conversation.messages.map((message) =>
+              message.sender_id !== currentUserId && !message.read_at
+                ? {
+                    ...message,
+                    read_at: new Date().toISOString(),
+                    status: "read",
+                  }
+                : message,
+            ),
+            last_message_read:
+              conversation.last_message_sender !== currentUserId
+                ? true
+                : conversation.last_message_read,
+          };
+        });
+      },
+    );
+
+    // 2. Update database in background
     let cancelled = false;
 
     const markMessagesAsRead = async () => {
@@ -86,10 +119,14 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
 
         if (error) {
           console.error("Read receipt error:", error);
-          return;
-        }
 
-        if (cancelled) return;
+          // Refresh server data if update failed
+          if (!cancelled) {
+            await queryClient.invalidateQueries({
+              queryKey: ["conversations", currentUserId],
+            });
+          }
+        }
       } catch (error) {
         console.error("Read receipt error:", error);
       }
@@ -100,7 +137,7 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [selectedId, currentUserId, dbMessages, supabase]);
+  }, [selectedId, currentUserId, dbMessages, supabase, queryClient]);
 
   // SELECTED CONVERSATION DATA
 
@@ -157,6 +194,7 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
 
   // SEND IMAGE / FILE ATTACHMENT
 
+  // Send one non-image attachment.
   async function handleAttachment(file: File) {
     if (!selectedId || !file) return;
 
@@ -167,6 +205,21 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
       });
     } catch (error) {
       console.error("Attachment upload failed:", error);
+    }
+  }
+
+  // Send multiple images as one group.
+  async function handleAttachments(files: File[], caption?: string) {
+    if (!selectedId || files.length === 0) return;
+
+    try {
+      await sendImageGroup({
+        conversationId: selectedId,
+        files,
+        caption,
+      });
+    } catch (error) {
+      console.error("Image group upload failed:", error);
     }
   }
 
@@ -212,12 +265,16 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
           //   onSend={handleSend}
           //   onAttachment={handleAttachment}
           //   onBack={() => setSelectedId("")}
+          //   onLoadOlder={() => fetchNextPage()}
+          //   hasMoreMessages={!!hasNextPage}
+          //   isLoadingOlder={isFetchingNextPage}
           // />
           <ChatWindow
             conversation={conversationWithMessages}
             currentUserId={currentUserId}
             onSend={handleSend}
             onAttachment={handleAttachment}
+            onAttachments={handleAttachments}
             onBack={() => setSelectedId("")}
             onLoadOlder={() => fetchNextPage()}
             hasMoreMessages={!!hasNextPage}

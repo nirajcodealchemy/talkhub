@@ -19,12 +19,14 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function ChatSidebar({
   onSelect,
   onStartChat,
   conversations,
   currentUserId,
+  selectedId,
 }: ChatSideBarProps) {
   const t = useTranslations("screen.chat.ChatSidebar");
 
@@ -87,7 +89,35 @@ export default function ChatSidebar({
     });
   }, [users, search, currentUserId]);
 
-  const usersToDisplay = filteredUsers;
+  // const usersToDisplay = filteredUsers;
+  const usersToDisplay = useMemo(() => {
+    const usersWithConversations = filteredUsers.map((user) => {
+      const conversation = conversations.find(
+        (c) =>
+          !c.is_group &&
+          (c.other_user_id === user.id ||
+            c.name === user.full_name ||
+            c.name === user.username),
+      );
+
+      return {
+        user,
+        conversation,
+      };
+    });
+
+    return usersWithConversations.sort((a, b) => {
+      const timeA = a.conversation?.last_message_timestamp
+        ? new Date(a.conversation.last_message_timestamp).getTime()
+        : 0;
+
+      const timeB = b.conversation?.last_message_timestamp
+        ? new Date(b.conversation.last_message_timestamp).getTime()
+        : 0;
+
+      return timeB - timeA;
+    });
+  }, [filteredUsers, conversations]);
 
   async function handleStartChat(userId: string) {
     if (!onStartChat || userId === currentUserId) return;
@@ -122,53 +152,53 @@ export default function ChatSidebar({
         </h1>
 
         <div className="relative" ref={menuRef}>
-          <button
+          <Button
             type="button"
             aria-label={t("moreOptions")}
             aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="cursor-pointer rounded-full p-1.5 text-foreground transition-colors hover:bg-accent"
+            className="cursor-pointer rounded-full p-1.5 text-foreground transition-colors hover:bg-accent bg-white"
           >
-            <MoreVertical size={20} />
-          </button>
+            <MoreVertical className="size-6" />
+          </Button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 top-10 z-30 w-48 rounded-xl border border-border bg-popover py-1.5 text-popover-foreground shadow-lg">
-              <button
+            <div className="absolute right-0 top-10 z-30 w-48 rounded-xl border border-border bg-popover  text-popover-foreground shadow-lg">
+              <Button
                 type="button"
                 onClick={() => {
                   setIsMenuOpen(false);
                   setIsCreateGroupOpen(true);
                 }}
-                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="flex w-full h-[40px] cursor-pointer justify-start items-center gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
                 <Users className="h-4 w-4" />
                 <span>{t("createGroup")}</span>
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   setIsMenuOpen(false);
                   setIsEditProfileOpen(true);
                 }}
-                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="flex w-full h-[40px] cursor-pointer justify-start items-center gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
                 <UserRoundPen className="h-4 w-4" />
                 <span>{t("editProfile")}</span>
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   setIsMenuOpen(false);
                   setShowLogoutModal(true);
                 }}
-                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-destructive transition-colors hover:bg-logout-red-light"
+                className="flex w-full h-[40px] cursor-pointer justify-start items-center gap-2.5 px-4 py-3 text-left text-sm font-medium text-destructive transition-colors hover:bg-logout-red-light"
               >
                 <LogOut className="h-4 w-4" />
                 <span>{t("logout")}</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -188,13 +218,17 @@ export default function ChatSidebar({
           />
 
           {search && (
-            <button
+            <Button
               type="button"
+              className={"h-0 w-0 cursor-pointer"}
               onClick={() => setSearch("")}
               aria-label={t("clearSearch")}
             >
-              <X size={16} className="cursor-pointer text-muted-foreground" />
-            </button>
+              <X
+                size={16}
+                className="cursor-pointer bg-muted  text-muted-foreground"
+              />
+            </Button>
           )}
         </div>
       </div>
@@ -213,57 +247,94 @@ export default function ChatSidebar({
           </div>
         )}
 
-        {!areUsersLoading &&
+        {/* {!areUsersLoading &&
           !usersFailed &&
-          (usersToDisplay.length > 0 ? (
-            usersToDisplay.map((user) => {
-              const existingConversation = conversations.find(
-                (c) =>
-                  !c.is_group &&
-                  (c.other_user_id === user.id ||
-                    c.name === user.full_name ||
-                    c.name === user.username),
-              );
+          // (usersToDisplay.length > 0 ? (
+          //   usersToDisplay.map((user) => {
+          //     const existingConversation = conversations.find(
+          //       (c) =>
+          //         !c.is_group &&
+          //         (c.other_user_id === user.id ||
+          //           c.name === user.full_name ||
+          //           c.name === user.username),
+          //     );
 
-              return (
-                <UserListItem
-                  key={user.id}
-                  user={user}
-                  isCurrentUser={user.id === currentUserId}
-                  currentUserId={currentUserId}
-                  isOpening={openingUserId === user.id}
-                  lastMessageType={existingConversation?.last_message_type}
-                  unreadCount={existingConversation?.unread_count ?? 0}
-                  lastMessage={existingConversation?.last_message ?? null}
-                  lastMessageAt={
-                    existingConversation?.last_message_timestamp ?? null
-                  }
-                  lastMessageSenderId={
-                    existingConversation?.last_message_sender ?? null
-                  }
-                  lastMessageDeliveredAt={
-                    existingConversation?.last_message_delivered
-                      ? "delivered"
-                      : null
-                  }
-                  lastMessageReadAt={
-                    existingConversation?.last_message_read ? "read" : null
-                  }
-                  onClick={() => {
-                    if (existingConversation) {
-                      onSelect(existingConversation.id);
-                    } else {
-                      handleStartChat(user.id);
-                    }
-                  }}
-                />
-              );
-            })
-          ) : (
-            <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-              {t("noUsersFound")}
-            </div>
-          ))}
+          //     return (
+          //       <UserListItem
+          //         key={user.id}
+          //         user={user}
+          //         isCurrentUser={user.id === currentUserId}
+          //         currentUserId={currentUserId}
+          //         isOpening={openingUserId === user.id}
+          //         lastMessageType={existingConversation?.last_message_type}
+          //         unreadCount={existingConversation?.unread_count ?? 0}
+          //         lastMessage={existingConversation?.last_message ?? null}
+          //         lastMessageAt={
+          //           existingConversation?.last_message_timestamp ?? null
+          //         }
+          //         lastMessageSenderId={
+          //           existingConversation?.last_message_sender ?? null
+          //         }
+          //         lastMessageDeliveredAt={
+          //           existingConversation?.last_message_delivered
+          //             ? "delivered"
+          //             : null
+          //         }
+          //         lastMessageReadAt={
+          //           existingConversation?.last_message_read ? "read" : null
+          //         }
+          //         onClick={() => {
+          //           if (existingConversation) {
+          //             onSelect(existingConversation.id);
+          //           } else {
+          //             handleStartChat(user.id);
+          //           }
+          //         }}
+          //       />
+          //     );
+          //   })
+          // ) : (
+          //   <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+          //     {t("noUsersFound")}
+          //   </div>
+          // ))} */}
+        {usersToDisplay.length > 0 ? (
+          usersToDisplay.map(({ user, conversation }) => (
+            <UserListItem
+              key={user.id}
+              user={user}
+              isCurrentUser={user.id === currentUserId}
+              currentUserId={currentUserId}
+              isOpening={openingUserId === user.id}
+              lastMessageType={conversation?.last_message_type}
+              unreadCount={
+                conversation?.id === selectedId
+                  ? 0
+                  : (conversation?.unread_count ?? 0)
+              }
+              lastMessage={conversation?.last_message ?? null}
+              lastMessageAt={conversation?.last_message_timestamp ?? null}
+              lastMessageSenderId={conversation?.last_message_sender ?? null}
+              lastMessageDeliveredAt={
+                conversation?.last_message_delivered ? "delivered" : null
+              }
+              lastMessageReadAt={
+                conversation?.last_message_read ? "read" : null
+              }
+              onClick={() => {
+                if (conversation) {
+                  onSelect(conversation.id);
+                } else {
+                  handleStartChat(user.id);
+                }
+              }}
+            />
+          ))
+        ) : (
+          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+            {t("noUsersFound")}
+          </div>
+        )}
       </div>
 
       {/* Create Group Modal */}

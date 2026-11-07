@@ -9,15 +9,30 @@ import { MessageInputProps } from "@/src/types/chat";
 import SendIcon from "@/src/components/icons/SendIcon";
 import { useRef, useState, DragEvent, useEffect } from "react";
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
-import { X, FileText, Image as ImageIcon, File, Paperclip } from "lucide-react";
+import {
+  X,
+  FileText,
+  Image as ImageIcon,
+  File,
+  Paperclip,
+  Loader2,
+} from "lucide-react";
 
 export default function MessageInput({
   conversationId,
   onSend,
   onAttachment,
+  onAttachments,
+  editingMessage,
+  onCancelEdit,
+  onEditSubmit,
+  onTyping,
+  onStopTyping,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
+  // const [editMessage, setEditMessage] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -45,6 +60,27 @@ export default function MessageInput({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (!editingMessage) return;
+
+    setMessage(editingMessage.content ?? "");
+    setSelectedFiles([]);
+    setAttachmentOpen(false);
+    setEmojiOpen(false);
+
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+
+      if (!textarea) return;
+
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+    });
+  }, [editingMessage]);
 
   // Reset input whenever the active conversation changes
   useEffect(() => {
@@ -119,21 +155,68 @@ export default function MessageInput({
     setSelectedFiles((previous) => previous.filter((_, i) => i !== index));
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const value = message.trim();
 
-    if (!value && selectedFiles.length === 0) return;
+    if (editingMessage) {
+      if (isSending || !value) return;
 
-    selectedFiles.forEach((file) => {
-      onAttachment?.(file);
-    });
+      setIsSending(true);
 
-    if (value) {
-      onSend(value);
+      try {
+        await onEditSubmit(value);
+        setMessage("");
+        setSelectedFiles([]);
+
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "24px";
+        }
+      } catch (error) {
+        console.error("Message editing failed:", error);
+      } finally {
+        setIsSending(false);
+      }
+
+      return;
     }
+    onStopTyping?.();
 
-    setMessage("");
-    setSelectedFiles([]);
+    if (isSending || (!value && selectedFiles.length === 0)) return;
+
+    setIsSending(true);
+
+    try {
+      const imageFiles = selectedFiles.filter((file) =>
+        file.type.startsWith("image/"),
+      );
+
+      const otherFiles = selectedFiles.filter(
+        (file) => !file.type.startsWith("image/"),
+      );
+
+      // Send all images as one group.
+      if (imageFiles.length > 0) {
+        await onAttachments?.(imageFiles, value);
+      } else if (value) {
+        await onSend(value);
+      }
+
+      // Send other files individually.
+      for (const file of otherFiles) {
+        await onAttachment?.(file);
+      }
+
+      setMessage("");
+      setSelectedFiles([]);
+
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
+    } catch (error) {
+      console.error("Message sending failed:", error);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
@@ -190,6 +273,34 @@ export default function MessageInput({
       )}
 
       <div className="flex flex-col gap-2">
+        {/* Editing message indicator */}
+        {editingMessage && (
+          <div className="flex items-center justify-between rounded-lg border-l-4 border-chart-4 bg-chart-4/5 px-3 py-2">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-chart-4">
+                Editing message
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {editingMessage.content}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMessage("");
+                setSelectedFiles([]);
+                onCancelEdit();
+                textareaRef.current?.focus();
+              }}
+              className="ml-3 shrink-0 cursor-pointer rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              aria-label="Cancel editing"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        )}
+
         {selectedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 pb-1">
             {selectedFiles.map((file, index) => (
@@ -224,27 +335,32 @@ export default function MessageInput({
           </div>
         )}
 
-        {/* <input
-          type="text"
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              handleSend();
-            }
-          }}
-          placeholder="Type your message..."
-          className="w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
-        /> */}
-
         <textarea
           ref={textareaRef}
           value={message}
-          onChange={(event) => {
-            setMessage(event.target.value);
+          // onChange={(event) => {
+          //   setMessage(event.target.value);
 
-            // Auto resize textarea
+          //   // Auto resize textarea
+          //   event.target.style.height = "auto";
+          //   event.target.style.height = `${Math.min(
+          //     event.target.scrollHeight,
+          //     120,
+          //   )}px`;
+          // }}
+          onChange={(event) => {
+            const value = event.target.value;
+
+            setMessage(value);
+
+            if (!editingMessage) {
+              if (value.trim()) {
+                onTyping?.();
+              } else {
+                onStopTyping?.();
+              }
+            }
+
             event.target.style.height = "auto";
             event.target.style.height = `${Math.min(
               event.target.scrollHeight,
@@ -390,10 +506,16 @@ export default function MessageInput({
                 : "bg-grey-100 text-grey-300"
             } disabled:cursor-not-allowed`}
           >
-            {message.length === 0 && selectedFiles.length === 0 ? (
-              <SendIcon color={null} />
+            {isSending ? (
+              <Loader2 size={19} className="animate-spin" />
             ) : (
-              <SendIcon color="var(--chart-4)" />
+              <>
+                {message.length === 0 && selectedFiles.length === 0 ? (
+                  <SendIcon color={null} />
+                ) : (
+                  <SendIcon color="var(--chart-4)" />
+                )}
+              </>
             )}
           </button>
         </div>

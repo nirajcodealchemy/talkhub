@@ -168,6 +168,7 @@ export function useConversations(userId: string) {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
+
   const conversations = useMemo(() => {
     return (query.data ?? []).map((conversation) => ({
       ...conversation,

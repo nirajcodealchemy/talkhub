@@ -1,6 +1,8 @@
 "use client";
 
 import { Phone, UserRound, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { ConversationModalProps } from "@/src/types/chat";
 
 export default function ConversationInfoModal({
@@ -8,23 +10,57 @@ export default function ConversationInfoModal({
   userId,
   onClose,
 }: ConversationModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
+
   const name = userId?.name || "User";
 
   const avatar =
     userId?.other_user_avatar ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=8b34d7&color=fff`;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
       }}
     >
-      <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-background shadow-xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="contact-info-title"
+        className="relative z-[100000] w-full max-w-sm overflow-hidden rounded-2xl bg-background shadow-xl"
+      >
+        {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2
+            id="contact-info-title"
+            className="text-lg font-semibold text-foreground"
+          >
             Contact Information
           </h2>
 
@@ -32,12 +68,13 @@ export default function ConversationInfoModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="cursor-pointer rounded-full p-2 text-muted-foreground hover:bg-muted"
+            className="cursor-pointer rounded-full p-2 text-muted-foreground transition hover:bg-muted"
           >
             <X size={20} />
           </button>
         </div>
 
+        {/* Profile information */}
         <div className="px-5 py-7">
           <div className="flex flex-col items-center">
             <img
@@ -52,31 +89,33 @@ export default function ConversationInfoModal({
           </div>
 
           <div className="mt-7 space-y-4">
+            {/* Full name */}
             <div className="flex items-center gap-3 rounded-xl bg-muted p-4">
-              <UserRound size={20} className="text-chart-4" />
+              <UserRound size={20} className="shrink-0 text-chart-4" />
 
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Full Name</p>
                 <p className="truncate text-sm font-medium text-foreground">
-                  {userId.name || "Not provided"}
+                  {userId?.name || "Not provided"}
                 </p>
               </div>
             </div>
 
+            {/* Phone number */}
             <div className="flex items-center gap-3 rounded-xl bg-muted p-4">
-              <Phone size={20} className="text-chart-4" />
+              <Phone size={20} className="shrink-0 text-chart-4" />
 
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Phone Number</p>
                 <p className="text-sm font-medium text-foreground">
-                  {userId.other_user_phone || "Not provided"}
+                  {userId?.other_user_phone || "Not provided"}
                 </p>
               </div>
             </div>
           </div>
         </div>
-        {/* ) : null} */}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

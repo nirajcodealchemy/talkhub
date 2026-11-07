@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditProfileProps } from "@/src/types/profile";
 import { createClient } from "@/src/lib/supabase/client";
+import { Button } from "@/components/ui/button";
 
 export default function EditProfileModal({
   userId,
@@ -177,15 +178,15 @@ export default function EditProfileModal({
             {t("title")}
           </h2>
 
-          <button
+          <Button
             type="button"
             onClick={onClose}
             disabled={loading}
             aria-label={t("closeModal")}
             className="cursor-pointer rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent"
           >
-            <X size={20} />
-          </button>
+            <X className="size-5" />
+          </Button>
         </div>
 
         {fetching ? (
@@ -209,22 +210,22 @@ export default function EditProfileModal({
                   className="h-24 w-24 rounded-full border-4 border-gray-100 object-cover"
                 />
 
-                <button
+                <Button
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   className="absolute bottom-0 right-0 cursor-pointer rounded-full bg-chart-4 p-2 text-white shadow-md transition-colors hover:bg-chart-5"
                 >
                   <Camera size={16} />
-                </button>
+                </Button>
               </div>
 
-              <button
+              <Button
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 className="mt-3 cursor-pointer text-sm font-medium text-chart-4 transition-colors hover:text-chart-5"
               >
                 {t("changePhoto")}
-              </button>
+              </Button>
 
               <input
                 ref={fileRef}
@@ -270,27 +271,27 @@ export default function EditProfileModal({
 
             {/* Footer Buttons */}
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <Button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="cursor-pointer rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                className="cursor-pointer h-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
               >
                 {t("cancel")}
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
                 onClick={handleSave}
                 disabled={
                   loading || fetching || !isNameValid || name === oldName
                 }
-                className="flex cursor-pointer items-center gap-2 rounded-lg bg-chart-4 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-chart-5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+                className="flex  h-full cursor-pointer items-center gap-2 rounded-lg bg-chart-4 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-chart-5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
               >
                 {loading && <Loader2 size={16} className="animate-spin" />}
 
                 {loading ? t("saving") : t("saveChanges")}
-              </button>
+              </Button>
             </div>
           </>
         )}

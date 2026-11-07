@@ -23,6 +23,7 @@ export type ChatMessage = {
   attachment_name?: string | null;
   attachment_type?: string | null;
   attachment_size?: number | null;
+  media_group_id?: string | null;
   status?: "sent" | "delivered" | "read";
 };
 
@@ -93,6 +94,9 @@ export type ChatWindowProps = {
   conversation: ChatConversation;
   onSend: (message: string) => void;
   onAttachment?: (file: File) => void;
+
+  // Multiple images as one group
+  onAttachments?: (files: File[], caption?: string) => void;
 };
 
 export type GroupModalProps = {
@@ -103,13 +107,22 @@ export type GroupModalProps = {
 
 export type MessageInputProps = {
   conversationId: string | null;
-  onSend: (message: string) => void;
-  onAttachment?: (file: File) => void;
+  onSend: (message: string) => void | Promise<void>;
+  onAttachment?: (file: File) => void | Promise<void>;
+  onAttachments?: (files: File[], caption?: string) => void;
+  editingMessage: ChatMessage | null;
+  onCancelEdit: () => void;
+  onEditSubmit: (content: string) => Promise<void>;
+  isEditing: boolean;
+  onTyping?: () => void;
+  onStopTyping?: () => void;
 };
 
 export type MessageItemProps = {
   isMine: boolean;
   message: ChatMessage;
+  groupMessages?: ChatMessage[];
+  onEditRequest: (message: ChatMessage) => void;
 };
 
 export type MessageListProps = {
@@ -118,6 +131,8 @@ export type MessageListProps = {
   isLoadingOlder: boolean;
   onLoadOlder: () => void;
   hasMoreMessages: boolean;
+  onEditMessage: (message: ChatMessage) => void;
+  isOtherUserTyping?: boolean;
 };
 
 export type UserListItemProps = {
