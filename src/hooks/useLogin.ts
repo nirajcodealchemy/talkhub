@@ -1,8 +1,8 @@
 "use client";
 
+import { LoginFormData } from "@/src/types/form";
 import { useMutation } from "@tanstack/react-query";
 import { createClient } from "@/src/lib/supabase/client";
-import { LoginFormData } from "@/src/types/form";
 
 export function useLogin() {
   return useMutation({

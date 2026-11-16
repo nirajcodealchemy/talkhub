@@ -1,11 +1,5 @@
-import { ReactNode } from "react";
 import AuthBrand from "./AuthBrand";
-
-type AuthLayoutProps = {
-  title: string;
-  children: ReactNode;
-  footer: ReactNode;
-};
+import { AuthLayoutProps } from "../types/form";
 
 const AuthLayout = ({ title, children, footer }: AuthLayoutProps) => {
   return (

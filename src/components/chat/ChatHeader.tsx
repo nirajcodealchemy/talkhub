@@ -1,39 +1,45 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, MoreVertical, X } from "lucide-react";
-import type { ChatConversation } from "@/src/types/chat";
+import InfoIcon from "../icons/InfoIcon";
 import VideoIcon from "../icons/VideoIcon";
 import PhoneIcon from "../icons/PhoneIcon";
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import SparklesIcon from "../icons/SparklesIcon";
-import InfoIcon from "../icons/InfoIcon";
+import type { HeaderProps } from "@/src/types/chat";
+import { ArrowLeft, MoreVertical, X } from "lucide-react";
 import ConversationInfoModal from "../modal/ConversationInfoModal";
 
-type Props = {
-  conversation: ChatConversation;
-  onBack?: () => void;
-};
-
-export default function ChatHeader({ conversation, onBack }: Props) {
+export default function ChatHeader({ conversation, onBack }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
+  const t = useTranslations("screen.chat.ChatHeader");
   return (
     <header className="relative z-20 flex h-[64px] shrink-0 items-center justify-between border-b border-border bg-background px-3 sm:px-5">
       {/* User details */}
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         {/* Mobile back button */}
-        <button
+        <Button
           type="button"
           onClick={onBack}
-          aria-label="Back to chats"
-          className="shrink-0 rounded-full p-1.5 text-foreground transition-colors hover:bg-accent sm:hidden"
+          aria-label={t("backAriaLabel")}
+          variant="ghost"
+          size="icon-xs"
+          className="h-8 w-8 shrink-0 cursor-pointer rounded-full bg-white text-foreground hover:bg-accent md:hidden"
         >
-          <ArrowLeft size={22} />
-        </button>
+          <ArrowLeft className="size-6" />
+        </Button>
 
         {/* User avatar */}
-        <div className="relative h-10 w-10 shrink-0">
+        <div
+          className="relative h-10 w-10 shrink-0 cursor-pointer"
+          onClick={() => {
+            setIsMenuOpen(false);
+            setIsInfoOpen(true);
+          }}
+        >
           <img
             src={conversation.avatar}
             alt={conversation.name}
@@ -48,102 +54,105 @@ export default function ChatHeader({ conversation, onBack }: Props) {
           </h2>
 
           <p className="text-[12px] text-muted-foreground">
-            {conversation.online ? "Online" : "Offline"}
+            {conversation.online ? t("online") : t("offline")}
           </p>
         </div>
       </div>
 
       {/* Desktop actions */}
       <div className="hidden shrink-0 items-center gap-4 text-foreground sm:flex">
-        <button
+        <Button
           type="button"
-          aria-label="Video call"
-          disabled
-          className="cursor-not-allowed rounded-full p-1 text-muted-foreground"
+          variant="ghost"
+          size="icon-lg"
+          aria-label={t("videoCallAriaLabel")}
+          className=" bg-white rounded-full p-1 text-muted-foreground cursor-not-allowed hover:bg-white"
         >
-          <VideoIcon />
-        </button>
+          <VideoIcon className="size-6 cursor-not-allowed " />
+        </Button>
 
-        <button
+        <Button
           type="button"
-          aria-label="Voice call"
-          disabled
-          className="cursor-not-allowed rounded-full p-1 text-muted-foreground"
+          aria-label={t("voiceCallAriaLabel")}
+          className=" bg-white rounded-full p-1 text-muted-foreground cursor-not-allowed hover:bg-white"
         >
-          <PhoneIcon />
-        </button>
+          <PhoneIcon className="size-6 cursor-not-allowed " />
+        </Button>
 
-        <button
+        <Button
           type="button"
-          aria-label="Chat tools"
-          disabled
-          className="cursor-not-allowed rounded-full p-1 text-muted-foreground"
+          aria-label={t("chatToolsAriaLabel")}
+          className=" bg-white rounded-full p-1 text-muted-foreground cursor-not-allowed hover:bg-white"
         >
-          <SparklesIcon />
-        </button>
+          <SparklesIcon className="size-6 cursor-not-allowed " />
+        </Button>
 
-        <button
+        <Button
           type="button"
           onClick={() => setIsInfoOpen(true)}
-          aria-label="Conversation information"
-          className="rounded-full cursor-pointer p-1 text-foreground transition-colors hover:bg-accent"
+          aria-label={t("conversationInfoAriaLabel")}
+          className=" bg-white rounded-full p-1 text-muted-foreground cursor-pointer hover:bg-white"
         >
-          <InfoIcon />
-        </button>
+          <InfoIcon className="size-6 cursor-not-allowed " />
+        </Button>
       </div>
 
       {/* Mobile menu */}
       <div className="relative sm:hidden">
-        <button
+        <Button
           type="button"
-          aria-label="Chat options"
+          aria-label={t("chatOptionsAriaLabel")}
           aria-expanded={isMenuOpen}
           onClick={() => setIsMenuOpen((previous) => !previous)}
-          className="rounded-full p-2 text-foreground transition-colors hover:bg-accent"
+          className="rounded-full p-2 text-foreground transition-colors bg-white hover:bg-accent cursor-pointer"
         >
-          {isMenuOpen ? <X size={21} /> : <MoreVertical size={21} />}
-        </button>
+          {isMenuOpen ? (
+            <X size={21} className="size-5 " />
+          ) : (
+            <MoreVertical size={21} className="size-5 " />
+          )}
+        </Button>
 
         {isMenuOpen && (
           <div className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-border bg-popover py-1.5 text-popover-foreground shadow-lg">
-            <button
+            <Button
               type="button"
               disabled
-              className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-3 text-sm text-muted-foreground"
+              className="flex w-full cursor-not-allowed bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
             >
-              <VideoIcon />
-              Video Call
-            </button>
+              <VideoIcon className="size-6 cursor-not-allowed " />
+              {t("videoCall")}
+            </Button>
 
-            <button
+            <Button
               type="button"
               disabled
-              className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-3 text-sm text-muted-foreground"
+              className="flex w-full cursor-not-allowed bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
             >
-              <PhoneIcon />
-              Voice Call
-            </button>
+              <PhoneIcon className="size-6 cursor-not-allowed " />
+              {t("voiceCall")}
+            </Button>
 
-            <button
+            <Button
               type="button"
               disabled
-              className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-3 text-sm text-muted-foreground"
+              className="flex w-full cursor-not-allowed bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
             >
-              <SparklesIcon />
-              Chat Tools
-            </button>
+              <SparklesIcon className="size-6 cursor-not-allowed " />
+              {t("chatTools")}
+            </Button>
 
-            <button
+            <Button
               type="button"
               onClick={() => {
                 setIsMenuOpen(false);
                 setIsInfoOpen(true);
               }}
-              className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-sm text-foreground transition-colors hover:bg-accent"
+              className="flex w-full cursor-pointer bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground hover:bg-white"
             >
-              <InfoIcon />
-              Conversation Info
-            </button>
+              <InfoIcon className="size-6 " />
+              {t("conversationInfo")}
+            </Button>
           </div>
         )}
       </div>
@@ -153,7 +162,7 @@ export default function ChatHeader({ conversation, onBack }: Props) {
         <ConversationInfoModal
           isOpen={isInfoOpen}
           onClose={() => setIsInfoOpen(false)}
-          userId={conversation.other_user_id}
+          userId={conversation}
         />
       )}
     </header>

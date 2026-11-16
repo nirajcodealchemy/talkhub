@@ -1,5 +1,5 @@
-import { MessageCircleText } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { MessageCircleText } from "lucide-react";
 
 const AuthBrand = () => {
   const t = useTranslations("auth.AuthBrand");
@@ -12,7 +12,7 @@ const AuthBrand = () => {
         />
 
         <h1 className="text-2xl font-bold tracking-tight text-chart-4 sm:text-3xl">
-          Talkhub
+          {t("talkhub")}
         </h1>
       </div>
 
