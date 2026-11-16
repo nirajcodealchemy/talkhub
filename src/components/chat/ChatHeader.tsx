@@ -5,11 +5,11 @@ import InfoIcon from "../icons/InfoIcon";
 import VideoIcon from "../icons/VideoIcon";
 import PhoneIcon from "../icons/PhoneIcon";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import SparklesIcon from "../icons/SparklesIcon";
 import type { HeaderProps } from "@/src/types/chat";
 import { ArrowLeft, MoreVertical, X } from "lucide-react";
 import ConversationInfoModal from "../modal/ConversationInfoModal";
-import { Button } from "@/components/ui/button";
 
 export default function ChatHeader({ conversation, onBack }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

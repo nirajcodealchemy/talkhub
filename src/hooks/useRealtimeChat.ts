@@ -248,6 +248,110 @@ export function useRealtimeMessages(conversationId: string | null) {
 //   }, [userId, supabase, queryClient]);
 // }
 
+// export function useRealtimeConversations(userId: string) {
+//   const supabase = useMemo(() => createClient(), []);
+//   const queryClient = useQueryClient();
+
+//   useEffect(() => {
+//     if (!userId) return;
+
+//     const conversationKey = ["conversations", userId];
+
+//     const refreshConversations = () => {
+//       void queryClient.invalidateQueries({
+//         queryKey: conversationKey,
+//         exact: true,
+//       });
+//     };
+
+//     const channel = supabase
+//       .channel(`global-messages:${userId}`)
+//       .on(
+//         "postgres_changes",
+//         {
+//           event: "INSERT",
+//           schema: "public",
+//           table: "messages",
+//         },
+//         async (payload) => {
+//           const message = payload.new as {
+//             id: string;
+//             conversation_id: string;
+//             sender_id: string;
+//           };
+
+//           if (message.sender_id === userId) {
+//             refreshConversations();
+//             return;
+//           }
+
+//           const { error } = await supabase.rpc(
+//             "mark_conversation_messages_delivered",
+//             {
+//               p_conversation_id: message.conversation_id,
+//             },
+//           );
+
+//           if (error) {
+//             console.error("Delivery receipt failed:", error);
+//           }
+
+//           // Refresh once after processing the incoming message.
+//           refreshConversations();
+//         },
+//       )
+//       .on(
+//         "postgres_changes",
+//         {
+//           event: "UPDATE",
+//           schema: "public",
+//           table: "messages",
+//         },
+//         (payload) => {
+//           const updated = payload.new as {
+//             id: string;
+//             conversation_id: string;
+//             sender_id: string;
+//             created_at: string;
+//             read_at: string | null;
+//             delivered_at: string | null;
+//             status?: string;
+//           };
+
+//           // Update the sidebar's last-message indicators without refetching.
+//           queryClient.setQueryData(
+//             conversationKey,
+//             (old: any[] | undefined) => {
+//               if (!old) return old;
+
+//               return old.map((conversation) => {
+//                 if (
+//                   conversation.id !== updated.conversation_id ||
+//                   conversation.last_message_timestamp !== updated.created_at
+//                 ) {
+//                   return conversation;
+//                 }
+
+//                 return {
+//                   ...conversation,
+//                   last_message_delivered: !!updated.delivered_at,
+//                   last_message_read: !!updated.read_at,
+//                 };
+//               });
+//             },
+//           );
+//         },
+//       )
+//       .subscribe((status, error) => {
+//         console.log("GLOBAL REALTIME STATUS:", status, error);
+//       });
+
+//     return () => {
+//       void supabase.removeChannel(channel);
+//     };
+//   }, [userId, supabase, queryClient]);
+// }
+
 export function useRealtimeConversations(userId: string) {
   const supabase = useMemo(() => createClient(), []);
   const queryClient = useQueryClient();
@@ -266,6 +370,8 @@ export function useRealtimeConversations(userId: string) {
 
     const channel = supabase
       .channel(`global-messages:${userId}`)
+
+      // 1. Listen for new messages.
       .on(
         "postgres_changes",
         {
@@ -282,6 +388,11 @@ export function useRealtimeConversations(userId: string) {
 
           if (message.sender_id === userId) {
             refreshConversations();
+
+            void queryClient.invalidateQueries({
+              queryKey: ["messages", message.conversation_id],
+            });
+
             return;
           }
 
@@ -296,10 +407,11 @@ export function useRealtimeConversations(userId: string) {
             console.error("Delivery receipt failed:", error);
           }
 
-          // Refresh once after processing the incoming message.
           refreshConversations();
         },
       )
+
+      // 2. Listen for message updates (read/delivered status).
       .on(
         "postgres_changes",
         {
@@ -318,7 +430,6 @@ export function useRealtimeConversations(userId: string) {
             status?: string;
           };
 
-          // Update the sidebar's last-message indicators without refetching.
           queryClient.setQueryData(
             conversationKey,
             (old: any[] | undefined) => {
@@ -342,6 +453,45 @@ export function useRealtimeConversations(userId: string) {
           );
         },
       )
+
+      // 3. Listen for messages deleted for everyone.
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const deletedMessage = payload.old as {
+            id?: string;
+            conversation_id?: string;
+          };
+
+          if (!deletedMessage.id) return;
+
+          // Immediately remove the deleted message from message caches.
+          queryClient.setQueriesData(
+            {
+              queryKey: ["messages"],
+            },
+            (old: any) => {
+              if (!old?.pages) return old;
+
+              return {
+                ...old,
+                pages: old.pages.map((page: any[]) =>
+                  page.filter((message) => message.id !== deletedMessage.id),
+                ),
+              };
+            },
+          );
+
+          // Refresh conversation previews.
+          refreshConversations();
+        },
+      )
+
       .subscribe((status, error) => {
         console.log("GLOBAL REALTIME STATUS:", status, error);
       });

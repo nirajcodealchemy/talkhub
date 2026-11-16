@@ -3,10 +3,10 @@ import { UserListItemProps } from "@/src/types/chat";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Check,
-  CheckCheck,
   Loader2,
-  Image as ImageIcon,
   FileText,
+  CheckCheck,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function UserListItem({
@@ -66,33 +66,6 @@ export default function UserListItem({
 
     return <Check size={15} className="shrink-0 text-grey-400" />;
   };
-
-  // const renderLastMessage = () => {
-  //   if (!lastMessage) return user.username ? `@${user.username}` : "";
-
-  //   // Image message
-  //   if (lastMessageType === "image" || lastMessage.startsWith("[Image]")) {
-  //     return (
-  //       <span className="flex items-center gap-1">
-  //         <ImageIcon size={13} className="shrink-0" />
-  //         <span>{t("image")}</span>
-  //       </span>
-  //     );
-  //   }
-
-  //   // File message
-  //   if (lastMessageType === "file") {
-  //     return (
-  //       <span className="flex items-center gap-1">
-  //         <FileText size={13} className="shrink-0" />
-  //         <span>{t("document")}</span>
-  //       </span>
-  //     );
-  //   }
-
-  //   // Normal text message
-  //   return lastMessage;
-  // };
 
   const renderLastMessage = () => {
     // Image message (check this before lastMessage)

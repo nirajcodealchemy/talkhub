@@ -47,36 +47,6 @@ export default function CreateGroupModal({ isOpen, onClose }: GroupModalProps) {
     setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
-  // const handleCreate = async () => {
-  //   setError("");
-
-  //   try {
-  //     const validation = groupCreateSchema.parse({
-  //       title,
-  //       memberIds: selectedUsers.map((u) => u.id),
-  //     });
-
-  //     await createGroup.mutateAsync({
-  //       title: validation.title,
-  //       memberIds: validation.memberIds,
-  //     });
-
-  //     setTitle("");
-  //     setSelectedUsers([]);
-  //     setSearchQuery("");
-  //     setSearchResults([]);
-  //     onClose();
-  //   } catch (err) {
-  //     if (err instanceof z.ZodError) {
-  //       setError(err.errors[0].message);
-  //     } else if (err instanceof Error) {
-  //       setError(err.message);
-  //     } else {
-  //       setError("Failed to create group");
-  //     }
-  //   }
-  // };
-
   if (!isOpen) return null;
   console.log(searchResults);
   return createPortal(

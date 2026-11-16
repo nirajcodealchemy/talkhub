@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MessageItemProps } from "@/src/types/chat";
+import { useLocale, useTranslations } from "next-intl";
+import { useDeleteMessage } from "@/src/hooks/useDelete";
 import {
   X,
   Copy,
@@ -15,9 +18,6 @@ import {
   ChevronRight,
   MoreVertical,
 } from "lucide-react";
-import { MessageItemProps } from "@/src/types/chat";
-import { useLocale, useTranslations } from "next-intl";
-import { useDeleteMessage } from "@/src/hooks/useDelete";
 
 const MESSAGE_LINE_LIMIT = 10;
 

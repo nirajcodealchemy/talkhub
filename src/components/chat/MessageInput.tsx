@@ -30,7 +30,6 @@ export default function MessageInput({
   onStopTyping,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
-  // const [editMessage, setEditMessage] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -338,16 +337,6 @@ export default function MessageInput({
         <textarea
           ref={textareaRef}
           value={message}
-          // onChange={(event) => {
-          //   setMessage(event.target.value);
-
-          //   // Auto resize textarea
-          //   event.target.style.height = "auto";
-          //   event.target.style.height = `${Math.min(
-          //     event.target.scrollHeight,
-          //     120,
-          //   )}px`;
-          // }}
           onChange={(event) => {
             const value = event.target.value;
 

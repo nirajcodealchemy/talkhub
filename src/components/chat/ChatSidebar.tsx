@@ -247,57 +247,6 @@ export default function ChatSidebar({
           </div>
         )}
 
-        {/* {!areUsersLoading &&
-          !usersFailed &&
-          // (usersToDisplay.length > 0 ? (
-          //   usersToDisplay.map((user) => {
-          //     const existingConversation = conversations.find(
-          //       (c) =>
-          //         !c.is_group &&
-          //         (c.other_user_id === user.id ||
-          //           c.name === user.full_name ||
-          //           c.name === user.username),
-          //     );
-
-          //     return (
-          //       <UserListItem
-          //         key={user.id}
-          //         user={user}
-          //         isCurrentUser={user.id === currentUserId}
-          //         currentUserId={currentUserId}
-          //         isOpening={openingUserId === user.id}
-          //         lastMessageType={existingConversation?.last_message_type}
-          //         unreadCount={existingConversation?.unread_count ?? 0}
-          //         lastMessage={existingConversation?.last_message ?? null}
-          //         lastMessageAt={
-          //           existingConversation?.last_message_timestamp ?? null
-          //         }
-          //         lastMessageSenderId={
-          //           existingConversation?.last_message_sender ?? null
-          //         }
-          //         lastMessageDeliveredAt={
-          //           existingConversation?.last_message_delivered
-          //             ? "delivered"
-          //             : null
-          //         }
-          //         lastMessageReadAt={
-          //           existingConversation?.last_message_read ? "read" : null
-          //         }
-          //         onClick={() => {
-          //           if (existingConversation) {
-          //             onSelect(existingConversation.id);
-          //           } else {
-          //             handleStartChat(user.id);
-          //           }
-          //         }}
-          //       />
-          //     );
-          //   })
-          // ) : (
-          //   <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-          //     {t("noUsersFound")}
-          //   </div>
-          // ))} */}
         {usersToDisplay.length > 0 ? (
           usersToDisplay.map(({ user, conversation }) => (
             <UserListItem
