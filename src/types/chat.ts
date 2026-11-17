@@ -15,8 +15,10 @@ export type ChatMessage = {
   reply_count?: number;
   conversation_id: string;
   read_at?: string | null;
+  deleted_for_me?: boolean;
   message_type: MessageType;
   edited_at?: string | null;
+  deleted_at?: string | null;
   delivered_at?: string | null;
   attachment_url?: string | null;
   attachment_path?: string | null;
@@ -24,6 +26,7 @@ export type ChatMessage = {
   attachment_type?: string | null;
   attachment_size?: number | null;
   media_group_id?: string | null;
+  is_deleted_for_everyone?: boolean;
   status?: "sent" | "delivered" | "read";
 };
 

@@ -17,6 +17,11 @@ import {
   Paperclip,
   Loader2,
 } from "lucide-react";
+import {
+  ALLOWED_EXTENSIONS,
+  ALLOWED_FILE_TYPES,
+  MAX_FILE_SIZE,
+} from "@/src/constant/attechmentFile";
 
 export default function MessageInput({
   conversationId,
@@ -129,6 +134,24 @@ export default function MessageInput({
 
     return <File size={20} />;
   };
+
+  function validateAttachment(file: File): string | null {
+    if (file.size > MAX_FILE_SIZE) {
+      return `${file.name} exceeds the maximum file size of 100 MB.`;
+    }
+
+    const extension = file.name.split(".").pop()?.toLowerCase();
+
+    const isAllowedType = ALLOWED_FILE_TYPES.includes(file.type);
+    const isAllowedExtension =
+      !!extension && ALLOWED_EXTENSIONS.includes(extension);
+
+    if (!isAllowedType || !isAllowedExtension) {
+      return `${file.name} is not a supported file type.`;
+    }
+
+    return null;
+  }
 
   const addFiles = (files: FileList | File[]) => {
     const newFiles = Array.from(files);
@@ -417,7 +440,7 @@ export default function MessageInput({
               )}
             </div>
 
-            <input
+            {/* <input
               ref={fileRef}
               type="file"
               multiple
@@ -428,6 +451,32 @@ export default function MessageInput({
                 }
 
                 event.target.value = "";
+              }}
+            /> */}
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.gif,.webp,.zip,.pdf,.xls,.xlsx,.csv,.doc,.docx,.ppt,.pptx"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+
+                for (const file of files) {
+                  const error = validateAttachment(file);
+
+                  if (error) {
+                    // Replace with your existing toast notification if available.
+                    alert(error);
+                    e.target.value = "";
+                    return;
+                  }
+                }
+
+                // Continue with your existing attachment selection logic.
+                addFiles(files);
+
+                e.target.value = "";
               }}
             />
 
