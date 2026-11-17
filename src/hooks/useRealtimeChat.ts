@@ -181,177 +181,6 @@ export function useRealtimeMessages(conversationId: string | null) {
   }, [conversationId, queryClient, supabase]);
 }
 
-// export function useRealtimeConversations(userId: string) {
-//   const supabase = useMemo(() => createClient(), []);
-//   const queryClient = useQueryClient();
-
-//   useEffect(() => {
-//     if (!userId) return;
-
-//     const refreshConversations = () =>
-//       queryClient.invalidateQueries({
-//         queryKey: ["conversations", userId],
-//         exact: true,
-//       });
-
-//     const channel = supabase
-//       .channel(`global-messages:${userId}`)
-//       .on(
-//         "postgres_changes",
-//         {
-//           event: "INSERT",
-//           schema: "public",
-//           table: "messages",
-//         },
-//         async (payload) => {
-//           const message = payload.new as {
-//             conversation_id: string;
-//             sender_id: string;
-//           };
-
-//           if (message.sender_id === userId) {
-//             void refreshConversations();
-//             return;
-//           }
-
-//           const { error } = await supabase.rpc(
-//             "mark_conversation_messages_delivered",
-//             {
-//               p_conversation_id: message.conversation_id,
-//             },
-//           );
-
-//           if (error) {
-//             console.error("Delivery receipt failed:", error);
-//             void refreshConversations();
-//           }
-//         },
-//       )
-//       .on(
-//         "postgres_changes",
-//         {
-//           event: "UPDATE",
-//           schema: "public",
-//           table: "messages",
-//         },
-//         () => {
-//           void refreshConversations();
-//         },
-//       )
-//       .subscribe((status, error) => {
-//         console.log("GLOBAL REALTIME STATUS:", status, error);
-//       });
-
-//     return () => {
-//       void supabase.removeChannel(channel);
-//     };
-//   }, [userId, supabase, queryClient]);
-// }
-
-// export function useRealtimeConversations(userId: string) {
-//   const supabase = useMemo(() => createClient(), []);
-//   const queryClient = useQueryClient();
-
-//   useEffect(() => {
-//     if (!userId) return;
-
-//     const conversationKey = ["conversations", userId];
-
-//     const refreshConversations = () => {
-//       void queryClient.invalidateQueries({
-//         queryKey: conversationKey,
-//         exact: true,
-//       });
-//     };
-
-//     const channel = supabase
-//       .channel(`global-messages:${userId}`)
-//       .on(
-//         "postgres_changes",
-//         {
-//           event: "INSERT",
-//           schema: "public",
-//           table: "messages",
-//         },
-//         async (payload) => {
-//           const message = payload.new as {
-//             id: string;
-//             conversation_id: string;
-//             sender_id: string;
-//           };
-
-//           if (message.sender_id === userId) {
-//             refreshConversations();
-//             return;
-//           }
-
-//           const { error } = await supabase.rpc(
-//             "mark_conversation_messages_delivered",
-//             {
-//               p_conversation_id: message.conversation_id,
-//             },
-//           );
-
-//           if (error) {
-//             console.error("Delivery receipt failed:", error);
-//           }
-
-//           // Refresh once after processing the incoming message.
-//           refreshConversations();
-//         },
-//       )
-//       .on(
-//         "postgres_changes",
-//         {
-//           event: "UPDATE",
-//           schema: "public",
-//           table: "messages",
-//         },
-//         (payload) => {
-//           const updated = payload.new as {
-//             id: string;
-//             conversation_id: string;
-//             sender_id: string;
-//             created_at: string;
-//             read_at: string | null;
-//             delivered_at: string | null;
-//             status?: string;
-//           };
-
-//           // Update the sidebar's last-message indicators without refetching.
-//           queryClient.setQueryData(
-//             conversationKey,
-//             (old: any[] | undefined) => {
-//               if (!old) return old;
-
-//               return old.map((conversation) => {
-//                 if (
-//                   conversation.id !== updated.conversation_id ||
-//                   conversation.last_message_timestamp !== updated.created_at
-//                 ) {
-//                   return conversation;
-//                 }
-
-//                 return {
-//                   ...conversation,
-//                   last_message_delivered: !!updated.delivered_at,
-//                   last_message_read: !!updated.read_at,
-//                 };
-//               });
-//             },
-//           );
-//         },
-//       )
-//       .subscribe((status, error) => {
-//         console.log("GLOBAL REALTIME STATUS:", status, error);
-//       });
-
-//     return () => {
-//       void supabase.removeChannel(channel);
-//     };
-//   }, [userId, supabase, queryClient]);
-// }
-
 export function useRealtimeConversations(userId: string) {
   const supabase = useMemo(() => createClient(), []);
   const queryClient = useQueryClient();
@@ -428,6 +257,7 @@ export function useRealtimeConversations(userId: string) {
             read_at: string | null;
             delivered_at: string | null;
             status?: string;
+            is_deleted_for_everyone?: boolean;
           };
 
           queryClient.setQueryData(
@@ -451,6 +281,15 @@ export function useRealtimeConversations(userId: string) {
               });
             },
           );
+
+          if (updated.is_deleted_for_everyone) {
+            void queryClient.invalidateQueries({
+              queryKey: ["messages", updated.conversation_id],
+              exact: true,
+            });
+
+            refreshConversations();
+          }
         },
       )
 

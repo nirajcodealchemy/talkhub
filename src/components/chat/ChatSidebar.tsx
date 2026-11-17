@@ -261,7 +261,12 @@ export default function ChatSidebar({
                   ? 0
                   : (conversation?.unread_count ?? 0)
               }
-              lastMessage={conversation?.last_message ?? null}
+              lastMessage={
+                conversation?.last_message === "This message was deleted" ||
+                conversation?.last_message === "You deleted this message"
+                  ? null
+                  : (conversation?.last_message ?? null)
+              }
               lastMessageAt={conversation?.last_message_timestamp ?? null}
               lastMessageSenderId={conversation?.last_message_sender ?? null}
               lastMessageDeliveredAt={

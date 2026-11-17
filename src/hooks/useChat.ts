@@ -92,6 +92,64 @@ export function useMessages(conversationId: string) {
       }
 
       // Get messages hidden by this user.
+      // const { data: deletions, error: deletionError } = await supabase
+      //   .from("message_deletions")
+      //   .select("message_id")
+      //   .eq("user_id", user.id);
+
+      // if (deletionError) throw deletionError;
+
+      // const hiddenIds = (deletions ?? []).map(
+      //   (deletion) => deletion.message_id,
+      // );
+
+      // let request = supabase
+      //   .from("messages")
+      //   .select("*")
+      //   .eq("conversation_id", conversationId)
+      //   .order("created_at", { ascending: false })
+      //   .limit(PAGE_SIZE);
+
+      // if (pageParam) {
+      //   request = request.lt("created_at", pageParam);
+      // }
+
+      // if (hiddenIds.length > 0) {
+      //   request = request.not("id", "in", `(${hiddenIds.join(",")})`);
+      // }
+
+      // const { data, error } = await request;
+
+      // if (error) throw error;
+
+      // const messages = [...(data ?? [])].reverse();
+
+      // return Promise.all(
+      //   messages.map(async (message) => {
+      //     if (!message.attachment_path) {
+      //       return {
+      //         ...message,
+      //         attachment_url: null,
+      //       };
+      //     }
+
+      //     const { data: signedData, error: signedError } =
+      //       await supabase.storage
+      //         .from("chat-attachments")
+      //         .createSignedUrl(message.attachment_path, 3600);
+
+      //     if (signedError) {
+      //       console.error("Signed URL error:", signedError);
+      //     }
+
+      //     return {
+      //       ...message,
+      //       attachment_url: signedData?.signedUrl ?? null,
+      //     };
+      //   }),
+      // );
+
+      // Get messages hidden by this user.
       const { data: deletions, error: deletionError } = await supabase
         .from("message_deletions")
         .select("message_id")
@@ -99,8 +157,8 @@ export function useMessages(conversationId: string) {
 
       if (deletionError) throw deletionError;
 
-      const hiddenIds = (deletions ?? []).map(
-        (deletion) => deletion.message_id,
+      const hiddenIds = new Set(
+        (deletions ?? []).map((deletion) => deletion.message_id),
       );
 
       let request = supabase
@@ -114,10 +172,6 @@ export function useMessages(conversationId: string) {
         request = request.lt("created_at", pageParam);
       }
 
-      if (hiddenIds.length > 0) {
-        request = request.not("id", "in", `(${hiddenIds.join(",")})`);
-      }
-
       const { data, error } = await request;
 
       if (error) throw error;
@@ -126,9 +180,16 @@ export function useMessages(conversationId: string) {
 
       return Promise.all(
         messages.map(async (message) => {
-          if (!message.attachment_path) {
+          const deletedForMe = hiddenIds.has(message.id);
+
+          if (
+            !message.attachment_path ||
+            message.is_deleted_for_everyone ||
+            deletedForMe
+          ) {
             return {
               ...message,
+              deleted_for_me: deletedForMe,
               attachment_url: null,
             };
           }
@@ -144,6 +205,7 @@ export function useMessages(conversationId: string) {
 
           return {
             ...message,
+            deleted_for_me: deletedForMe,
             attachment_url: signedData?.signedUrl ?? null,
           };
         }),
