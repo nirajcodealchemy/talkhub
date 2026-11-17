@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { useLogin } from "@/src/hooks/useLogin";
 import AuthInput from "@/src/components/AuthInput";
 import { loginValidation } from "@/src/utils/validation";
 import AuthLayout from "@/src/components/AuthLayout";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { LoginFormData } from "@/src/types/form";
+import { Button } from "@/src/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();

@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import { NextIntlClientProvider } from "next-intl";
 import QueryProvider from "../providers/QueryProvider";
-import { cn } from "@/lib/utils";
+import { cn } from "@/src/lib/utils";
 
 const instrumentSansHeading = Instrument_Sans({
   subsets: ["latin"],

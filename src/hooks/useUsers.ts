@@ -3,12 +3,13 @@
 import { ChatUser } from "../types/chat";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/src/lib/supabase/client";
+import { QUERY_KEYS } from "../lib/queryKeys";
 
 export function useUsers() {
   const supabase = createClient();
 
   return useQuery({
-    queryKey: ["chat-users"],
+    queryKey: QUERY_KEYS.users,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")

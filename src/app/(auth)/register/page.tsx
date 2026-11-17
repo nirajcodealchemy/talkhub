@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 import { useSignup } from "@/src/hooks/useSignup";
 import AuthInput from "@/src/components/AuthInput";
@@ -11,6 +10,7 @@ import AuthLayout from "@/src/components/AuthLayout";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { Confirmation } from "@/src/components/modal/ConfirmationModal";
 import { SignupFormData } from "@/src/types/form";
+import { Button } from "@/src/components/ui/button";
 
 export default function SignupPage() {
   const router = useRouter();

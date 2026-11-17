@@ -5,9 +5,9 @@ import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Profile } from "@/src/types/profile";
 import { X, Users, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { GroupModalProps } from "@/src/types/chat";
 import { useSearchUsers } from "@/src/hooks/useChat";
+import { Button } from "../ui/button";
 
 export default function CreateGroupModal({ isOpen, onClose }: GroupModalProps) {
   const t = useTranslations("screen.chat.CreateGroupModal");
@@ -127,7 +127,7 @@ export default function CreateGroupModal({ isOpen, onClose }: GroupModalProps) {
                       <img
                         src={
                           user.avatar_url ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=8b34d7&color=fff`
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name ?? "User")}&background=8b34d7&color=fff`
                         }
                         alt=""
                       />

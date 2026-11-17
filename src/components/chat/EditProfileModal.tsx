@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditProfileProps } from "@/src/types/profile";
 import { createClient } from "@/src/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { QUERY_KEYS } from "@/src/lib/queryKeys";
+import { Button } from "../ui/button";
 
 export default function EditProfileModal({
   userId,
@@ -145,7 +146,7 @@ export default function EditProfileModal({
       setSelectedFile(null);
 
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["users"] }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users }),
         queryClient.invalidateQueries({ queryKey: ["conversations"] }),
       ]);
 
