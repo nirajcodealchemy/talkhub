@@ -98,9 +98,15 @@ export default function UserListItem({
   // };
   const renderLastMessage = () => {
     // Deleted message: show placeholder first.
-    if (lastMessageType === "deleted") {
-      return lastMessage;
+    if (
+      lastMessage === "This message was deleted" ||
+      lastMessage === "You deleted this message"
+    ) {
+      return "This message was deleted";
     }
+    // if (lastMessageType === "deleted") {
+    //   return lastMessage;
+    // }
 
     // Image message
     if (lastMessageType === "image" || lastMessage?.startsWith("[Image]")) {
@@ -160,7 +166,6 @@ export default function UserListItem({
         <div className="mt-1 flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-1 text-muted-foreground">
             {renderMessageStatus()}
-
             <p className="truncate text-[12px]">{renderLastMessage()}</p>
           </div>
 

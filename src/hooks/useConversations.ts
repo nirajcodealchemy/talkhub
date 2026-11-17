@@ -6,95 +6,57 @@ import { useOnlineUsers } from "./useOnlineUsers";
 import { createClient } from "@/src/lib/supabase/client";
 import { useRealtimeConversations } from "./useRealtimeChat";
 
+type ConversationSummary = {
+  conversation_id: string;
+  is_group: boolean;
+  title: string | null;
+  last_message_deleted_for_everyone: boolean | null;
+  last_message_deleted_for_me: boolean | null;
+  last_message_at: string | null;
+  last_message_content: string | null;
+  last_message_type: string | null;
+  last_message_sender_id: string | null;
+  last_message_delivered_at: string | null;
+  last_message_read_at: string | null;
+  unread_count: number | string | null;
+};
+
 export function useConversations(userId: string) {
   const supabase = useMemo(() => createClient(), []);
 
   const onlineUserIds = useOnlineUsers(userId);
-  // Global listener must stay active on every page
+
+  // Global listener must stay active on every page.
   useRealtimeConversations(userId);
 
   const query = useQuery({
     queryKey: ["conversations", userId],
 
     queryFn: async () => {
-      // 1. Get current user's memberships
-      const { data: memberships, error: memberError } = await supabase
-        .from("conversation_members")
-        .select("conversation_id, role")
-        .eq("user_id", userId);
+      // 1. Fetch conversation summaries from PostgreSQL.
+      const { data: summariesData, error: summaryError } = await supabase.rpc(
+        "get_user_conversations",
+      );
 
-      if (memberError) throw memberError;
+      if (summaryError) throw summaryError;
 
-      if (!memberships?.length) return [];
+      const summaries = (summariesData ?? []) as ConversationSummary[];
 
-      const conversationIds = [
-        ...new Set(memberships.map((m) => m.conversation_id)),
-      ];
+      if (!summaries.length) return [];
 
-      // 2. Fetch only conversations belonging to this user
-      const { data: conversations, error: convError } = await supabase
-        .from("conversations")
-        .select(
-          `
-            id,
-            title,
-            is_group,
-            created_by,
-            created_at,
-            updated_at
-          `,
-        )
-        .in("id", conversationIds)
-        .order("updated_at", { ascending: false });
+      const conversationIds = summaries.map(
+        (conversation) => conversation.conversation_id,
+      );
 
-      if (convError) throw convError;
-
-      // 3. Fetch members of these conversations
-      const { data: allMembers, error: allMembersError } = await supabase
+      // 2. Fetch members of these conversations.
+      const { data: allMembers, error: membersError } = await supabase
         .from("conversation_members")
         .select("conversation_id, user_id, role")
         .in("conversation_id", conversationIds);
 
-      if (allMembersError) throw allMembersError;
+      if (membersError) throw membersError;
 
-      // 4. Fetch messages belonging ONLY to these conversations
-      const { data: allMessages, error: messagesError } = await supabase
-        .from("messages")
-        .select(
-          `
-    id,
-    conversation_id,
-    sender_id,
-    content,
-    message_type,
-    created_at,
-    read_at,
-    delivered_at,
-    is_deleted_for_everyone
-  `,
-        )
-        .in("conversation_id", conversationIds)
-        .order("created_at", { ascending: true });
-
-      if (messagesError) throw messagesError;
-
-      const messageIds = (allMessages || []).map((message) => message.id);
-
-      const { data: deletedForMe, error: deletionError } = messageIds.length
-        ? await supabase
-            .from("message_deletions")
-            .select("message_id")
-            .eq("user_id", userId)
-            .in("message_id", messageIds)
-        : { data: [], error: null };
-
-      if (deletionError) throw deletionError;
-
-      const deletedMessageIds = new Set(
-        (deletedForMe || []).map((item) => item.message_id),
-      );
-
-      // 5. Fetch other users' profiles
+      // 3. Collect other user IDs.
       const otherUserIds = [
         ...new Set(
           (allMembers || [])
@@ -103,6 +65,7 @@ export function useConversations(userId: string) {
         ),
       ];
 
+      // 4. Fetch other users' profiles.
       const { data: profiles, error: profilesError } = otherUserIds.length
         ? await supabase
             .from("profiles")
@@ -112,46 +75,35 @@ export function useConversations(userId: string) {
 
       if (profilesError) throw profilesError;
 
-      // 6. Build conversations separately
-      return (conversations || []).map((conv) => {
-        const members = (allMembers || []).filter(
-          (member) => member.conversation_id === conv.id,
-        );
+      // 5. Group members by conversation.
+      const membersByConversation = new Map<
+        string,
+        NonNullable<typeof allMembers>
+      >();
 
-        // Get all messages for this conversation
-        const messages = (allMessages || []).filter(
-          (message) => message.conversation_id === conv.id,
-        );
+      (allMembers || []).forEach((member) => {
+        const existing =
+          membersByConversation.get(member.conversation_id) || [];
 
-        // IMPORTANT: Get the latest message BEFORE filtering deleted messages.
-        const lastMessage = messages[messages.length - 1];
+        existing.push(member);
 
-        // Check whether the latest message is deleted
-        const isDeletedForEveryone =
-          lastMessage?.is_deleted_for_everyone === true;
+        membersByConversation.set(member.conversation_id, existing);
+      });
 
-        const isDeletedForMe = lastMessage
-          ? deletedMessageIds.has(lastMessage.id)
-          : false;
+      // 6. Create a profile lookup map.
+      const profilesById = new Map(
+        (profiles || []).map((profile) => [profile.id, profile]),
+      );
 
-        // Keep only messages visible to the current user
-        const visibleMessages = messages.filter(
-          (message) =>
-            !message.is_deleted_for_everyone &&
-            !deletedMessageIds.has(message.id),
-        );
-
-        // Calculate unread messages
-        const unreadCount = visibleMessages.filter(
-          (message) => message.sender_id !== userId && message.read_at === null,
-        ).length;
-        // const unreadCount = visibleMessages.filter(
-        //   (message) => message.sender_id !== userId && message.read_at === null,
-        // ).length;
+      // 7. Build conversation summaries.
+      return summaries.map((conv) => {
+        const members = membersByConversation.get(conv.conversation_id) || [];
 
         const otherMember = members.find((member) => member.user_id !== userId);
 
-        const profile = profiles?.find((p) => p.id === otherMember?.user_id);
+        const profile = otherMember
+          ? profilesById.get(otherMember.user_id)
+          : undefined;
 
         const name = conv.is_group
           ? conv.title || "Group"
@@ -159,60 +111,68 @@ export function useConversations(userId: string) {
 
         const avatar =
           profile?.avatar_url ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=8b34d7&color=fff`;
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+            name,
+          )}&background=8b34d7&color=fff`;
+
+        const isDeletedForEveryone =
+          conv.last_message_deleted_for_everyone === true;
+
+        const isDeletedForMe = conv.last_message_deleted_for_me === true;
+
+        const isDeleted = isDeletedForEveryone || isDeletedForMe;
+
+        const lastMessageTime = conv.last_message_at
+          ? new Date(conv.last_message_at)
+          : null;
 
         return {
-          id: conv.id,
+          id: conv.conversation_id,
           name,
           avatar,
 
           is_group: conv.is_group,
+
           other_user_id: otherMember?.user_id || null,
           other_user_phone: profile?.phone || null,
           other_user_username: profile?.username || null,
           other_user_avatar: profile?.avatar_url || null,
 
-          // last_message: lastMessage?.content || "",
           last_message: isDeletedForEveryone
             ? "This message was deleted"
             : isDeletedForMe
               ? "You deleted this message"
-              : lastMessage?.content || "",
+              : conv.last_message_content || "",
 
-          last_message_type:
-            isDeletedForEveryone || isDeletedForMe
-              ? "deleted"
-              : lastMessage?.message_type || "text",
+          last_message_type: isDeleted
+            ? "deleted"
+            : conv.last_message_type || "text",
 
-          last_message_time: lastMessage
-            ? new Date(lastMessage.created_at).toLocaleTimeString([], {
+          last_message_time: lastMessageTime
+            ? lastMessageTime.toLocaleTimeString([], {
                 hour: "numeric",
                 minute: "2-digit",
               })
             : "",
 
-          last_message_timestamp: lastMessage?.created_at ?? "",
+          last_message_timestamp: conv.last_message_at ?? "",
 
-          last_message_sender: lastMessage?.sender_id ?? undefined,
+          last_message_sender: conv.last_message_sender_id ?? undefined,
 
-          last_message_is_mine: lastMessage?.sender_id === userId,
+          last_message_is_mine: conv.last_message_sender_id === userId,
 
-          // last_message_delivered: !!lastMessage?.delivered_at,
-          last_message_delivered:
-            !isDeletedForEveryone && !isDeletedForMe
-              ? !!lastMessage?.delivered_at
-              : false,
+          last_message_delivered: !isDeleted
+            ? !!conv.last_message_delivered_at
+            : false,
 
-          // last_message_read: !!lastMessage?.read_at,
-          last_message_read:
-            !isDeletedForEveryone && !isDeletedForMe
-              ? !!lastMessage?.read_at
-              : false,
+          last_message_read: !isDeleted ? !!conv.last_message_read_at : false,
 
-          unread_count: unreadCount,
+          unread_count: Number(conv.unread_count || 0),
 
           online: false,
-          messages: visibleMessages,
+
+          // Full message history is loaded separately.
+          messages: [],
         };
       });
     },
@@ -223,6 +183,7 @@ export function useConversations(userId: string) {
     refetchOnWindowFocus: false,
   });
 
+  // 8. Update online status without refetching conversations.
   const conversations = useMemo(() => {
     return (query.data ?? []).map((conversation) => ({
       ...conversation,

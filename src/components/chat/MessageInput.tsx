@@ -137,7 +137,7 @@ export default function MessageInput({
 
   function validateAttachment(file: File): string | null {
     if (file.size > MAX_FILE_SIZE) {
-      return `${file.name} exceeds the maximum file size of 100 MB.`;
+      return `${file.name} exceeds the maximum file size of 30 MB.`;
     }
 
     const extension = file.name.split(".").pop()?.toLowerCase();
