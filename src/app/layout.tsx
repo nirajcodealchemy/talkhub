@@ -14,6 +14,8 @@ import { getMessages } from "next-intl/server";
 import QueryProvider from "../providers/QueryProvider";
 import { cn } from "@/src/lib/utils";
 
+export const instant = false;
+
 const instrumentSansHeading = Instrument_Sans({
   subsets: ["latin"],
   variable: "--font-instrument",
