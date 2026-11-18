@@ -67,7 +67,7 @@ export default function DeleteMessageModal({
             type="button"
             disabled={isDeleting || !isMine}
             onClick={() => onDelete(true)}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground transition hover:bg-destructive/80 disabled:opacity-50"
+            className="flex w-full cursor-pointer text-white items-center justify-center gap-2 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground transition hover:bg-destructive/80 disabled:opacity-50"
           >
             Delete for everyone
           </button>
