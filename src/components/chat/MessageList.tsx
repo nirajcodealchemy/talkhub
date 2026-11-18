@@ -4,6 +4,7 @@ import { ArrowDown, Loader2 } from "lucide-react";
 import MessageItem from "./MessageItem";
 import { ChatMessage, MessageListProps } from "@/src/types/chat";
 import { useLayoutEffect, useMemo, useRef, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 type RenderMessage = {
   key: string;
@@ -17,7 +18,10 @@ function getDateKey(dateString: string) {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
-function getDateLabel(dateString: string) {
+function getDateLabel(
+  dateString: string,
+  t: ReturnType<typeof useTranslations>,
+) {
   const date = new Date(dateString);
   const today = new Date();
 
@@ -25,11 +29,11 @@ function getDateLabel(dateString: string) {
   yesterday.setDate(today.getDate() - 1);
 
   if (getDateKey(dateString) === getDateKey(today.toISOString())) {
-    return "Today";
+    return t("today");
   }
 
   if (getDateKey(dateString) === getDateKey(yesterday.toISOString())) {
-    return "Yesterday";
+    return t("yesterday");
   }
 
   return date.toLocaleDateString(undefined, {
@@ -64,6 +68,7 @@ export default function MessageList({
 
   const [newMessageCount, setNewMessageCount] = useState(0);
 
+  const t = useTranslations("screen.MessageList");
   // Combine image rows belonging to the same group.
   const renderedMessages = useMemo(() => {
     const result: RenderMessage[] = [];
@@ -126,43 +131,6 @@ export default function MessageList({
     });
   };
 
-  // Initial scroll, new messages, and older-message pagination.
-  // useLayoutEffect(() => {
-  //   const container = scrollRef.current;
-
-  //   if (!container || messages.length === 0) return;
-
-  //   const latestMessage = messages[messages.length - 1];
-  //   const latestMessageId = latestMessage.id;
-
-  //   // Preserve scroll position when older messages are loaded.
-  //   if (previousHeightRef.current !== null) {
-  //     const previousHeight = previousHeightRef.current;
-
-  //     container.scrollTop += container.scrollHeight - previousHeight;
-
-  //     previousHeightRef.current = null;
-  //     return;
-  //   }
-
-  //   // Initial chat opening.
-  //   if (!initialScrollDone.current) {
-  //     scrollToBottom();
-  //     shouldStickToBottomRef.current = true;
-
-  //     initialScrollDone.current = true;
-  //     previousLastMessageId.current = latestMessageId;
-  //     return;
-  //   }
-
-  //   // New message received or sent.
-  //   if (previousLastMessageId.current !== latestMessageId) {
-  //     scrollToBottom("smooth");
-  //     shouldStickToBottomRef.current = true;
-  //   }
-
-  //   previousLastMessageId.current = latestMessageId;
-  // }, [messages]);
   useLayoutEffect(() => {
     const container = scrollRef.current;
 
@@ -252,25 +220,6 @@ export default function MessageList({
       resizeObserver.disconnect();
     };
   }, []);
-
-  // function handleScroll() {
-  //   const container = scrollRef.current;
-
-  //   if (!container) return;
-
-  //   // Keep the bottom only when the user is near the latest messages.
-  //   const distanceFromBottom =
-  //     container.scrollHeight - container.scrollTop - container.clientHeight;
-
-  //   shouldStickToBottomRef.current = distanceFromBottom <= 150;
-
-  //   if (isLoadingOlder || !hasMoreMessages) return;
-
-  //   if (container.scrollTop <= 80) {
-  //     previousHeightRef.current = container.scrollHeight;
-  //     onLoadOlder();
-  //   }
-  // }
 
   function handleScroll() {
     const container = scrollRef.current;
@@ -379,7 +328,7 @@ export default function MessageList({
                   {showDateSeparator && (
                     <div className="flex justify-center pb-1">
                       <span className="rounded-md border border-border bg-background px-3 py-1 text-[12px] text-foreground shadow-xs">
-                        {getDateLabel(item.message.created_at)}
+                        {getDateLabel(item.message.created_at, t)}
                       </span>
                     </div>
                   )}
