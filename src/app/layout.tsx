@@ -1,5 +1,3 @@
-export const instant = false;
-
 import {
   Geist,
   Geist_Mono,
