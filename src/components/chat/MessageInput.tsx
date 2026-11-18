@@ -14,7 +14,7 @@ import {
   ALLOWED_EXTENSIONS,
   ALLOWED_FILE_TYPES,
   MAX_FILE_SIZE,
-} from "@/src/constant/attechmentFile";
+} from "@/src/constant/attachmentFile";
 
 export default function MessageInput({
   conversationId,
