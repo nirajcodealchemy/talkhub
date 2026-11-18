@@ -223,7 +223,7 @@ export default function EditProfileModal({
               <Button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="mt-3 cursor-pointer text-sm font-medium text-chart-4 transition-colors hover:text-chart-5"
+                className="mt-3 cursor-pointer text-sm font-medium text-chart-4 transition-colors hover:text-chart-5 hover:bg-accent"
               >
                 {t("changePhoto")}
               </Button>

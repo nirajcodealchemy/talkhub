@@ -146,6 +146,7 @@
         "edit": "Edit",
         "delete": "Delete",
         "image": "Image",
+        "edited": "edited",
         "downloadAll": "Download all",
         "PreparingZip": "Preparing ZIP..."
       }

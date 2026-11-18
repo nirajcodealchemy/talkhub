@@ -206,8 +206,10 @@ export default function MessageItem({
               isMine ? "text-primary-foreground/80" : "text-muted-foreground"
             }`}
           >
-            {message.edited_at && (
-              <span className="ml-1 text-[10px] opacity-70">(edited)</span>
+            {message.edited_at && !isDeleted && (
+              <span className="ml-1 text-[10px] opacity-70">
+                ({t("edited")})
+              </span>
             )}
 
             <span className={message.message_type === "image" ? "mr-2" : ""}>
