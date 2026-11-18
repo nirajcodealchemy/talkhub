@@ -1,3 +1,5 @@
+export const instant = false;
+
 import { redirect } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/server";
 
