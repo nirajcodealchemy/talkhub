@@ -158,7 +158,8 @@
     "UserListItem": {
       "image": "Image",
       "defaultUser": "User",
-      "document": "Document"
+      "document": "Document",
+      "deletedMessagePlaceholder": "This message was deleted"
     }
   }
 }

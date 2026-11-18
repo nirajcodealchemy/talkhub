@@ -260,7 +260,7 @@ BEGIN
 END;
 $function$;
 
-CREATE OR REPLACE FUNCTION public.mark_conversation_messages_delivered(
+CREATE OR REPLACE FUNCTION public.mark_conversation_messages_read(
   p_conversation_id uuid
 )
 RETURNS integer
@@ -358,7 +358,6 @@ GRANT EXECUTE ON FUNCTION public.search_chat_users(text, integer) TO authenticat
 
 -- These functions were observed with PUBLIC, anon, authenticated and service_role execute.
 GRANT EXECUTE ON FUNCTION public.handle_new_user() TO PUBLIC, anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.mark_conversation_messages_delivered(uuid) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.mark_conversation_messages_read(uuid) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.update_conversation_timestamp() TO PUBLIC, anon, authenticated, service_role;
 
@@ -535,7 +534,6 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES
   ('avatars', 'avatars', true),
   ('chat-attachments', 'chat-attachments', false),
-  ('chat-files', 'chat-files', false);
 
 -- ---------------------------------------------------------------------------
 -- STORAGE POLICIES
@@ -576,7 +574,7 @@ CREATE POLICY "Members can read chat files"
 ON storage.objects
 FOR SELECT TO authenticated
 USING (
-  bucket_id = 'chat-files'
+  bucket_id = 'chat-attachments'
   AND CASE
     WHEN (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
       THEN is_member(((storage.foldername(name))[1])::uuid)
@@ -588,7 +586,7 @@ CREATE POLICY "Members can upload chat files"
 ON storage.objects
 FOR INSERT TO authenticated
 WITH CHECK (
-  bucket_id = 'chat-files'
+  bucket_id = 'chat-attachments'
   AND CASE
     WHEN (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
       THEN is_member(((storage.foldername(name))[1])::uuid)
@@ -600,7 +598,7 @@ CREATE POLICY "Owners can delete their own chat files"
 ON storage.objects
 FOR DELETE TO authenticated
 USING (
-  bucket_id = 'chat-files'
+  bucket_id = 'chat-attachments'
   AND owner_id = (SELECT (auth.uid())::text)
   AND CASE
     WHEN (storage.foldername(name))[1] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'

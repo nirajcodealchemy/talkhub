@@ -73,7 +73,7 @@ export default function UserListItem({
       lastMessage === "This message was deleted" ||
       lastMessage === "You deleted this message"
     ) {
-      return "This message was deleted";
+      return t("deletedMessagePlaceholder");
     }
 
     // Image message
