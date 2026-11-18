@@ -3,20 +3,13 @@
 import MicIcon from "../icons/MicIcon";
 import PlusIcon from "../icons/PlusIcon";
 import FileIcon from "../icons/FileIcon";
-import EmojiIcon from "../icons/EmojiIcon";
 import { useTranslations } from "next-intl";
 import { MessageInputProps } from "@/src/types/chat";
+import { X, Paperclip, Loader2 } from "lucide-react";
 import SendIcon from "@/src/components/icons/SendIcon";
 import { useRef, useState, DragEvent, useEffect } from "react";
-import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
-import {
-  X,
-  FileText,
-  Image as ImageIcon,
-  File,
-  Paperclip,
-  Loader2,
-} from "lucide-react";
+import EmojiPickerPopover from "./message-input/EmojiPickerPopover";
+import AttachmentPreviewList from "./message-input/AttachmentPreviewList";
 import {
   ALLOWED_EXTENSIONS,
   ALLOWED_FILE_TYPES,
@@ -35,35 +28,18 @@ export default function MessageInput({
   onStopTyping,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
-  const [emojiOpen, setEmojiOpen] = useState(false);
+
   const [isSending, setIsSending] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const dragCounter = useRef(0);
-  const emojiRef = useRef<HTMLDivElement>(null);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const t = useTranslations("screen.chat.MessageInput");
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        emojiRef.current &&
-        !emojiRef.current.contains(event.target as Node)
-      ) {
-        setEmojiOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   useEffect(() => {
     if (!editingMessage) return;
@@ -71,7 +47,6 @@ export default function MessageInput({
     setMessage(editingMessage.content ?? "");
     setSelectedFiles([]);
     setAttachmentOpen(false);
-    setEmojiOpen(false);
 
     requestAnimationFrame(() => {
       const textarea = textareaRef.current;
@@ -91,7 +66,7 @@ export default function MessageInput({
     setMessage("");
     setSelectedFiles([]);
     setAttachmentOpen(false);
-    setEmojiOpen(false);
+
     setIsDragging(false);
 
     dragCounter.current = 0;
@@ -105,39 +80,9 @@ export default function MessageInput({
     textareaRef.current?.focus();
   }, [conversationId]);
 
-  const handleEmojiClick = (emojiData: EmojiClickData) => {
-    setMessage((previous) => previous + emojiData.emoji);
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} ${t("fileSizeBytes")}`;
-
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} ${t("fileSizeKilobytes")}`;
-    }
-
-    return `${(bytes / (1024 * 1024)).toFixed(1)} ${t("fileSizeMegabytes")}`;
-  };
-
-  const getFileIcon = (file: File) => {
-    if (file.type.startsWith("image/")) {
-      return <ImageIcon size={20} />;
-    }
-
-    if (
-      file.type.includes("pdf") ||
-      file.type.includes("document") ||
-      file.type.includes("text")
-    ) {
-      return <FileText size={20} />;
-    }
-
-    return <File size={20} />;
-  };
-
   function validateAttachment(file: File): string | null {
     if (file.size > MAX_FILE_SIZE) {
-      return `${file.name} exceeds the maximum file size of 30 MB.`;
+      return `${file.name} exceeds the maximum file size of 20 MB.`;
     }
 
     const extension = file.name.split(".").pop()?.toLowerCase();
@@ -323,39 +268,7 @@ export default function MessageInput({
           </div>
         )}
 
-        {selectedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 pb-1">
-            {selectedFiles.map((file, index) => (
-              <div
-                key={`${file.name}-${file.lastModified}-${index}`}
-                className="group relative flex max-w-[220px] items-center gap-2 rounded-xl border border-grey-200 bg-grey-50 px-3 py-2"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-chart-4/10 text-chart-4">
-                  {getFileIcon(file)}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-foreground">
-                    {file.name}
-                  </p>
-
-                  <p className="text-[10px] text-grey-400">
-                    {formatFileSize(file.size)}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  aria-label={t("removeFile", { name: file.name })}
-                  className="flex h-6 w-6 cursor-pointer shrink-0 items-center justify-center rounded-full bg-grey-200 text-grey-600 transition hover:bg-logout-red-light hover:text-destructive"
-                >
-                  <X size={13} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        <AttachmentPreviewList files={selectedFiles} onRemove={removeFile} />
 
         <textarea
           ref={textareaRef}
@@ -440,19 +353,6 @@ export default function MessageInput({
               )}
             </div>
 
-            {/* <input
-              ref={fileRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(event) => {
-                if (event.target.files) {
-                  addFiles(event.target.files);
-                }
-
-                event.target.value = "";
-              }}
-            /> */}
             <input
               ref={fileRef}
               type="file"
@@ -489,39 +389,11 @@ export default function MessageInput({
               <MicIcon />
             </button>
 
-            <div className="relative" ref={emojiRef}>
-              <button
-                type="button"
-                aria-label={t("insertEmoji")}
-                aria-expanded={emojiOpen}
-                onClick={() => setEmojiOpen((previous) => !previous)}
-                className="cursor-pointer rounded-full p-1 text-grey-400 transition-colors hover:text-chart-4"
-              >
-                <EmojiIcon />
-              </button>
-
-              {emojiOpen && (
-                <div
-                  className="
-                    fixed bottom-[90px] left-1/2 z-[100]
-                    w-[calc(100vw-24px)] max-w-[270px]
-                    -translate-x-1/2
-                    sm:absolute sm:bottom-12 sm:left-0
-                    sm:w-[350px] sm:translate-x-0
-                  "
-                >
-                  <EmojiPicker
-                    onEmojiClick={handleEmojiClick}
-                    width="100%"
-                    height={300}
-                    searchPlaceholder={t("searchEmoji")}
-                    previewConfig={{
-                      showPreview: false,
-                    }}
-                  />
-                </div>
-              )}
-            </div>
+            <EmojiPickerPopover
+              onEmojiSelect={(emoji) =>
+                setMessage((previous) => previous + emoji)
+              }
+            />
 
             <button
               type="button"

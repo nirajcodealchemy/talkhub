@@ -41,7 +41,7 @@ revoke all on function public.mark_messages_as_read(uuid) from public, anon;
 grant execute on function public.mark_messages_as_read(uuid) to authenticated;
 
 -- Function to mark messages as delivered
-create or replace function public.mark_messages_as_delivered(p_conversation_id uuid)
+create or replace function public.mark_messages_as_read(p_conversation_id uuid)
 returns void
 language plpgsql
 security definer
@@ -64,5 +64,5 @@ begin
 end;
 $$;
 
-revoke all on function public.mark_messages_as_delivered(uuid) from public, anon;
-grant execute on function public.mark_messages_as_delivered(uuid) to authenticated;
+revoke all on function public.mark_messages_as_read(uuid) from public, anon;
+grant execute on function public.mark_messages_as_read(uuid) to authenticated;

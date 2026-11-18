@@ -195,7 +195,7 @@ export default function CreateGroupModal({ isOpen, onClose }: GroupModalProps) {
 
             <Button
               // onClick={handleCreate}
-              disabled={true}
+              disabled
               className="h-full flex-1 cursor-not-allowed bg-chart-4 text-white hover:bg-chart-5"
             >
               {t("createGroup")}

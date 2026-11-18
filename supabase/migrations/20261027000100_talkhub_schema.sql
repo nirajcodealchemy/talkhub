@@ -226,7 +226,7 @@ using (user_id = (select auth.uid()));
 -- Storage buckets
 insert into storage.buckets (id, name, public)
 values
-  ('chat-files', 'chat-files', false),
+  ('chat-attachments', 'chat-attachments', false),
   ('avatars', 'avatars', true)
 on conflict (id) do update
 set public = excluded.public;
@@ -236,7 +236,7 @@ set public = excluded.public;
 create policy "Members can read chat files"
 on storage.objects for select to authenticated
 using (
-  bucket_id = 'chat-files'
+  bucket_id = 'chat-attachments'
   and case
     when (storage.foldername(name))[1] ~*
       '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
@@ -248,7 +248,7 @@ using (
 create policy "Members can upload chat files"
 on storage.objects for insert to authenticated
 with check (
-  bucket_id = 'chat-files'
+  bucket_id = 'chat-attachments'
   and case
     when (storage.foldername(name))[1] ~*
       '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
@@ -260,7 +260,7 @@ with check (
 create policy "Owners can delete their own chat files"
 on storage.objects for delete to authenticated
 using (
-  bucket_id = 'chat-files'
+  bucket_id = 'chat-attachments'
   and owner_id = (select auth.uid()::text)
   and case
     when (storage.foldername(name))[1] ~*

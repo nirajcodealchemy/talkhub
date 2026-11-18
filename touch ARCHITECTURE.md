@@ -1,410 +1,289 @@
-# TalkHub Codebase Review & Architecture Analysis
+# TalkHub Codebase Review & Audit (Version 2)
 
-## 1. Project Structure & Module Breakdown
-
-TalkHub is a real-time messaging application built with **Next.js 16 (App Router)**, **React 19**, **Supabase (Auth, PostgreSQL, Storage, Realtime)**, **TanStack React Query v5**, **Tailwind CSS v4**, and **next-intl**.
-
-### Directory Tree Overview
-
-```text
-talkhub/
-├── middleware.ts                  # Root Next.js middleware (delegates to src/proxy.ts)
-├── messages/                      # Active i18n translation strings (en.json)
-├── components/                    # Root shadcn UI primitives (button, input, alert-dialog)
-│   └── ui/
-├── lib/                           # Root utility (re-exports cn from "cn")
-│   └── utils.ts
-├── supabase/                      # Database configuration & SQL migrations
-│   ├── config.toml
-│   └── migrations/                # Schema DDL, triggers, and RPC functions
-├── src/
-│   ├── app/                       # Next.js App Router (pages, layout, globals)
-│   │   ├── (auth)/                # Route group: /login, /register
-│   │   ├── chat/                  # Authenticated chat page
-│   │   ├── layout.tsx             # Root layout with providers & font setup
-│   │   ├── page.tsx               # Root redirector
-│   │   └── color.ts               # (Dead code) Legacy Tailwind color definition
-│   ├── components/                # Application domain components
-│   │   ├── chat/                  # ChatSidebar, ChatWindow, MessageList, MessageItem, MessageInput...
-│   │   ├── modal/                 # ConfirmationModal, ConversationInfoModal
-│   │   └── icons/                 # Custom SVG icons
-│   ├── hooks/                     # Custom React hooks (React Query & Supabase)
-│   ├── lib/                       # Supabase client/server/middleware configs & legacy schemas
-│   ├── providers/                 # QueryProvider (React Query client)
-│   ├── schemas/                   # Zod schemas (auth, modals)
-│   ├── screen/                    # Screen-level composition containers
-│   ├── store/                     # (Unused) Zustand store (chat.store.ts)
-│   ├── types/                     # TypeScript definitions (chat, profile, form, modals)
-│   └── utils/                     # Validation helpers, regex definitions
-```
-
-### Purpose of Major Modules
-
-| Module / Directory             | Key Files                                                                                     | Purpose                                                                                                                                                                                     |
-| :----------------------------- | :-------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Routing & Auth Middleware**  | `middleware.ts`, `src/proxy.ts`, `src/lib/supabase/middleware.ts`                             | Intercepts all requests, syncs Supabase SSR session cookies, redirects unauthenticated users to `/login`, and redirects authenticated users away from auth pages to `/chat`.                |
-| **Authentication Flow**        | `src/app/(auth)/login`, `register`, `useLogin.ts`, `useSignup.ts`                             | User registration and email/password login using Supabase Auth, client-side Zod validation, and automatic profile creation.                                                                 |
-| **Chat Screen & Presentation** | `src/screen/chat/ChatScreen.tsx`, `ChatLayout.tsx`                                            | Main orchestrator coordinating the sidebar conversation list, the active chat window, real-time message subscriptions, and read-receipt synchronization.                                    |
-| **Chat UI Components**         | `ChatSidebar.tsx`, `ChatWindow.tsx`, `MessageList.tsx`, `MessageItem.tsx`, `MessageInput.tsx` | Specialized UI modules managing message rendering, multi-image grids, infinite scroll history, attachment handling, emoji picker, context menus, and typing indicators.                     |
-| **Data Layer (Hooks)**         | `useConversations.ts`, `useChat.ts`, `useRealtimeChat.ts`, `useOnlineUsers.ts`                | TanStack Query queries and mutations for fetching conversations, sending text/attachments/image groups, and managing Supabase WebSocket channels.                                           |
-| **Database & Migrations**      | `supabase/migrations/*.sql`                                                                   | PostgreSQL schema definitions: `profiles`, `conversations`, `conversation_members`, `messages`, `message_deletions`, Row Level Security (RLS) policies, storage buckets, and RPC functions. |
+**Date:** November 18, 2026  
+**Reference Document:** [CODEBASE_REVIEW.md](file:///Users/pc-react/Documents/code_review/talkhub/CODEBASE_REVIEW.md)  
+**Evaluated Branch / Commit:** `main` (`e40342e`)
 
 ---
 
-## 2. How the Main Parts Work & Interact
+## 1. Executive Summary & Progress Audit
 
-```mermaid
-flowchart TD
-    subgraph Client["Client Browser (Next.js / React 19)"]
-        UI["ChatScreen & Components"]
-        RQ["TanStack React Query Cache"]
-        Realtime["Supabase Realtime Listeners"]
-    end
+Recent pull requests (`#2`, `#3`, `#4`) made significant headway addressing several architectural and structural issues identified in [CODEBASE_REVIEW.md](file:///Users/pc-react/Documents/code_review/talkhub/CODEBASE_REVIEW.md). However, **several critical runtime bugs from V1 remain unfixed**, and **a few new regressions were introduced** in the migration and component layers.
 
-    subgraph Server["Next.js Server / Edge"]
-        MW["Middleware (src/proxy.ts)"]
-        RSC["Server Components (src/app/chat/page.tsx)"]
-    end
+### Progress Matrix
 
-    subgraph Backend["Supabase Platform"]
-        Auth["Supabase Auth"]
-        PG["PostgreSQL Database & RLS"]
-        Storage["Storage Buckets (chat-files / avatars)"]
-        WS["Supabase Realtime (WebSocket)"]
-    end
-
-    Client -->|1. Route Request| MW
-    MW -->|Sync Session / Protect| Auth
-    MW -->|Authorized| RSC
-    RSC -->|Render with userId| UI
-
-    UI -->|Mutations (Send message, upload)| RQ
-    RQ -->|Write Rows / Invoke RPC| PG
-    UI -->|Upload Files| Storage
-    Storage -->|Signed URLs| UI
-
-    Realtime -->|Subscribe to INSERT/UPDATE/DELETE| WS
-    WS -->|Postgres Changes| Realtime
-    Realtime -->|Update / Invalidate| RQ
-    RQ -->|Re-render UI| UI
-```
-
-1. **Authentication & Session Management**:
-   - `src/lib/supabase/middleware.ts` runs on each request to refresh tokens using `@supabase/ssr`.
-   - `src/proxy.ts` evaluates session status: `/` redirects to `/chat` or `/login`; `/chat` requires an active session; logged-in users visiting `/login` or `/register` are redirected to `/chat`.
-   - On the client, `useLogin` and `useSignup` handle credentials against `supabase.auth`.
-
-2. **Conversation & Message Flow**:
-   - `ChatScreen.tsx` receives `currentUserId` from the server component `ChatPage`.
-   - `useConversations(currentUserId)` queries the database for user memberships, conversations, and other participants' profiles.
-   - When a conversation is selected, `useMessages(selectedId)` triggers an infinite query with cursor pagination (`created_at` timestamp).
-   - Sending messages (`useSendMessage`, `useSendAttachment`, `useSendImageGroup`) performs optimistic updates directly on the React Query cache before syncing with Supabase.
-
-3. **Realtime & Presence**:
-   - **Messages**: `useRealtimeMessages` listens to `postgres_changes` on the `messages` table filtered by `conversation_id`.
-   - **Global Events**: `useRealtimeConversations` listens for message inserts/updates across the user's chats to update sidebar badges and last message previews.
-   - **Presence**: `useOnlineUsers` connects to a Supabase Presence channel (`global-online-users`) tracking online user IDs.
-   - **Typing Indicator**: `useTypingIndicator` uses Supabase Broadcast events on `talkhub-typing:<conversationId>`.
+| Area / Recommendation from V1                                         |          Status           | Notes                                                                                                                 |
+| :-------------------------------------------------------------------- | :-----------------------: | :-------------------------------------------------------------------------------------------------------------------- |
+| **RPC Name Mismatch** (`mark_conversation_messages_read/delivered`)   |     ❌ **UNRESOLVED**     | Still calls `mark_conversation_messages_read` & `mark_conversation_messages_delivered`. Still fails at runtime.       |
+| **Storage Bucket Name Mismatch** (`chat-attachments` vs `chat-files`) |     ❌ **UNRESOLVED**     | Frontend still targets `"chat-attachments"`, SQL schema configures `"chat-files"`.                                    |
+| **Missing Attachment & Phone Columns in DB**                          |      ✅ **RESOLVED**      | Added via migration `20261117000100_fix_missing_chat_features.sql`.                                                   |
+| **Missing Group RPC & Message DELETE RLS**                            |      ✅ **RESOLVED**      | Added `create_group_conversation` RPC and sender DELETE policy in SQL.                                                |
+| **Group Chat Creation in UI**                                         |     ❌ **UNRESOLVED**     | `CreateGroupModal.tsx` button remains `disabled={true}`, handlers still commented out.                                |
+| **In-Memory Message Fetching in `useConversations`**                  | 🟡 **PARTIALLY RESOLVED** | Added `get_user_conversations()` SQL RPC, but omitted delivered/read timestamps and depends on an unmigrated column.  |
+| **Sidebar Omits Group Conversations**                                 |     ❌ **UNRESOLVED**     | `ChatSidebar.tsx` still iterates over `filteredUsers` with `!c.is_group`. Group chats are invisible.                  |
+| **Unfiltered Global Realtime Message Listener**                       |      ✅ **RESOLVED**      | `useRealtimeConversations` now dynamically subscribes only to conversation IDs the user belongs to.                   |
+| **Typing Indicator Hook Re-render Thrashing**                         |      ✅ **RESOLVED**      | Memoized Supabase client with `useMemo` in `useTypingIndicator.ts`.                                                   |
+| **`EditProfileModal` Query Key Mismatch**                             |      ✅ **RESOLVED**      | Uses shared `QUERY_KEYS.users` via `src/lib/queryKeys.ts`.                                                            |
+| **Component Decomposition (`MessageItem.tsx`)**                       |      ✅ **RESOLVED**      | Split into subcomponents in `src/components/chat/message/`.                                                           |
+| **Component Decomposition (`MessageInput.tsx`)**                      |     ❌ **UNRESOLVED**     | Still 563 lines. Created 0-byte empty files `AttachmentPreviewList.tsx` and `EmojiPickerPopover.tsx`.                 |
+| **Path Alias & Directory Consolidation**                              | 🟡 **PARTIALLY RESOLVED** | Root `./components` & `./lib` moved to `./src/`, but `components.json` was not updated to reflect `./src/`.           |
+| **Dead Files & Repository Cleanup**                                   | 🟡 **PARTIALLY RESOLVED** | Deleted `color.ts`, `chat.store.ts`, unused schemas, and zip; but created accidental `touch ARCHITECTURE.md` in root. |
+| **Root Layout Missing `messages` Prop**                               |      ✅ **RESOLVED**      | Added `messages = await getMessages()` to `src/app/layout.tsx`.                                                       |
+| **Hardcoded Display Text in UI Components**                           |      ✅ **RESOLVED**      | Added keys in `messages/en.json` for date headers, copied toast, edit/delete actions, and gallery.                    |
+| **Profiles RLS Tightening**                                           |      ✅ **RESOLVED**      | Replaced public read policy with `Users can view profiles in shared conversations`.                                   |
 
 ---
 
-## 3. Critical Issues & Areas for Improvement
+## 2. Critical Unresolved Issues from V1
 
-### Issue 1: RPC Function Name Mismatches Breaking Core Features
+### 1. RPC Function Name Mismatches Breaking Delivery & Read Receipts
 
 - **What's wrong:**
-  1. In `src/screen/chat/ChatScreen.tsx` (line 114), the client calls:
-     ```ts
-     await supabase.rpc("mark_conversation_messages_read", {
-       p_conversation_id: selectedId,
-     });
-     ```
-     However, the database migration (`20261103000400_message_status_tracking.sql`) defines this function as `mark_messages_as_read`.
-  2. In `src/hooks/useRealtimeChat.ts` (line 400), the client calls:
-     ```ts
-     await supabase.rpc("mark_conversation_messages_delivered", {
-       p_conversation_id: message.conversation_id,
-     });
-     ```
-     The migration defines this function as `mark_messages_as_delivered`.
-- **Why it matters:** Read receipts and delivery receipts fail in production with database RPC errors (`function ... does not exist`), logging errors and failing to persist message statuses.
-- **How to improve:** Align the RPC function names between the frontend callers and the SQL definitions, and generate typed database schemas using `supabase gen types typescript` to catch RPC name mismatches at compile time.
+  - `src/screen/chat/ChatScreen.tsx` (line 138):
+    ```ts
+    await supabase.rpc("mark_conversation_messages_read", {
+      p_conversation_id: selectedId,
+    });
+    ```
+    In `supabase/migrations/20261103000400_message_status_tracking.sql`, the function is named `mark_messages_as_read`.
+  - `src/hooks/useRealtimeChat.ts` (line 341):
+    ```ts
+    await supabase.rpc("mark_conversation_messages_delivered", {
+      p_conversation_id: message.conversation_id,
+    });
+    ```
+    In `supabase/migrations/20261103000400_message_status_tracking.sql`, the function is named `mark_messages_as_delivered`.
+- **Why it matters:** Every time a message arrives or a conversation opens, Supabase throws RPC 404 errors (`PGRST202: Could not find the function...`). Read and delivery statuses are never saved to the database.
+- **How to improve:**
+  - Update `ChatScreen.tsx` to call `"mark_messages_as_read"`.
+  - Update `useRealtimeChat.ts` to call `"mark_messages_as_delivered"`.
+  - (Optional) Or add SQL aliases in a new migration to support both names.
 - **Affected files:**
   - `src/screen/chat/ChatScreen.tsx`
   - `src/hooks/useRealtimeChat.ts`
-  - `supabase/migrations/20261103000400_message_status_tracking.sql`
 
 ---
 
-### Issue 2: Database Schema Mismatches (Missing Columns & RPCs)
+### 2. Storage Bucket Name Mismatch
 
 - **What's wrong:**
-  1. **Attachment metadata**: `useSendAttachment` and `useSendImageGroup` in `src/hooks/useChat.ts` insert `attachment_name`, `attachment_type`, `attachment_size`, and `media_group_id` into `public.messages`. None of these columns exist in `supabase/migrations/20261027000100_talkhub_schema.sql` (only `attachment_path` exists), and no subsequent migration adds them.
-  2. **Profile phone number**: `useSignup.ts` and `useConversations.ts` query and insert `phone` on `public.profiles`. The `profiles` schema has no `phone` column.
-  3. **Group creation RPC missing**: `useCreateGroupConversation` calls `supabase.rpc("create_group_conversation")`. The file `supabase/migrations/20261102000100_chat_features.sql` was checked in as an empty (0-byte) file, and this function does not exist in any migration.
-  4. **Storage bucket mismatch**: `useChat.ts` uploads to bucket `"chat-attachments"`, while the database schema and RLS policies configure bucket `"chat-files"`.
-  5. **Missing DELETE RLS policy**: `useDeleteMessage` attempts to run `.from("messages").delete()`, but the migration specifically states `-- Intentionally NO client UPDATE or DELETE policies`, and no DELETE policy was added.
-- **Why it matters:** Sending grouped images, saving attachments, saving phone numbers, creating group chats, and deleting messages will fail with PostgreSQL constraint/column/RLS errors.
-- **How to improve:**
-  - Create a migration adding the missing columns to `messages` (`attachment_name text`, `attachment_type text`, `attachment_size bigint`, `media_group_id uuid`) and `profiles` (`phone text`).
-  - Implement `create_group_conversation(p_title text, p_member_ids uuid[])` in SQL.
-  - Standardize the storage bucket name to `chat-files` (or `chat-attachments`) across both SQL and TypeScript.
-  - Add a DELETE policy on `messages`:
-    ```sql
-    create policy "Senders can delete their own messages"
-    on public.messages for delete to authenticated
-    using (sender_id = (select auth.uid()));
-    ```
+  - `src/hooks/useChat.ts` (lines 199, 411, 438, 528, 563) targets storage bucket `"chat-attachments"`.
+  - `supabase/migrations/20261027000100_talkhub_schema.sql` (line 229) creates and grants RLS policies on bucket `"chat-files"`.
+- **Why it matters:** Uploading images, documents, or image groups fails with `Bucket not found` or storage permission errors on standard deployments.
+- **How to improve:** Change bucket references in `src/hooks/useChat.ts` from `"chat-attachments"` to `"chat-files"` (or add an `INSERT INTO storage.buckets` migration for `chat-attachments`).
 - **Affected files:**
-  - `supabase/migrations/`
   - `src/hooks/useChat.ts`
-  - `src/hooks/useSignup.ts`
-  - `src/hooks/useConversations.ts`
 
 ---
 
-### Issue 3: Severe Scalability & Performance Bottleneck in `useConversations`
+### 3. Sidebar Ignores Group Chats & Iterates Users
 
 - **What's wrong:**
-  In `src/hooks/useConversations.ts` (lines 61–76), step 4 executes:
+  In `src/components/chat/ChatSidebar.tsx` (lines 94–101):
   ```ts
-  const { data: allMessages } = await supabase
-    .from("messages")
-    .select(...)
-    .in("conversation_id", conversationIds)
-    .order("created_at", { ascending: true });
+  const usersWithConversations = filteredUsers.map((user) => {
+    const conversation = conversations.find(
+      (c) =>
+        !c.is_group &&
+        (c.other_user_id === user.id || ...),
+    );
   ```
-  It queries **every message in every conversation the user belongs to into browser memory** without a limit, solely to compute `lastMessage` and `unreadCount`.
-- **Why it matters:** If a user has 10 conversations with 1,000 messages each, 10,000 rows are fetched on initial load and on every query invalidation. This causes network saturation, high database load, and browser memory exhaustion.
-- **How to improve:**
-  - Delegate conversation summaries to the database using a PostgreSQL view or a dedicated RPC function (e.g., `get_user_conversations`) utilizing `DISTINCT ON (conversation_id)` or lateral joins for the last message, and a subquery for unread counts.
-  - Alternatively, store denormalized `last_message_content`, `last_message_at`, `last_message_sender_id` directly on the `conversations` table, maintained via a database trigger on message insert.
-- **Affected files:**
-  - `src/hooks/useConversations.ts`
-  - `supabase/migrations/`
-
----
-
-### Issue 4: Global Realtime Listener Without Database Filter
-
-- **What's wrong:**
-  In `src/hooks/useRealtimeChat.ts` (lines 375–381), `useRealtimeConversations` subscribes to:
-  ```ts
-  .on("postgres_changes", {
-    event: "INSERT",
-    schema: "public",
-    table: "messages",
-  }, ...)
-  ```
-  There is no `filter` clause on this channel.
-- **Why it matters:** The client receives a WebSocket event for **every message inserted across the entire platform**, including chats the user is not a participant of. Even if RLS limits data payload, this causes client event flooding and unnecessary query invalidations.
-- **How to improve:** Filter Realtime changes by user conversation IDs, or broadcast new message events via user-specific Supabase Realtime broadcast channels (`user:<userId>`).
-- **Affected files:**
-  - `src/hooks/useRealtimeChat.ts`
-
----
-
-### Issue 5: Sidebar Renders All Users Instead of Conversations
-
-- **What's wrong:**
-  In `src/components/chat/ChatSidebar.tsx` (lines 94–120):
-  - `usersToDisplay` maps over `filteredUsers` (fetched from `useUsers()`, which returns every profile in the database).
-  - It matches each user to a conversation: `c.other_user_id === user.id`.
-  - It filters out any conversation where `c.is_group === true` (`!c.is_group`).
 - **Why it matters:**
-  1. Group chats can never be seen or accessed in the sidebar.
-  2. If the platform has 5,000 registered users, the sidebar attempts to render 5,000 items even if the current user has only chatted with 1 person.
+  1. Group conversations are explicitly filtered out (`!c.is_group`). Users can never see, select, or participate in group chats from the sidebar.
+  2. Because `20261118000100_restrict_profiles_select.sql` restricted `profiles` to only shared conversations, `filteredUsers` no longer contains unknown users anyway. The sidebar is filtering a user list rather than displaying the user's conversation threads.
 - **How to improve:**
-  - The sidebar should iterate directly over `conversations` (which includes both 1:1 and group chats).
-  - User search should only trigger when the user opens a "New Chat" modal or explicitly searches for new contacts.
+  - Change `ChatSidebar.tsx` to iterate directly over `conversations` (both 1:1 and group chats).
+  - Search should filter existing conversations by name/title, with an explicit "New Chat" search modal using `search_chat_users` to discover new people.
 - **Affected files:**
   - `src/components/chat/ChatSidebar.tsx`
   - `src/components/chat/UserListItem.tsx`
 
 ---
 
-### Issue 6: Typing Indicator Effect Memory Leak / Socket Churn
+### 4. Create Group Button Permanently Disabled in UI
 
 - **What's wrong:**
-  In `src/hooks/useTypingIndicator.ts` (lines 17, 99):
+  In `src/components/chat/CreateGroupModal.tsx` (lines 197–201):
+  ```tsx
+  <Button
+    // onClick={handleCreate}
+    disabled={true}
+    className="h-full flex-1 cursor-not-allowed bg-chart-4 text-white hover:bg-chart-5"
+  >
+    {t("createGroup")}
+  </Button>
+  ```
+  The SQL migration `20261117000100_fix_missing_chat_features.sql` added the backend function `create_group_conversation`, but the UI hook and click handler were left commented out and disabled.
+- **Why it matters:** Group conversation creation cannot be completed by end users.
+- **How to improve:** Uncomment `useCreateGroupConversation()`, wire up `handleCreate`, and enable the button when `title.trim()` is valid and `selectedUsers.length > 0`.
+- **Affected files:**
+  - `src/components/chat/CreateGroupModal.tsx`
+
+---
+
+### 5. `components.json` Path Aliases Point to Root
+
+- **What's wrong:**
+  In `components.json`:
+  ```json
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  }
+  ```
+  While the UI files were moved to `src/components/ui`, `components.json` was left pointing to `@/components` (which resolves to root `./components` because tsconfig maps `@/*` to `./*`).
+- **Why it matters:** Running any future shadcn command (e.g. `npx shadcn add dropdown-menu`) will recreate the root `./components` and `./lib` directories, causing directory duplication again.
+- **How to improve:** Update `components.json` aliases to prefix with `src/`:
+  ```json
+  "aliases": {
+    "components": "@/src/components",
+    "utils": "@/src/lib/utils",
+    "ui": "@/src/components/ui",
+    "lib": "@/src/lib",
+    "hooks": "@/src/hooks"
+  }
+  ```
+- **Affected files:**
+  - `components.json`
+
+---
+
+## 3. New Issues & Regressions Introduced in Recent Commits
+
+### 1. Accidental `touch ARCHITECTURE.md` File in Root
+
+- **What's wrong:** A file named literally `touch ARCHITECTURE.md` (24KB, with a leading shell command in its filename) was committed to the repository root.
+- **Why it matters:** Clutters repository, causes shell escape issues, and pollutes git history.
+- **How to improve:** Delete `touch ARCHITECTURE.md` (or rename to `ARCHITECTURE.md` if intended as project documentation).
+- **Affected files:**
+  - `touch ARCHITECTURE.md`
+
+---
+
+### 2. Migration Failure on Clean Database (`is_deleted_for_everyone`)
+
+- **What's wrong:**
+  Migration `supabase/migrations/20261118000100_get_user_conversations.sql` (lines 50, 67, 90) executes:
+  ```sql
+  AND m.is_deleted_for_everyone = false
+  ```
+  However, **no migration in the `supabase/migrations/` chain ever ran**:
+  ```sql
+  ALTER TABLE public.messages ADD COLUMN is_deleted_for_everyone boolean NOT NULL DEFAULT false;
+  ```
+  The column only exists in `baseline/production_schema_snapshot.sql` (which is an unapplied reference snapshot).
+- **Why it matters:** Running `supabase db reset` or executing migrations on a fresh staging/production database will crash with:
+  `ERROR: column m.is_deleted_for_everyone does not exist`.
+- **How to improve:** Add a migration running `ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS is_deleted_for_everyone boolean NOT NULL DEFAULT false;` ordered before `20261118000100_get_user_conversations.sql`, or prepend it directly into a migration fix.
+- **Affected files:**
+  - `supabase/migrations/`
+
+---
+
+### 3. `get_user_conversations()` Omits Delivered & Read Timestamps
+
+- **What's wrong:**
+  In `src/hooks/useConversations.ts` (lines 19–21, 145–146):
   ```ts
-  const supabase = createClient();
+  last_message_delivered_at: string | null;
+  last_message_read_at: string | null;
   // ...
-  useEffect(() => { ... }, [conversationId, currentUserId, supabase]);
+  last_message_delivered: !!conv.last_message_delivered_at,
+  last_message_read: !!conv.last_message_read_at,
   ```
-  `createClient()` is called inside the hook body without `useMemo`. Because a new client instance is created on every render, the `useEffect` cleans up and re-establishes the WebSocket channel on every render of `ChatWindow`.
-- **Why it matters:** Rapid channel creation and removal causes WebSocket thrashing, lost broadcast events, and client-side lag during typing.
-- **How to improve:** Memoize the Supabase client:
+  However, the new SQL function in `20261118000100_get_user_conversations.sql` only selects:
+  `id, content, message_type, sender_id, created_at` from `lm`. It does **not** select `delivered_at` or `read_at`!
+- **Why it matters:** In the conversation list, single/double checks for outgoing messages never show as delivered or read because `last_message_delivered_at` and `last_message_read_at` are always `undefined`.
+- **How to improve:** Update `get_user_conversations()` return table and query to include `last_message_delivered_at timestamptz` and `last_message_read_at timestamptz`.
+- **Affected files:**
+  - `supabase/migrations/20261118000100_get_user_conversations.sql`
+  - `src/hooks/useConversations.ts`
+
+---
+
+### 4. Empty 0-byte Placeholder Files in `message-input/`
+
+- **What's wrong:**
+  `src/components/chat/message-input/AttachmentPreviewList.tsx` and `EmojiPickerPopover.tsx` are 0-byte empty files. Meanwhile, `MessageInput.tsx` is still 563 lines long.
+- **Why it matters:** Creates dead imports or confusing empty modules in the source tree without fulfilling the component decomposition.
+- **How to improve:** Either complete extracting `<AttachmentPreviewList />` and `<EmojiPickerPopover />` from `MessageInput.tsx`, or delete the empty placeholder files until ready to implement.
+- **Affected files:**
+  - `src/components/chat/message-input/AttachmentPreviewList.tsx`
+  - `src/components/chat/message-input/EmojiPickerPopover.tsx`
+  - `src/components/chat/MessageInput.tsx`
+
+---
+
+### 5. Typos in Directory & File Names
+
+- **What's wrong:**
+  - File `src/constant/attechmentFile.ts`:
+    - Folder name `constant` violates the common convention `constants`.
+    - File name `attechmentFile.ts` has a typo (`attechment` instead of `attachment`).
+- **Why it matters:** Degrades code maintainability, searchability, and clean naming standards.
+- **How to improve:** Rename `src/constant/attechmentFile.ts` to `src/constants/attachmentFiles.ts` (or `src/constants/attachments.ts`) and update imports.
+- **Affected files:**
+  - `src/constant/attechmentFile.ts`
+  - Any importing files
+
+---
+
+### 6. Hardcoded String in `UserListItem.tsx`
+
+- **What's wrong:**
+  In `src/components/chat/UserListItem.tsx` (lines 72–78):
   ```ts
-  const supabase = useMemo(() => createClient(), []);
+  if (
+    lastMessage === "This message was deleted" ||
+    lastMessage === "You deleted this message"
+  ) {
+    return "This message was deleted";
+  }
   ```
-  or omit `supabase` from the dependency array if using a stable singleton instance.
+- **Why it matters:** Hardcoded English string bypasses `next-intl` localization.
+- **How to improve:** Add a key in `messages/en.json` (e.g., `deletedMessagePlaceholder`) and use `t("deletedMessagePlaceholder")`.
+- **Affected files:**
+  - `src/components/chat/UserListItem.tsx`
+  - `messages/en.json`
+
+---
+
+### 7. Large Blocks of Commented-out Dead Code
+
+- **What's wrong:**
+  - `src/hooks/useTypingIndicator.ts` has lines 1–106 commented out.
+  - `src/hooks/useRealtimeChat.ts` has lines 1–200 commented out.
+- **Why it matters:** Increases file size, clutters navigation, and confuses future maintainers. Git history already preserves previous implementations.
+- **How to improve:** Delete the commented-out blocks from both files.
 - **Affected files:**
   - `src/hooks/useTypingIndicator.ts`
+  - `src/hooks/useRealtimeChat.ts`
 
 ---
 
-### Issue 7: Query Key Mismatch in `EditProfileModal`
+## 4. Prioritized Action Plan
 
-- **What's wrong:**
-  In `src/components/chat/EditProfileModal.tsx` (line 148):
-  ```ts
-  await queryClient.invalidateQueries({ queryKey: ["users"] });
-  ```
-  However, in `src/hooks/useUsers.ts` (line 11), the query key is defined as:
-  ```ts
-  queryKey: ["chat-users"];
-  ```
-- **Why it matters:** Editing a user's name or avatar does not invalidate the user list query; stale profile information remains in the sidebar until manual page reload.
-- **How to improve:** Define shared query key constants (e.g. `QUERY_KEYS = { users: ["chat-users"], conversations: ["conversations"] }`).
-- **Affected files:**
-  - `src/components/chat/EditProfileModal.tsx`
-  - `src/hooks/useUsers.ts`
+To bring the codebase to production readiness, complete the remaining tasks in the following order:
 
----
-
-## 4. Structural Improvements & Project Organization
-
-### 1. Resolve Duplicate Directory Paths (`components` vs `src/components`, `lib` vs `src/lib`)
-
-- **Problem:** Shadcn CLI created root-level directories `./components/ui` and `./lib/utils.ts` because `components.json` is configured with `@/*` aliases pointing to the root directory while all application code lives in `./src/`.
-- **Action:**
-  1. Move `./components/ui` to `./src/components/ui`.
-  2. Move `./lib/utils.ts` to `./src/lib/utils.ts`.
-  3. Delete the root `./components` and `./lib` directories.
-  4. Update `components.json` and `tsconfig.json` so `@/*` maps to `./src/*`.
-
-### 2. Clean Up Orphaned, Duplicate, and Dead Files
-
-- **`talkhub-project.zip`**: A 230KB archive file in the root directory that should not be tracked in version control.
-- **`src/screen/ChatScreen.tsx`**: A 2-line file merely re-exporting `src/screen/chat/ChatScreen.tsx`. Delete and import directly from `src/screen/chat`.
-- **`src/app/color.ts`**: An unused 354-line Tailwind v3 config file sitting in the Next.js App Router folder. Remove it.
-- **`src/store/chat.store.ts`**: A Zustand store that is never imported or used. Either adopt Zustand and remove redundant state from hooks, or remove Zustand and its dependency from `package.json`.
-- **`src/lib/validations/`**: Contains unused schemas (`chat.schema.ts`, `group.schema.ts`, `message.schema.ts`) that conflict in convention with `src/schemas/auth.ts`.
-- **`src/i18n/textConstatn.ts` & `src/i18n/en.json`**: `textConstatn.ts` is an unused file with a typo. `src/i18n/en.json` contains only `{"LOGIN": "Login"}` while the real dictionary is at `messages/en.json`. Consolidate all translations in `messages/`.
-- **Empty 0-byte files**: Remove `src/lib/utils/chat.ts`, `src/lib/utils/file.ts`, `src/utils/enum.ts`, and `supabase/migrations/20261102000100_chat_features.sql`.
-
-### Recommended Target Directory Structure
-
-```text
-src/
-├── app/                           # Only Next.js App Router routes & layouts
-│   ├── (auth)/                    # (auth)/login, (auth)/register
-│   ├── chat/                      # chat/page.tsx
-│   ├── globals.css
-│   └── layout.tsx
-├── components/
-│   ├── ui/                        # Shadcn UI primitives (button, input, dialog)
-│   ├── chat/                      # Chat domain components
-│   ├── modal/                     # Shared modal components
-│   └── icons/                     # Shared SVG icons
-├── hooks/                         # Data & feature hooks (useChat, useConversations, etc.)
-├── lib/
-│   ├── supabase/                  # client.ts, server.ts, middleware.ts
-│   └── utils.ts                   # Class merging (cn) & common formatters
-├── schemas/                       # All Zod validation schemas
-├── types/                         # TypeScript domain models & database contracts
-└── i18n/                          # request.ts (locales stay in /messages)
+```mermaid
+flowchart TD
+    A["Step 1: Fix Database Migrations<br>(is_deleted_for_everyone column + get_user_conversations timestamps)"] --> B["Step 2: Fix RPC & Bucket Callers<br>(mark_messages_as_read/delivered + chat-files bucket)"]
+    B --> C["Step 3: Fix Sidebar & Group Chat UI<br>(Display group chats + enable CreateGroupModal)"]
+    C --> D["Step 4: Repository Hygiene<br>(Delete 'touch ARCHITECTURE.md', remove dead code, fix components.json)"]
 ```
 
----
+### Action Checklist
 
-## 5. Code Quality, Maintainability & Reusability
-
-### 1. Component Over-Responsibility & Decomposition
-
-- **`MessageItem.tsx` (869 lines):**
-  - **Current issue:** Combines context menu handling, clipboard fallbacks, image lightbox/gallery with keyboard controls, file download triggers, message truncation ("read more/less"), and deletion modal handling in a single component.
-  - **Fix:** Split into sub-components:
-    - `<MessageContextMenu />`
-    - `<MessageImageGallery />`
-    - `<MessageAttachment />`
-    - `<MessageTextContent />`
-
-- **`MessageInput.tsx` (514 lines):**
-  - **Current issue:** Handles drag-and-drop file upload, file size formatting, emoji picker popup, textarea auto-resize, editing mode states, and typing throttle triggers all in one place.
-  - **Fix:** Extract `<AttachmentPreviewList />` and `<EmojiPickerPopover />`.
-
-### 2. State Inconsistency in `MessageItem.tsx`
-
-- In `MessageItem.tsx` (line 39):
-  ```ts
-  const [contextMenu, setContextMenu] = useState<ContextMenuPosition | null>(
-    null,
-  );
-  ```
-  In line 200:
-  ```ts
-  setContextMenu(false); // Type mismatch (boolean assigned to object | null)
-  ```
-  In line 328:
-  ```ts
-  onClick={() => setContextMenu((prev) => !prev)} // Toggles between boolean and object
-  ```
-  This creates erratic menu positioning behavior. Replace this state with a clean boolean toggle for the hover menu and separate coordinates only if using an explicit right-click context menu.
-
-### 3. Missing `messages` Prop on `NextIntlClientProvider`
-
-- In `src/app/layout.tsx` (line 48):
-  ```tsx
-  <NextIntlClientProvider>{children}</NextIntlClientProvider>
-  ```
-  `NextIntlClientProvider` is invoked without passing `messages`. While server components work, client components utilizing `useTranslations` without messages passed through the root provider can encounter hydration mismatches or missing key errors. Pass `messages = await getMessages()` in `RootLayout`.
-
----
-
-## 6. Best Practices & Security Audit
-
-### 1. Database Row Level Security (RLS) Review
-
-- **Unrestricted SELECT on Profiles**: `20261103000100_profiles_view_all.sql` created:
-  ```sql
-  create policy "Anyone can view all profiles"
-  on public.profiles for select to authenticated using (true);
-  ```
-  This exposes all user profiles (including usernames and phone numbers if added) to any authenticated user. If TalkHub is intended for closed networks or friend-only chats, profiles should be restricted to users who share conversations or through the explicit search RPC `search_chat_users`.
-
-### 2. File Upload Validation
-
-- In `useChat.ts` (`useSendAttachment`), validation on file size and extension is done purely on the client.
-- **Security Improvement:** Add Supabase Storage bucket constraints (`file_size_limit` and `allowed_mime_types`) directly in the bucket configuration:
-  ```sql
-  update storage.buckets
-  set file_size_limit = 10485760, -- 10MB
-      allowed_mime_types = '{image/*,application/pdf,text/plain}'
-  where id = 'chat-files';
-  ```
-
-### 3. Hardcoded Display Text in UI Components
-
-Several user-facing strings bypass `next-intl`:
-
-- In `src/components/chat/MessageList.tsx`: `"Today"` and `"Yesterday"` are hardcoded in `getDateLabel()` despite translation keys existing.
-- In `src/components/chat/MessageItem.tsx`: `"Text copied!"`, `"Edit"`, `"Delete"`, `"Image"` are hardcoded English literals.
-- Standardize all visible strings across the app to use `t(...)`.
-
----
-
-## 7. Recommended Implementation Plan
-
-1. **Phase 1: Database & RPC Alignment (High Priority)**
-   - Add missing columns (`attachment_name`, `attachment_type`, `attachment_size`, `media_group_id`, `phone`) to Supabase migrations.
-   - Align RPC function names (`mark_messages_as_read`, `mark_messages_as_delivered`).
-   - Add the `create_group_conversation` function and message DELETE policy.
-   - Sync the storage bucket name (`chat-files`).
-
-2. **Phase 2: Conversation Loading & Realtime Optimization**
-   - Replace client-side message scanning in `useConversations` with an efficient PostgreSQL query/RPC.
-   - Refactor `ChatSidebar` to render actual conversation threads (including groups) rather than the global user list.
-   - Add conversation-scoped filtering to `useRealtimeConversations`.
-   - Fix the `supabase` instance dependency in `useTypingIndicator`.
-
-3. **Phase 3: Directory Cleanup & Alias Alignment**
-   - Move root `./components/ui` and `./lib/utils.ts` into `src/`.
-   - Update `tsconfig.json` and `components.json`.
-   - Remove unused/dead files (`color.ts`, `chat.store.ts`, unused schemas, 0-byte files, `talkhub-project.zip`).
-
-4. **Phase 4: Component Refactoring & Type Safety**
-   - Decompose `MessageItem.tsx` and `MessageInput.tsx`.
-   - Fix `contextMenu` type mismatch and `["users"]` query key mismatch.
-   - Ensure complete i18n coverage across all message views.
+1. [ ] **Database**: Add `ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS is_deleted_for_everyone boolean NOT NULL DEFAULT false;` to migration chain.
+2. [ ] **Database**: Update `get_user_conversations()` to return `last_message_delivered_at` and `last_message_read_at`.
+3. [ ] **Client RPC**: In `ChatScreen.tsx`, rename RPC call to `mark_messages_as_read`.
+4. [ ] **Client RPC**: In `useRealtimeChat.ts`, rename RPC call to `mark_messages_as_delivered`.
+5. [ ] **Storage**: In `useChat.ts`, update bucket name from `"chat-attachments"` to `"chat-files"`.
+6. [ ] **Sidebar**: Refactor `ChatSidebar.tsx` to list conversation items (including group conversations).
+7. [ ] **Modals**: Enable group creation in `CreateGroupModal.tsx`.
+8. [ ] **Cleanup**: Delete root file `touch ARCHITECTURE.md`.
+9. [ ] **Cleanup**: Remove 300+ lines of commented-out code in `useTypingIndicator.ts` and `useRealtimeChat.ts`.
+10. [ ] **Tooling**: Update `components.json` aliases to point to `@/src/...`.

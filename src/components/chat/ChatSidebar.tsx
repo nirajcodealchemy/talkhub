@@ -166,6 +166,7 @@ export default function ChatSidebar({
             <div className="absolute right-0 top-10 z-30 w-48 rounded-xl border border-border bg-popover  text-popover-foreground shadow-lg">
               <Button
                 type="button"
+                disabled
                 onClick={() => {
                   setIsMenuOpen(false);
                   setIsCreateGroupOpen(true);
