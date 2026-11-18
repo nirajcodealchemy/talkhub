@@ -141,17 +141,24 @@
         "sharedAttachment": "Shared attachment",
         "replies": "{count, plural, one {# Reply} other {# Replies}}",
         "readMore": "Read more",
-        "readLess": "Read less"
-      },
-      "MessageList": {
-        "today": "Today",
-        "emptyMessage": "No messages yet. Send a message to start the conversation!"
-      },
-      "UserListItem": {
+        "readLess": "Read less",
+        "textCopied": "Text copied!",
+        "edit": "Edit",
+        "delete": "Delete",
         "image": "Image",
-        "defaultUser": "User",
-        "document": "Document"
+        "downloadAll": "Download all",
+        "PreparingZip": "Preparing ZIP..."
       }
+    },
+    "MessageList": {
+      "today": "Today",
+      "emptyMessage": "No messages yet. Send a message to start the conversation!",
+      "yesterday": "Yesterday"
+    },
+    "UserListItem": {
+      "image": "Image",
+      "defaultUser": "User",
+      "document": "Document"
     }
   }
 }

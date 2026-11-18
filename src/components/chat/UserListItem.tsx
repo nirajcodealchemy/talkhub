@@ -67,35 +67,6 @@ export default function UserListItem({
     return <Check size={15} className="shrink-0 text-grey-400" />;
   };
 
-  // const renderLastMessage = () => {
-  //   // Image message (check this before lastMessage)
-  //   if (lastMessageType === "image" || lastMessage?.startsWith("[Image]")) {
-  //     return (
-  //       <span className="flex items-center gap-1">
-  //         <ImageIcon size={13} className="shrink-0" />
-  //         <span>{t("image")}</span>
-  //       </span>
-  //     );
-  //   }
-
-  //   // File message
-  //   if (lastMessageType === "file") {
-  //     return (
-  //       <span className="flex items-center gap-1">
-  //         <FileText size={13} className="shrink-0" />
-  //         <span>{t("document")}</span>
-  //       </span>
-  //     );
-  //   }
-
-  //   // Normal text message
-  //   if (lastMessage) {
-  //     return lastMessage;
-  //   }
-
-  //   // Fallback when there is no message
-  //   return user.username ? `@${user.username}` : "";
-  // };
   const renderLastMessage = () => {
     // Deleted message: show placeholder first.
     if (
@@ -104,9 +75,6 @@ export default function UserListItem({
     ) {
       return "This message was deleted";
     }
-    // if (lastMessageType === "deleted") {
-    //   return lastMessage;
-    // }
 
     // Image message
     if (lastMessageType === "image" || lastMessage?.startsWith("[Image]")) {

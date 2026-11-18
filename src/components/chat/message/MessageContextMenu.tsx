@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { ChatMessage } from "@/src/types/chat";
+import { useTranslations } from "next-intl";
 
 type Props = {
   message: ChatMessage;
@@ -37,6 +38,8 @@ export default function MessageContextMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isDeleted = message.is_deleted_for_everyone || message.deleted_for_me;
+
+  const t = useTranslations("screen.chat.MessageItem");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -144,7 +147,8 @@ export default function MessageContextMenu({
       {copySuccess && (
         <div className="fixed bottom-6 left-1/2 z-[150] -translate-x-1/2">
           <div className="rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background shadow-lg">
-            Text copied!
+            {/* Text copied! */}
+            {t("textCopied")}
           </div>
         </div>
       )}
@@ -206,7 +210,7 @@ export default function MessageContextMenu({
                   ) : (
                     <Download size={16} />
                   )}
-                  {isDownloading ? "Preparing ZIP..." : "Download all"}
+                  {isDownloading ? t("PreparingZip") : t("downloadAll")}
                 </button>
               )}
 
@@ -220,7 +224,7 @@ export default function MessageContextMenu({
                   className="flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
                 >
                   <Pencil size={16} />
-                  Edit
+                  {t("edit")}
                 </button>
               )}
 
@@ -233,7 +237,7 @@ export default function MessageContextMenu({
                 className="flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
               >
                 <Trash2 size={16} />
-                Delete
+                {t("delete")}
               </button>
             </div>
           </>,

@@ -257,7 +257,7 @@ export default function MessageImageGallery({
             compact ? "text-xs font-semibold" : "text-sm font-semibold"
           }
         >
-          {formatFileSize(image.attachment_size) || "Image"}
+          {formatFileSize(image.attachment_size) || t("image")}
         </span>
         <Download size={compact ? 17 : 19} />
       </button>

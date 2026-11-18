@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { ChatConversation } from "@/src/types/chat";
@@ -50,6 +50,31 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
 
   const [selectedId, setSelectedId] = useState<string>("");
 
+  const previousUserId = useRef(currentUserId);
+
+  useEffect(() => {
+    if (previousUserId.current === currentUserId) return;
+
+    const previousUser = previousUserId.current;
+
+    // Reset the selected conversation when the account changes.
+    setSelectedId("");
+
+    // Remove the previous user's conversation cache.
+    if (previousUser) {
+      queryClient.removeQueries({
+        queryKey: ["conversations", previousUser],
+        exact: true,
+      });
+    }
+
+    // Clear cached message queries to prevent old messages appearing.
+    queryClient.removeQueries({
+      queryKey: ["messages"],
+    });
+
+    previousUserId.current = currentUserId;
+  }, [currentUserId, queryClient]);
   // const { data: dbMessages } = useMessages(selectedId);
   const {
     data: messagesData,

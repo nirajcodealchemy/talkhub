@@ -8,6 +8,7 @@ import {
 import type { ReactNode } from "react";
 import "./globals.css";
 import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
 import QueryProvider from "../providers/QueryProvider";
 import { cn } from "@/src/lib/utils";
 
@@ -31,7 +32,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const RootLayout = ({ children }: { children: ReactNode }) => {
+const RootLayout = async ({ children }: { children: ReactNode }) => {
+  const messages = await getMessages();
+
   return (
     <html
       lang="en"
@@ -44,9 +47,9 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
       )}
     >
       <body>
-        <QueryProvider>
-          <NextIntlClientProvider>{children}</NextIntlClientProvider>
-        </QueryProvider>
+        <NextIntlClientProvider messages={messages}>
+          <QueryProvider>{children}</QueryProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
