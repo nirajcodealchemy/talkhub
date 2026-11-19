@@ -7,17 +7,17 @@ type Props = {
   isMine: boolean;
   isDeleting: boolean;
   deleteError: string;
-  onDelete: (deleteForEveryone: boolean) => void;
   onClose: () => void;
+  onDelete: (deleteForEveryone: boolean) => void;
 };
 
 export default function DeleteMessageModal({
   isOpen,
   isMine,
+  onClose,
+  onDelete,
   isDeleting,
   deleteError,
-  onDelete,
-  onClose,
 }: Props) {
   if (!isOpen) return null;
 

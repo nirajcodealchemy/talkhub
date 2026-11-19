@@ -171,10 +171,10 @@ export function useRealtimeConversations(userId: string) {
           (payload) => {
             const updated = payload.new as {
               id: string;
-              conversation_id: string;
               sender_id: string;
               created_at: string;
               read_at: string | null;
+              conversation_id: string;
               delivered_at: string | null;
               is_deleted_for_everyone?: boolean;
             };

@@ -1,8 +1,8 @@
 "use client";
 
-import { Phone, UserRound, X } from "lucide-react";
-import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
+import { Phone, UserRound, X } from "lucide-react";
 import { ConversationModalProps } from "@/src/types/chat";
 
 export default function ConversationInfoModal({
@@ -78,8 +78,8 @@ export default function ConversationInfoModal({
         <div className="px-5 py-7">
           <div className="flex flex-col items-center">
             <img
-              src={avatar}
               alt={name}
+              src={avatar}
               className="h-24 w-24 rounded-full object-cover"
             />
 

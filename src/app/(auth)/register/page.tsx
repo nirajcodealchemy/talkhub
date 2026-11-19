@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useSignup } from "@/src/hooks/useSignup";
+import { SignupFormData } from "@/src/types/form";
 import AuthInput from "@/src/components/AuthInput";
 import { validation } from "@/src/utils/validation";
+import { Button } from "@/src/components/ui/button";
 import AuthLayout from "@/src/components/AuthLayout";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { Confirmation } from "@/src/components/modal/ConfirmationModal";
-import { SignupFormData } from "@/src/types/form";
-import { Button } from "@/src/components/ui/button";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -151,49 +151,49 @@ export default function SignupPage() {
         <AuthInput
           id="name"
           name="name"
-          label={t("nameLabel")}
           type="text"
           value={data.name}
+          error={error.name}
+          autoComplete="name"
+          label={t("nameLabel")}
           onChange={handleChange}
           placeholder={t("namePlaceholder")}
-          autoComplete="name"
-          error={error.name}
         />
 
         <AuthInput
           id="phone"
-          name="phone"
-          label={t("phoneLabel")}
           type="tel"
+          name="phone"
+          maxLength={10}
+          autoComplete="tel"
           value={data.phone}
+          inputMode="numeric"
+          error={error.phone}
+          label={t("phoneLabel")}
           onChange={handleChange}
           placeholder={t("phonePlaceholder")}
-          autoComplete="tel"
-          inputMode="numeric"
-          maxLength={10}
-          error={error.phone}
         />
 
         <AuthInput
           id="email"
           name="email"
-          label={t("emailLabel")}
           type="email"
           value={data.email}
+          error={error.email}
+          autoComplete="email"
+          label={t("emailLabel")}
           onChange={handleChange}
           placeholder={t("emailPlaceholder")}
-          autoComplete="email"
-          error={error.email}
         />
 
         <AuthInput
           id="password"
-          name="password"
           type="password"
-          label={t("passwordLabel")}
+          name="password"
           value={data.password}
           error={error.password}
           onChange={handleChange}
+          label={t("passwordLabel")}
           autoComplete="new-password"
           placeholder={t("passwordPlaceholder")}
         />
@@ -215,11 +215,11 @@ export default function SignupPage() {
         </Button>
       </form>
       <Confirmation
+        loading={loading}
         title={modalConfig.title}
+        isOpen={modalConfig.isOpen}
         message={modalConfig.message}
         confirm={modalConfig.confirm}
-        isOpen={modalConfig.isOpen}
-        loading={loading}
         onCancel={() =>
           setModalConfig((previous) => ({
             ...previous,

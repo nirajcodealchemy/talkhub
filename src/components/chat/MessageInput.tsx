@@ -11,31 +11,29 @@ import { useRef, useState, DragEvent, useEffect } from "react";
 import EmojiPickerPopover from "./message-input/EmojiPickerPopover";
 import AttachmentPreviewList from "./message-input/AttachmentPreviewList";
 import {
+  MAX_FILE_SIZE,
   ALLOWED_EXTENSIONS,
   ALLOWED_FILE_TYPES,
-  MAX_FILE_SIZE,
 } from "@/src/constant/attachmentFile";
 
 export default function MessageInput({
-  conversationId,
   onSend,
+  onTyping,
   onAttachment,
-  onAttachments,
-  editingMessage,
   onCancelEdit,
   onEditSubmit,
-  onTyping,
   onStopTyping,
+  onAttachments,
+  conversationId,
+  editingMessage,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
-
   const [isSending, setIsSending] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const dragCounter = useRef(0);
-
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -224,11 +222,11 @@ export default function MessageInput({
 
   return (
     <div
-      className="relative m-3 shrink-0 rounded-md bg-background px-6 py-3"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      className="relative m-3 shrink-0 rounded-md bg-background px-6 py-3"
     >
       {isDragging && (
         <div className="absolute inset-2 z-50 flex items-center justify-center rounded-xl border-2 border-dashed border-chart-4 bg-chart-4/5">
@@ -311,18 +309,7 @@ export default function MessageInput({
           }}
           placeholder={t("typeMessage")}
           rows={1}
-          className="
-    w-full
-    max-h-[120px]
-    min-h-[24px]
-    resize-none
-    overflow-y-auto
-    bg-transparent
-    text-[14px]
-    text-foreground
-    outline-none
-    placeholder:text-muted-foreground
-  "
+          className=" w-full max-h-[120px] min-h-[24px] resize-none overflow-y-auto bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
         />
 
         <hr className="-mx-6 w-auto border-0 border-t border-border" />

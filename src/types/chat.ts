@@ -80,6 +80,22 @@ export type ChatListItemProps = {
   conversation: ChatConversation;
 };
 
+export type MessageImageGalleryProps = {
+  isMine: boolean;
+  message: ChatMessage;
+  groupMessages?: ChatMessage[];
+};
+
+export type MessageTextContentProps = {
+  isMine: boolean;
+  message: ChatMessage;
+};
+
+export type ChatAttachmentProps = {
+  isMine: boolean;
+  message: ChatMessage;
+};
+
 export type ChatSideBarProps = {
   selectedId: string;
   currentUserId?: string;
@@ -109,16 +125,16 @@ export type GroupModalProps = {
 };
 
 export type MessageInputProps = {
+  isEditing: boolean;
+  onTyping?: () => void;
+  onCancelEdit: () => void;
+  onStopTyping?: () => void;
   conversationId: string | null;
+  editingMessage: ChatMessage | null;
+  onEditSubmit: (content: string) => Promise<void>;
   onSend: (message: string) => void | Promise<void>;
   onAttachment?: (file: File) => void | Promise<void>;
   onAttachments?: (files: File[], caption?: string) => void;
-  editingMessage: ChatMessage | null;
-  onCancelEdit: () => void;
-  onEditSubmit: (content: string) => Promise<void>;
-  isEditing: boolean;
-  onTyping?: () => void;
-  onStopTyping?: () => void;
 };
 
 export type MessageItemProps = {
@@ -134,8 +150,8 @@ export type MessageListProps = {
   isLoadingOlder: boolean;
   onLoadOlder: () => void;
   hasMoreMessages: boolean;
-  onEditMessage: (message: ChatMessage) => void;
   isOtherUserTyping?: boolean;
+  onEditMessage: (message: ChatMessage) => void;
 };
 
 export type UserListItemProps = {
@@ -158,4 +174,38 @@ export type ChatUser = {
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
+};
+
+export type AttachmentPreviewListProps = {
+  files: File[];
+  onRemove: (index: number) => void;
+};
+
+export type EmojiPickerPopoverProps = {
+  onEmojiSelect: (emoji: string) => void;
+};
+
+export type RenderMessage = {
+  key: string;
+  message: ChatMessage;
+  groupMessages?: ChatMessage[];
+};
+
+export type ConversationSummary = {
+  is_group: boolean;
+  title: string | null;
+  conversation_id: string;
+  last_message_at: string | null;
+  last_message_type: string | null;
+  last_message_content: string | null;
+  last_message_read_at: string | null;
+  unread_count: number | string | null;
+  last_message_sender_id: string | null;
+  last_message_delivered_at: string | null;
+  last_message_deleted_for_me: boolean | null;
+  last_message_deleted_for_everyone: boolean | null;
+};
+
+export type ChatScreenProps = {
+  currentUserId?: string;
 };

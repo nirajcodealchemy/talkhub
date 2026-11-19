@@ -1,18 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import JSZip from "jszip";
+import { useState } from "react";
 import { Ban, Check, CheckCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-
 import type { MessageItemProps } from "@/src/types/chat";
 import { useDeleteMessage } from "@/src/hooks/useDelete";
-
-import MessageTextContent from "./message/MessageTextContent";
-import MessageImageGallery from "./message/MessageImageGallery";
 import MessageAttachment from "./message/MessageAttachment";
+import MessageTextContent from "./message/MessageTextContent";
 import MessageContextMenu from "./message/MessageContextMenu";
 import DeleteMessageModal from "./message/DeleteMessageModal";
+import MessageImageGallery from "./message/MessageImageGallery";
 
 export default function MessageItem({
   message,
@@ -20,11 +18,10 @@ export default function MessageItem({
   groupMessages,
   onEditRequest,
 }: MessageItemProps) {
-  const t = useTranslations("screen.chat.MessageItem");
   const locale = useLocale();
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const { mutateAsync: deleteMessage, isPending: isDeleting } =
     useDeleteMessage();
@@ -35,6 +32,7 @@ export default function MessageItem({
     hour12: true,
   });
 
+  const t = useTranslations("screen.chat.MessageItem");
   const isRead = !!message.read_at || message.status === "read";
 
   const isDelivered =
@@ -146,10 +144,10 @@ export default function MessageItem({
       <div className="relative w-fit min-w-[120px] max-w-[75%]">
         {/* Message context menu */}
         <MessageContextMenu
-          message={message}
           isMine={isMine}
-          isImageGroup={isImageGroup}
+          message={message}
           onEdit={handleEdit}
+          isImageGroup={isImageGroup}
           onDelete={handleOpenDeleteModal}
           onDownloadGroup={handleDownloadImageGroupAsZip}
         />
@@ -184,9 +182,9 @@ export default function MessageItem({
               {/* Image message */}
               {message.message_type === "image" && (
                 <MessageImageGallery
+                  isMine={isMine}
                   message={message}
                   groupMessages={groupMessages}
-                  isMine={isMine}
                 />
               )}
 
@@ -265,11 +263,11 @@ export default function MessageItem({
 
       {/* Delete confirmation modal */}
       <DeleteMessageModal
-        isOpen={isDeleteModalOpen}
         isMine={isMine}
         isDeleting={isDeleting}
-        deleteError={deleteError}
         onDelete={handleDelete}
+        deleteError={deleteError}
+        isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
       />
     </div>

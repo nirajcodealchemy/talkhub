@@ -1,39 +1,40 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import type { ChatMessage } from "@/src/types/chat";
 import {
   Copy,
-  Download,
-  Loader2,
-  MoreVertical,
   Pencil,
   Trash2,
+  Loader2,
+  Download,
+  MoreVertical,
 } from "lucide-react";
-import type { ChatMessage } from "@/src/types/chat";
-import { useTranslations } from "next-intl";
 
 type Props = {
-  message: ChatMessage;
   isMine: boolean;
-  isImageGroup: boolean;
   onEdit: () => void;
+  message: ChatMessage;
   onDelete: () => void;
+  isImageGroup: boolean;
   onDownloadGroup: () => Promise<void>;
 };
 
 export default function MessageContextMenu({
-  message,
   isMine,
-  isImageGroup,
   onEdit,
+  message,
   onDelete,
+  isImageGroup,
   onDownloadGroup,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
   const [copySuccess, setCopySuccess] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
   const triggerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -161,10 +162,10 @@ export default function MessageContextMenu({
       >
         <button
           type="button"
-          onClick={handleToggle}
-          aria-label="More message options"
           title="More options"
+          onClick={handleToggle}
           aria-expanded={isOpen}
+          aria-label="More message options"
           className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground"
         >
           <MoreVertical size={17} />
@@ -173,9 +174,9 @@ export default function MessageContextMenu({
         {message.message_type === "text" && message.content && (
           <button
             type="button"
-            onClick={() => void handleCopy()}
-            aria-label="Copy message"
             title="Copy message"
+            aria-label="Copy message"
+            onClick={() => void handleCopy()}
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground"
           >
             <Copy size={15} />

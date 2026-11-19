@@ -1,34 +1,26 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-
-import type { ChatConversation } from "@/src/types/chat";
-
 import ChatLayout from "./ChatLayout";
+import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
+import type { ChatConversation, ChatScreenProps } from "@/src/types/chat";
 import { createClient } from "@/src/lib/supabase/client";
-
 import MessageIcon from "@/src/components/icons/Message";
 import ChatWindow from "@/src/components/chat/ChatWindow";
 import ChatSidebar from "@/src/components/chat/ChatSidebar";
-
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useConversations } from "@/src/hooks/useConversations";
 import { useRealtimeMessages } from "@/src/hooks/useRealtimeChat";
 
 import {
+  useMessages,
   useSendMessage,
   useSendAttachment,
-  useMessages,
-  useCreateDirectConversation,
   useSendImageGroup,
+  useCreateDirectConversation,
 } from "@/src/hooks/useChat";
 
-type Props = {
-  currentUserId?: string;
-};
-
-export default function ChatScreen({ currentUserId = "" }: Props) {
+export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
   const t = useTranslations("screen.chat.ChatScreen");
   const queryClient = useQueryClient();
   const supabase = useMemo(() => createClient(), []);
@@ -270,9 +262,9 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
         }`}
       >
         <ChatSidebar
-          conversations={conversations}
           selectedId={selectedId}
           onSelect={handleSelect}
+          conversations={conversations}
           currentUserId={currentUserId}
           onStartChat={handleStartChat}
         />
@@ -284,26 +276,16 @@ export default function ChatScreen({ currentUserId = "" }: Props) {
         } md:flex`}
       >
         {conversationWithMessages ? (
-          // <ChatWindow
-          //   conversation={conversationWithMessages}
-          //   currentUserId={currentUserId}
-          //   onSend={handleSend}
-          //   onAttachment={handleAttachment}
-          //   onBack={() => setSelectedId("")}
-          //   onLoadOlder={() => fetchNextPage()}
-          //   hasMoreMessages={!!hasNextPage}
-          //   isLoadingOlder={isFetchingNextPage}
-          // />
           <ChatWindow
-            conversation={conversationWithMessages}
-            currentUserId={currentUserId}
             onSend={handleSend}
+            currentUserId={currentUserId}
             onAttachment={handleAttachment}
-            onAttachments={handleAttachments}
-            onBack={() => setSelectedId("")}
-            onLoadOlder={() => fetchNextPage()}
             hasMoreMessages={!!hasNextPage}
+            onBack={() => setSelectedId("")}
+            onAttachments={handleAttachments}
+            onLoadOlder={() => fetchNextPage()}
             isLoadingOlder={isFetchingNextPage}
+            conversation={conversationWithMessages}
           />
         ) : (
           <div className="hidden flex-1 flex-col items-center justify-center bg-muted px-6 text-center md:flex">

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
-import { ChatMessage, ChatWindowProps } from "@/src/types/chat";
+import { useEffect, useState } from "react";
 import { useEditMessage } from "@/src/hooks/useEditText";
+import { ChatMessage, ChatWindowProps } from "@/src/types/chat";
 import { useTypingIndicator } from "@/src/hooks/useTypingIndicator";
 
 export default function ChatWindow({
@@ -57,25 +57,25 @@ export default function ChatWindow({
       <ChatHeader conversation={conversation} onBack={onBack} />
 
       <MessageList
-        messages={conversation.messages}
-        currentUserId={currentUserId}
         onLoadOlder={onLoadOlder}
-        hasMoreMessages={hasMoreMessages}
+        currentUserId={currentUserId}
         isLoadingOlder={isLoadingOlder}
+        messages={conversation.messages}
+        hasMoreMessages={hasMoreMessages}
         onEditMessage={handleEditRequest}
         isOtherUserTyping={isOtherUserTyping}
       />
       <MessageInput
         onSend={onSend}
-        onAttachment={onAttachment}
-        onAttachments={onAttachments}
-        conversationId={conversation.id}
-        editingMessage={editingMessage}
-        onCancelEdit={handleCancelEdit}
-        onEditSubmit={handleEditSubmit}
         isEditing={isEditing}
         onTyping={notifyTyping}
         onStopTyping={stopTyping}
+        onAttachment={onAttachment}
+        onAttachments={onAttachments}
+        editingMessage={editingMessage}
+        onCancelEdit={handleCancelEdit}
+        onEditSubmit={handleEditSubmit}
+        conversationId={conversation.id}
       />
     </section>
   );

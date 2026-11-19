@@ -1,13 +1,8 @@
 "use client";
 
-import { Download, FileText } from "lucide-react";
 import { useLocale } from "next-intl";
-import type { ChatMessage } from "@/src/types/chat";
-
-type Props = {
-  message: ChatMessage;
-  isMine: boolean;
-};
+import { Download, FileText } from "lucide-react";
+import type { ChatAttachmentProps } from "@/src/types/chat";
 
 function formatFileSize(bytes?: number | null) {
   if (!bytes) return "";
@@ -16,7 +11,10 @@ function formatFileSize(bytes?: number | null) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function MessageAttachment({ message, isMine }: Props) {
+export default function MessageAttachment({
+  message,
+  isMine,
+}: ChatAttachmentProps) {
   const locale = useLocale();
 
   if (message.message_type !== "file" || !message.attachment_url) {

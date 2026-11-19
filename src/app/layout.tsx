@@ -1,16 +1,15 @@
+import "./globals.css";
+import { cn } from "@/src/lib/utils";
+import type { ReactNode } from "react";
+import { getMessages } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
+import QueryProvider from "../providers/QueryProvider";
 import {
   Geist,
   Geist_Mono,
   Public_Sans,
   Instrument_Sans,
 } from "next/font/google";
-
-import type { ReactNode } from "react";
-import "./globals.css";
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
-import QueryProvider from "../providers/QueryProvider";
-import { cn } from "@/src/lib/utils";
 
 export const instant = false;
 

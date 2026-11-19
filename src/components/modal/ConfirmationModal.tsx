@@ -1,22 +1,22 @@
 "use client";
 
 import { X } from "lucide-react";
+import { Button } from "../ui/button";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmationModalData } from "@/src/types/modals";
-import { Button } from "../ui/button";
 
 export const Confirmation = ({
   title,
   isOpen,
   confirm,
   message,
-  loading = false,
   onCancel,
   onConfirm,
+  loading = false,
 }: ConfirmationModalData) => {
-  const confirmBtnRef = useRef<HTMLButtonElement>(null);
   const [mounted, setMounted] = useState(false);
+  const confirmBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -55,9 +55,9 @@ export const Confirmation = ({
 
           <Button
             type="button"
-            aria-label="Close modal"
             onClick={onCancel}
             disabled={loading}
+            aria-label="Close modal"
             className="cursor-pointer bg-background text-foreground hover:bg-background disabled:opacity-50"
           >
             <X size={20} />
@@ -87,10 +87,10 @@ export const Confirmation = ({
           )}
 
           <Button
-            ref={confirmBtnRef}
             type="button"
-            onClick={handleConfirm}
             disabled={loading}
+            ref={confirmBtnRef}
+            onClick={handleConfirm}
             className="!h-9 !min-w-[76px] cursor-pointer rounded-lg bg-destructive !px-5 !py-0 text-sm font-medium text-white shadow-none hover:bg-destructive/90 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (

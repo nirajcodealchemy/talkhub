@@ -1,6 +1,6 @@
+import { userRegex } from "./regex";
 import { signupSchema, loginSchema } from "../schemas/auth";
 import type { SignupFormData, LoginFormData } from "../types/form";
-import { userRegex } from "./regex";
 
 export const validation = (
   data: Partial<SignupFormData> | SignupFormData,

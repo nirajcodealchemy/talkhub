@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AuthInputProps } from "../types/form";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
 
 const AuthInput = ({
   id,

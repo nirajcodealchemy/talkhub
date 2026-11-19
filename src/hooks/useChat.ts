@@ -92,64 +92,6 @@ export function useMessages(conversationId: string) {
       }
 
       // Get messages hidden by this user.
-      // const { data: deletions, error: deletionError } = await supabase
-      //   .from("message_deletions")
-      //   .select("message_id")
-      //   .eq("user_id", user.id);
-
-      // if (deletionError) throw deletionError;
-
-      // const hiddenIds = (deletions ?? []).map(
-      //   (deletion) => deletion.message_id,
-      // );
-
-      // let request = supabase
-      //   .from("messages")
-      //   .select("*")
-      //   .eq("conversation_id", conversationId)
-      //   .order("created_at", { ascending: false })
-      //   .limit(PAGE_SIZE);
-
-      // if (pageParam) {
-      //   request = request.lt("created_at", pageParam);
-      // }
-
-      // if (hiddenIds.length > 0) {
-      //   request = request.not("id", "in", `(${hiddenIds.join(",")})`);
-      // }
-
-      // const { data, error } = await request;
-
-      // if (error) throw error;
-
-      // const messages = [...(data ?? [])].reverse();
-
-      // return Promise.all(
-      //   messages.map(async (message) => {
-      //     if (!message.attachment_path) {
-      //       return {
-      //         ...message,
-      //         attachment_url: null,
-      //       };
-      //     }
-
-      //     const { data: signedData, error: signedError } =
-      //       await supabase.storage
-      //         .from("chat-attachments")
-      //         .createSignedUrl(message.attachment_path, 3600);
-
-      //     if (signedError) {
-      //       console.error("Signed URL error:", signedError);
-      //     }
-
-      //     return {
-      //       ...message,
-      //       attachment_url: signedData?.signedUrl ?? null,
-      //     };
-      //   }),
-      // );
-
-      // Get messages hidden by this user.
       const { data: deletions, error: deletionError } = await supabase
         .from("message_deletions")
         .select("message_id")
@@ -280,19 +222,19 @@ export function useSendMessage() {
 
       const optimisticMessage = {
         id: tempId,
-        conversation_id: variables.conversationId,
-        sender_id: user?.id ?? "",
-        content: variables.content,
-        message_type: variables.messageType || "text",
-        created_at: new Date().toISOString(),
+        read_at: null,
+        reactions: [],
+        reply_count: 0,
+        status: "sending",
+        delivered_at: null,
         attachment_url: null,
         attachment_path: null,
         attachment_name: null,
-        delivered_at: null,
-        read_at: null,
-        status: "sending",
-        reactions: [],
-        reply_count: 0,
+        sender_id: user?.id ?? "",
+        content: variables.content,
+        created_at: new Date().toISOString(),
+        conversation_id: variables.conversationId,
+        message_type: variables.messageType || "text",
       };
 
       queryClient.setQueryData(queryKey, (old: any) => {

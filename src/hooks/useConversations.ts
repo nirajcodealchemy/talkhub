@@ -3,23 +3,9 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useOnlineUsers } from "./useOnlineUsers";
+import { ConversationSummary } from "../types/chat";
 import { createClient } from "@/src/lib/supabase/client";
 import { useRealtimeConversations } from "./useRealtimeChat";
-
-type ConversationSummary = {
-  conversation_id: string;
-  is_group: boolean;
-  title: string | null;
-  last_message_deleted_for_everyone: boolean | null;
-  last_message_deleted_for_me: boolean | null;
-  last_message_at: string | null;
-  last_message_content: string | null;
-  last_message_type: string | null;
-  last_message_sender_id: string | null;
-  last_message_delivered_at: string | null;
-  last_message_read_at: string | null;
-  unread_count: number | string | null;
-};
 
 export function useConversations(userId: string) {
   const supabase = useMemo(() => createClient(), []);
@@ -133,8 +119,8 @@ export function useConversations(userId: string) {
 
           is_group: conv.is_group,
 
-          other_user_id: otherMember?.user_id || null,
           other_user_phone: profile?.phone || null,
+          other_user_id: otherMember?.user_id || null,
           other_user_username: profile?.username || null,
           other_user_avatar: profile?.avatar_url || null,
 

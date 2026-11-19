@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "../lib/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useEditMessage() {
   const supabase = createClient();
@@ -10,12 +10,11 @@ export function useEditMessage() {
 
     mutationFn: async ({
       messageId,
-      conversationId,
       content,
     }: {
+      content: string;
       messageId: string;
       conversationId: string;
-      content: string;
     }) => {
       const {
         data: { user },

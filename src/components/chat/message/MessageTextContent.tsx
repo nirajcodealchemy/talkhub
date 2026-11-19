@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import type { ChatMessage } from "@/src/types/chat";
+import type { MessageTextContentProps } from "@/src/types/chat";
 
 const MESSAGE_LINE_LIMIT = 10;
 
-type Props = {
-  message: ChatMessage;
-  isMine: boolean;
-};
-
-export default function MessageTextContent({ message, isMine }: Props) {
+export default function MessageTextContent({
+  message,
+  isMine,
+}: MessageTextContentProps) {
   const t = useTranslations("screen.chat.MessageItem");
   const [isExpanded, setIsExpanded] = useState(false);
 

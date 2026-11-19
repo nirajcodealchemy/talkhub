@@ -1,12 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { AttachmentPreviewListProps } from "@/src/types/chat";
 import { FileText, Image as ImageIcon, File, X } from "lucide-react";
-
-type AttachmentPreviewListProps = {
-  files: File[];
-  onRemove: (index: number) => void;
-};
 
 export default function AttachmentPreviewList({
   files,

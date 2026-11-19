@@ -1,16 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, X } from "lucide-react";
-import JSZip from "jszip";
-import { useTranslations } from "next-intl";
-import type { ChatMessage } from "@/src/types/chat";
-
-type Props = {
-  message: ChatMessage;
-  groupMessages?: ChatMessage[];
-  isMine: boolean;
-};
+import type { ChatMessage, MessageImageGalleryProps } from "@/src/types/chat";
 
 const STORAGE_KEY = "talkhub_downloaded_images";
 
@@ -25,7 +18,7 @@ export default function MessageImageGallery({
   message,
   groupMessages,
   isMine,
-}: Props) {
+}: MessageImageGalleryProps) {
   const t = useTranslations("screen.chat.MessageItem");
 
   const [downloadedImageIds, setDownloadedImageIds] = useState<Set<string>>(
@@ -142,51 +135,6 @@ export default function MessageImageGallery({
           ? error.message
           : "Unable to save image. Please try again.",
       );
-    }
-  };
-
-  const handleDownloadImageGroupAsZip = async () => {
-    if (!isImageGroup) return;
-
-    const downloadableImages = images.filter((image) => !!image.attachment_url);
-
-    if (!downloadableImages.length) return;
-
-    try {
-      const zip = new JSZip();
-
-      await Promise.all(
-        downloadableImages.map(async (image, index) => {
-          const response = await fetch(image.attachment_url!);
-          if (!response.ok) {
-            throw new Error(`Failed to download image ${index + 1}`);
-          }
-
-          const blob = await response.blob();
-          const originalName =
-            image.attachment_name?.trim() || `image-${index + 1}`;
-          const safeName = originalName.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_");
-
-          zip.file(safeName, blob);
-        }),
-      );
-
-      const zipBlob = await zip.generateAsync({
-        type: "blob",
-        compression: "DEFLATE",
-        compressionOptions: { level: 6 },
-      });
-
-      const blobUrl = URL.createObjectURL(zipBlob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `talkhub-images-${message.id}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-    } catch (error) {
-      console.error("Image ZIP download failed:", error);
     }
   };
 

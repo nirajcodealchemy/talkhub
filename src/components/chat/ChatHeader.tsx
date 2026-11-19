@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "../ui/button";
 import InfoIcon from "../icons/InfoIcon";
 import VideoIcon from "../icons/VideoIcon";
 import PhoneIcon from "../icons/PhoneIcon";
@@ -9,7 +10,6 @@ import SparklesIcon from "../icons/SparklesIcon";
 import type { HeaderProps } from "@/src/types/chat";
 import { ArrowLeft, MoreVertical, X } from "lucide-react";
 import ConversationInfoModal from "../modal/ConversationInfoModal";
-import { Button } from "../ui/button";
 
 export default function ChatHeader({ conversation, onBack }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,10 +23,10 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
         {/* Mobile back button */}
         <Button
           type="button"
+          size="icon-xs"
+          variant="ghost"
           onClick={onBack}
           aria-label={t("backAriaLabel")}
-          variant="ghost"
-          size="icon-xs"
           className="h-8 w-8 shrink-0 cursor-pointer rounded-full bg-white text-foreground hover:bg-accent md:hidden"
         >
           <ArrowLeft className="size-6" />
@@ -41,8 +41,8 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
           }}
         >
           <img
-            src={conversation.avatar}
             alt={conversation.name}
+            src={conversation.avatar}
             className="h-full w-full rounded-full object-cover"
           />
         </div>
@@ -63,8 +63,8 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
       <div className="hidden shrink-0 items-center gap-4 text-foreground sm:flex">
         <Button
           type="button"
-          variant="ghost"
           size="icon-lg"
+          variant="ghost"
           aria-label={t("videoCallAriaLabel")}
           className=" bg-white rounded-full p-1 text-muted-foreground cursor-not-allowed hover:bg-white"
         >
@@ -101,8 +101,8 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
       <div className="relative sm:hidden">
         <Button
           type="button"
-          aria-label={t("chatOptionsAriaLabel")}
           aria-expanded={isMenuOpen}
+          aria-label={t("chatOptionsAriaLabel")}
           onClick={() => setIsMenuOpen((previous) => !previous)}
           className="rounded-full p-2 text-foreground transition-colors bg-white hover:bg-accent cursor-pointer"
         >
@@ -161,8 +161,8 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
       {conversation.other_user_id && (
         <ConversationInfoModal
           isOpen={isInfoOpen}
-          onClose={() => setIsInfoOpen(false)}
           userId={conversation}
+          onClose={() => setIsInfoOpen(false)}
         />
       )}
     </header>

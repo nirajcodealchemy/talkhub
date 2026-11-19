@@ -1,14 +1,14 @@
 "use client";
 
+import { Button } from "../ui/button";
 import { useTranslations } from "next-intl";
 import { userRegex } from "@/src/utils/regex";
+import { QUERY_KEYS } from "@/src/lib/queryKeys";
 import { Camera, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditProfileProps } from "@/src/types/profile";
 import { createClient } from "@/src/lib/supabase/client";
-import { QUERY_KEYS } from "@/src/lib/queryKeys";
-import { Button } from "../ui/button";
 
 export default function EditProfileModal({
   userId,
@@ -229,10 +229,10 @@ export default function EditProfileModal({
               </Button>
 
               <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
                 hidden
+                type="file"
+                ref={fileRef}
+                accept="image/*"
                 onChange={(event) => handleFileChange(event.target.files?.[0])}
               />
             </div>
@@ -249,12 +249,12 @@ export default function EditProfileModal({
               <input
                 id="name"
                 value={name}
+                maxLength={80}
+                placeholder={t("namePlaceholder")}
                 onChange={(event) => {
                   setName(event.target.value);
                   setError("");
                 }}
-                placeholder={t("namePlaceholder")}
-                maxLength={80}
                 className={`w-full rounded-lg border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors ${
                   nameError
                     ? "border-destructive focus:border-destructive"

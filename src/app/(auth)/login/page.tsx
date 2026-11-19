@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useLogin } from "@/src/hooks/useLogin";
-import AuthInput from "@/src/components/AuthInput";
-import { loginValidation } from "@/src/utils/validation";
-import AuthLayout from "@/src/components/AuthLayout";
-import { ChangeEvent, FormEvent, useState } from "react";
 import { LoginFormData } from "@/src/types/form";
+import AuthInput from "@/src/components/AuthInput";
 import { Button } from "@/src/components/ui/button";
+import AuthLayout from "@/src/components/AuthLayout";
+import { loginValidation } from "@/src/utils/validation";
+import { ChangeEvent, FormEvent, useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -126,10 +126,10 @@ export default function LoginPage() {
           id="email"
           name="email"
           type="email"
-          label={t("emailLabel")}
           value={data.email}
           error={error.email}
           autoComplete="email"
+          label={t("emailLabel")}
           onChange={handleChange}
           placeholder={t("emailPlaceholder")}
         />
@@ -138,10 +138,10 @@ export default function LoginPage() {
           id="password"
           name="password"
           type="password"
-          label={t("passwordLabel")}
           value={data.password}
           error={error.password}
           onChange={handleChange}
+          label={t("passwordLabel")}
           autoComplete="current-password"
           placeholder={t("passwordPlaceholder")}
         />

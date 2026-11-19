@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-
-import { createClient } from "@/src/lib/supabase/server";
 import { ChatScreen } from "@/src/screen/chat";
+import { createClient } from "@/src/lib/supabase/server";
 
 export default async function ChatPage() {
   const supabase = await createClient();
@@ -17,4 +16,3 @@ export default async function ChatPage() {
 
   return <ChatScreen currentUserId={user.id} />;
 }
-

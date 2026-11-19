@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "../ui/button";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Profile } from "@/src/types/profile";
 import { X, Users, Search } from "lucide-react";
 import { GroupModalProps } from "@/src/types/chat";
 import { useSearchUsers } from "@/src/hooks/useChat";
-import { Button } from "../ui/button";
 
 export default function CreateGroupModal({ isOpen, onClose }: GroupModalProps) {
   const t = useTranslations("screen.chat.CreateGroupModal");

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "../ui/button";
 import UserListItem from "./UserListItem";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -11,22 +12,21 @@ import type { ChatSideBarProps } from "@/src/types/chat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Confirmation } from "@/src/components/modal/ConfirmationModal";
 import {
-  Loader2,
+  X,
+  Users,
   LogOut,
+  Search,
+  Loader2,
   MoreVertical,
   UserRoundPen,
-  Search,
-  Users,
-  X,
 } from "lucide-react";
-import { Button } from "../ui/button";
 
 export default function ChatSidebar({
   onSelect,
+  selectedId,
   onStartChat,
   conversations,
   currentUserId,
-  selectedId,
 }: ChatSideBarProps) {
   const t = useTranslations("screen.chat.ChatSidebar");
 
@@ -251,12 +251,14 @@ export default function ChatSidebar({
         {usersToDisplay.length > 0 ? (
           usersToDisplay.map(({ user, conversation }) => (
             <UserListItem
-              key={user.id}
               user={user}
-              isCurrentUser={user.id === currentUserId}
+              key={user.id}
               currentUserId={currentUserId}
               isOpening={openingUserId === user.id}
+              isCurrentUser={user.id === currentUserId}
               lastMessageType={conversation?.last_message_type}
+              lastMessageAt={conversation?.last_message_timestamp ?? null}
+              lastMessageSenderId={conversation?.last_message_sender ?? null}
               unreadCount={
                 conversation?.id === selectedId
                   ? 0
@@ -268,8 +270,6 @@ export default function ChatSidebar({
                   ? null
                   : (conversation?.last_message ?? null)
               }
-              lastMessageAt={conversation?.last_message_timestamp ?? null}
-              lastMessageSenderId={conversation?.last_message_sender ?? null}
               lastMessageDeliveredAt={
                 conversation?.last_message_delivered ? "delivered" : null
               }
@@ -296,29 +296,29 @@ export default function ChatSidebar({
       {currentUserId && (
         <CreateGroupModal
           isOpen={isCreateGroupOpen}
-          onClose={() => setIsCreateGroupOpen(false)}
           currentUserId={currentUserId}
+          onClose={() => setIsCreateGroupOpen(false)}
         />
       )}
 
       {/* Edit Profile Modal */}
       {currentUserId && (
         <EditProfileModal
+          userId={currentUserId}
           isOpen={isEditProfileOpen}
           onClose={() => setIsEditProfileOpen(false)}
-          userId={currentUserId}
         />
       )}
 
       {/* Logout Confirmation */}
       <Confirmation
         isOpen={showLogoutModal}
+        onConfirm={handleLogout}
         title={t("logoutConfirmTitle")}
-        message={t("logoutConfirmMessage")}
         confirm={t("logoutConfirmButton")}
         loading={logoutMutation.isPending}
+        message={t("logoutConfirmMessage")}
         onCancel={() => setShowLogoutModal(false)}
-        onConfirm={handleLogout}
       />
     </aside>
   );
