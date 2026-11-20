@@ -6,12 +6,18 @@ import InfoIcon from "../icons/InfoIcon";
 import VideoIcon from "../icons/VideoIcon";
 import PhoneIcon from "../icons/PhoneIcon";
 import { useTranslations } from "next-intl";
+import GroupInfoPanel from "./GroupInfoPanel";
 import SparklesIcon from "../icons/SparklesIcon";
 import type { HeaderProps } from "@/src/types/chat";
-import { ArrowLeft, MoreVertical, X } from "lucide-react";
+import { ArrowLeft, MoreVertical, Users, X } from "lucide-react";
 import ConversationInfoModal from "../modal/ConversationInfoModal";
 
-export default function ChatHeader({ conversation, onBack }: HeaderProps) {
+export default function ChatHeader({
+  onBack,
+  conversation,
+  currentUserId,
+  onOpenGroupInfo,
+}: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
@@ -32,29 +38,50 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
           <ArrowLeft className="size-6" />
         </Button>
 
-        {/* User avatar */}
         <div
-          className="relative h-10 w-10 shrink-0 cursor-pointer"
           onClick={() => {
-            setIsMenuOpen(false);
-            setIsInfoOpen(true);
+            if (conversation.is_group) {
+              onOpenGroupInfo?.();
+            } else {
+              setIsInfoOpen(true);
+            }
           }}
+          className="relative h-10 w-10 shrink-0 cursor-pointer"
         >
-          <img
-            alt={conversation.name}
-            src={conversation.avatar}
-            className="h-full w-full rounded-full object-cover"
-          />
+          {conversation.is_group ? (
+            <div className="flex h-full w-full items-center justify-center rounded-full bg-chart-4/10 text-chart-4">
+              <Users className="size-5" />
+            </div>
+          ) : (
+            <img
+              alt={conversation.name}
+              src={conversation.avatar}
+              className="h-full w-full rounded-full object-cover"
+            />
+          )}
         </div>
 
         {/* User details */}
-        <div className="min-w-0">
+        {/* <div className="min-w-0">
           <h2 className="truncate text-[15px] font-semibold text-foreground">
             {conversation.name}
           </h2>
 
           <p className="text-[12px] text-muted-foreground">
             {conversation.online ? t("online") : t("offline")}
+          </p>
+        </div> */}
+        <div className="min-w-0">
+          <h2 className="truncate text-[15px] font-semibold text-foreground">
+            {conversation.name}
+          </h2>
+
+          <p className="text-[12px] text-muted-foreground">
+            {conversation.is_group
+              ? `${conversation.group_member_count ?? 0} Members`
+              : conversation.online
+                ? t("online")
+                : t("offline")}
           </p>
         </div>
       </div>
@@ -89,11 +116,17 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
 
         <Button
           type="button"
-          onClick={() => setIsInfoOpen(true)}
+          onClick={() => {
+            if (conversation.is_group) {
+              onOpenGroupInfo?.();
+            } else {
+              setIsInfoOpen(true);
+            }
+          }}
           aria-label={t("conversationInfoAriaLabel")}
           className=" bg-white rounded-full p-1 text-muted-foreground cursor-pointer hover:bg-white"
         >
-          <InfoIcon className="size-6 cursor-not-allowed " />
+          <InfoIcon className="size-6" />
         </Button>
       </div>
 
@@ -144,9 +177,16 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
 
             <Button
               type="button"
+              // onClick={() => {
+              //   setIsMenuOpen(false);
+              //   setIsInfoOpen(true);
+              // }}
               onClick={() => {
-                setIsMenuOpen(false);
-                setIsInfoOpen(true);
+                if (conversation.is_group) {
+                  onOpenGroupInfo?.();
+                } else {
+                  setIsInfoOpen(true);
+                }
               }}
               className="flex w-full cursor-pointer bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground hover:bg-white"
             >
@@ -158,7 +198,24 @@ export default function ChatHeader({ conversation, onBack }: HeaderProps) {
       </div>
 
       {/* Conversation information modal */}
-      {conversation.other_user_id && (
+      {/* {conversation.other_user_id && (
+        <ConversationInfoModal
+          isOpen={isInfoOpen}
+          userId={conversation}
+          onClose={() => setIsInfoOpen(false)}
+        />
+      )} */}
+      {/* Group information panel */}
+      {conversation.is_group && isInfoOpen && (
+        <GroupInfoPanel
+          conversation={conversation}
+          currentUserId={currentUserId}
+          onClose={() => setIsInfoOpen(false)}
+          onGroupExited={onBack}
+        />
+      )}
+
+      {!conversation.is_group && conversation.other_user_id && isInfoOpen && (
         <ConversationInfoModal
           isOpen={isInfoOpen}
           userId={conversation}

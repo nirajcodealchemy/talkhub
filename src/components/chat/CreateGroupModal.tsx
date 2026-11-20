@@ -7,9 +7,17 @@ import { useTranslations } from "next-intl";
 import { Profile } from "@/src/types/profile";
 import { X, Users, Search } from "lucide-react";
 import { GroupModalProps } from "@/src/types/chat";
-import { useSearchUsers } from "@/src/hooks/useChat";
+import {
+  useCreateGroupConversation,
+  useSearchUsers,
+} from "@/src/hooks/useChat";
 
-export default function CreateGroupModal({ isOpen, onClose }: GroupModalProps) {
+export default function CreateGroupModal({
+  isOpen,
+  onClose,
+  currentUserId,
+  onCreated,
+}: GroupModalProps) {
   const t = useTranslations("screen.chat.CreateGroupModal");
 
   const [title, setTitle] = useState("");
@@ -19,6 +27,30 @@ export default function CreateGroupModal({ isOpen, onClose }: GroupModalProps) {
 
   const searchUsers = useSearchUsers();
   // const createGroup = useCreateGroupConversation();
+
+  const createGroup = useCreateGroupConversation();
+
+  const handleCreate = async () => {
+    const groupName = title.trim();
+
+    if (!groupName || selectedUsers.length < 2) return;
+
+    try {
+      const conversationId = await createGroup.mutateAsync({
+        title: groupName,
+        memberIds: selectedUsers.map((user) => user.id),
+      });
+
+      setTitle("");
+      setSearchQuery("");
+      setSearchResults([]);
+      setSelectedUsers([]);
+      onCreated?.(conversationId);
+      onClose();
+    } catch (error) {
+      console.error("Group creation failed:", error);
+    }
+  };
 
   const handleSearch = async (query: string) => {
     if (query.trim().length < 2) {
@@ -35,8 +67,18 @@ export default function CreateGroupModal({ isOpen, onClose }: GroupModalProps) {
     }
   };
 
+  // const handleAddUser = (user: Profile) => {
+  //   if (selectedUsers.find((u) => u.id === user.id)) return;
+
+  //   setSelectedUsers((prev) => [...prev, user]);
+  //   setSearchQuery("");
+  //   setSearchResults([]);
+  // };
+
   const handleAddUser = (user: Profile) => {
-    if (selectedUsers.find((u) => u.id === user.id)) return;
+    if (user.id === currentUserId) return;
+
+    if (selectedUsers.some((u) => u.id === user.id)) return;
 
     setSelectedUsers((prev) => [...prev, user]);
     setSearchQuery("");
@@ -193,12 +235,23 @@ export default function CreateGroupModal({ isOpen, onClose }: GroupModalProps) {
               {t("cancel")}
             </Button>
 
-            <Button
-              // onClick={handleCreate}
+            {/* <Button
+              onClick={handleCreate}
               disabled
               className="h-full flex-1 cursor-not-allowed bg-chart-4 text-white hover:bg-chart-5"
             >
               {t("createGroup")}
+            </Button> */}
+            <Button
+              onClick={handleCreate}
+              disabled={
+                !title.trim() ||
+                selectedUsers.length < 2 ||
+                createGroup.isPending
+              }
+              className="h-full flex-1 cursor-pointer bg-chart-4 text-white hover:bg-chart-5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {createGroup.isPending ? "Creating..." : t("createGroup")}
             </Button>
           </div>
         </div>

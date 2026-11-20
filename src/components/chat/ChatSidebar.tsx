@@ -48,6 +48,7 @@ export default function ChatSidebar({
     isError: usersFailed,
   } = useUsers();
 
+  // Close menu when clicking outside.
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -64,6 +65,7 @@ export default function ChatSidebar({
     };
   }, [isMenuOpen]);
 
+  // Filter and remove duplicate users.
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
 
@@ -75,9 +77,7 @@ export default function ChatSidebar({
       }
     }
 
-    const uniqueUsers = Array.from(uniqueUsersMap.values());
-
-    return uniqueUsers.filter((user) => {
+    return Array.from(uniqueUsersMap.values()).filter((user) => {
       if (user.id === currentUserId) return false;
 
       if (!term) return true;
@@ -89,35 +89,50 @@ export default function ChatSidebar({
     });
   }, [users, search, currentUserId]);
 
-  // const usersToDisplay = filteredUsers;
-  const usersToDisplay = useMemo(() => {
-    const usersWithConversations = filteredUsers.map((user) => {
+  // Create one combined list of groups and individual users.
+  const chatItems = useMemo(() => {
+    const term = search.trim().toLowerCase();
+
+    // Group conversations.
+    const groupItems = conversations
+      .filter((conversation) => {
+        if (!conversation.is_group) return false;
+
+        if (!term) return true;
+
+        return conversation.name?.toLowerCase().includes(term);
+      })
+      .map((conversation) => ({
+        type: "group" as const,
+        id: conversation.id,
+        conversation,
+        timestamp: conversation.last_message_timestamp
+          ? new Date(conversation.last_message_timestamp).getTime()
+          : new Date(conversation.last_message_timestamp || 0).getTime(),
+      }));
+
+    // Individual users and their direct conversations.
+    const userItems = filteredUsers.map((user) => {
       const conversation = conversations.find(
-        (c) =>
-          !c.is_group &&
-          (c.other_user_id === user.id ||
-            c.name === user.full_name ||
-            c.name === user.username),
+        (item) => !item.is_group && item.other_user_id === user.id,
       );
 
       return {
+        type: "user" as const,
+        id: user.id,
         user,
         conversation,
+        timestamp: conversation?.last_message_timestamp
+          ? new Date(conversation.last_message_timestamp).getTime()
+          : 0,
       };
     });
 
-    return usersWithConversations.sort((a, b) => {
-      const timeA = a.conversation?.last_message_timestamp
-        ? new Date(a.conversation.last_message_timestamp).getTime()
-        : 0;
-
-      const timeB = b.conversation?.last_message_timestamp
-        ? new Date(b.conversation.last_message_timestamp).getTime()
-        : 0;
-
-      return timeB - timeA;
-    });
-  }, [filteredUsers, conversations]);
+    // Combine and sort by latest message.
+    return [...groupItems, ...userItems].sort(
+      (a, b) => b.timestamp - a.timestamp,
+    );
+  }, [conversations, filteredUsers, search]);
 
   async function handleStartChat(userId: string) {
     if (!onStartChat || userId === currentUserId) return;
@@ -157,21 +172,20 @@ export default function ChatSidebar({
             aria-label={t("moreOptions")}
             aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="cursor-pointer rounded-full p-1.5 text-foreground transition-colors hover:bg-accent bg-white"
+            className="cursor-pointer rounded-full bg-white p-1.5 text-foreground transition-colors hover:bg-accent"
           >
             <MoreVertical className="size-6" />
           </Button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 top-10 z-30 w-48 rounded-xl border border-border bg-popover  text-popover-foreground shadow-lg">
+            <div className="absolute right-0 top-10 z-30 w-48 rounded-xl border border-border bg-popover text-popover-foreground shadow-lg">
               <Button
                 type="button"
-                disabled
                 onClick={() => {
                   setIsMenuOpen(false);
                   setIsCreateGroupOpen(true);
                 }}
-                className="flex w-full h-[40px] cursor-pointer justify-start items-center gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="flex h-[40px] w-full cursor-pointer items-center justify-start gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
                 <Users className="h-4 w-4" />
                 <span>{t("createGroup")}</span>
@@ -183,7 +197,7 @@ export default function ChatSidebar({
                   setIsMenuOpen(false);
                   setIsEditProfileOpen(true);
                 }}
-                className="flex w-full h-[40px] cursor-pointer justify-start items-center gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="flex h-[40px] w-full cursor-pointer items-center justify-start gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
                 <UserRoundPen className="h-4 w-4" />
                 <span>{t("editProfile")}</span>
@@ -195,7 +209,7 @@ export default function ChatSidebar({
                   setIsMenuOpen(false);
                   setShowLogoutModal(true);
                 }}
-                className="flex w-full h-[40px] cursor-pointer justify-start items-center gap-2.5 px-4 py-3 text-left text-sm font-medium text-destructive transition-colors hover:bg-logout-red-light"
+                className="flex h-[40px] w-full cursor-pointer items-center justify-start gap-2.5 px-4 py-3 text-left text-sm font-medium text-destructive transition-colors hover:bg-logout-red-light"
               >
                 <LogOut className="h-4 w-4" />
                 <span>{t("logout")}</span>
@@ -221,21 +235,21 @@ export default function ChatSidebar({
           {search && (
             <Button
               type="button"
-              className={"h-0 w-0 cursor-pointer"}
+              className="h-0 w-0 cursor-pointer"
               onClick={() => setSearch("")}
               aria-label={t("clearSearch")}
             >
               <X
                 size={16}
-                className="cursor-pointer bg-muted  text-muted-foreground"
+                className="cursor-pointer bg-muted text-muted-foreground"
               />
             </Button>
           )}
         </div>
       </div>
 
-      {/* Users List */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      {/* Combined Users and Groups List */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain chat-scrollbar">
         {areUsersLoading && (
           <div className="flex justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-chart-4" />
@@ -248,48 +262,96 @@ export default function ChatSidebar({
           </div>
         )}
 
-        {usersToDisplay.length > 0 ? (
-          usersToDisplay.map(({ user, conversation }) => (
-            <UserListItem
-              user={user}
-              key={user.id}
-              currentUserId={currentUserId}
-              isOpening={openingUserId === user.id}
-              isCurrentUser={user.id === currentUserId}
-              lastMessageType={conversation?.last_message_type}
-              lastMessageAt={conversation?.last_message_timestamp ?? null}
-              lastMessageSenderId={conversation?.last_message_sender ?? null}
-              unreadCount={
-                conversation?.id === selectedId
-                  ? 0
-                  : (conversation?.unread_count ?? 0)
+        {!areUsersLoading &&
+          !usersFailed &&
+          (chatItems.length > 0 ? (
+            chatItems.map((item) => {
+              // Group item.
+              if (item.type === "group") {
+                const group = item.conversation;
+
+                return (
+                  <button
+                    key={`group-${group.id}`}
+                    type="button"
+                    onClick={() => onSelect(group.id)}
+                    className={`flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent ${
+                      selectedId === group.id ? "bg-accent" : ""
+                    }`}
+                  >
+                    {/* Group Avatar */}
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-chart-4/10">
+                      <Users className="h-5 w-5 text-chart-4" />
+                    </div>
+
+                    {/* Group Details */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {group.name}
+                      </p>
+
+                      <p className="truncate text-xs text-muted-foreground">
+                        {group.last_message || "Group created"}
+                      </p>
+                    </div>
+
+                    {/* Unread Count */}
+                    {group.unread_count > 0 && (
+                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-chart-4 px-1.5 text-xs text-white">
+                        {group.unread_count}
+                      </span>
+                    )}
+                  </button>
+                );
               }
-              lastMessage={
-                conversation?.last_message === "This message was deleted" ||
-                conversation?.last_message === "You deleted this message"
-                  ? null
-                  : (conversation?.last_message ?? null)
-              }
-              lastMessageDeliveredAt={
-                conversation?.last_message_delivered ? "delivered" : null
-              }
-              lastMessageReadAt={
-                conversation?.last_message_read ? "read" : null
-              }
-              onClick={() => {
-                if (conversation) {
-                  onSelect(conversation.id);
-                } else {
-                  handleStartChat(user.id);
-                }
-              }}
-            />
-          ))
-        ) : (
-          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-            {t("noUsersFound")}
-          </div>
-        )}
+              
+              // Individual user item.
+              const { user, conversation } = item;
+
+              return (
+                <UserListItem
+                  user={user}
+                  key={`user-${user.id}`}
+                  currentUserId={currentUserId}
+                  isOpening={openingUserId === user.id}
+                  isCurrentUser={false}
+                  lastMessageType={conversation?.last_message_type}
+                  lastMessageAt={conversation?.last_message_timestamp ?? null}
+                  lastMessageSenderId={
+                    conversation?.last_message_sender ?? null
+                  }
+                  unreadCount={
+                    conversation?.id === selectedId
+                      ? 0
+                      : (conversation?.unread_count ?? 0)
+                  }
+                  lastMessage={
+                    conversation?.last_message === "This message was deleted" ||
+                    conversation?.last_message === "You deleted this message"
+                      ? null
+                      : (conversation?.last_message ?? null)
+                  }
+                  lastMessageDeliveredAt={
+                    conversation?.last_message_delivered ? "delivered" : null
+                  }
+                  lastMessageReadAt={
+                    conversation?.last_message_read ? "read" : null
+                  }
+                  onClick={() => {
+                    if (conversation) {
+                      onSelect(conversation.id);
+                    } else {
+                      handleStartChat(user.id);
+                    }
+                  }}
+                />
+              );
+            })
+          ) : (
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+              {t("noUsersFound")}
+            </div>
+          ))}
       </div>
 
       {/* Create Group Modal */}
@@ -298,6 +360,9 @@ export default function ChatSidebar({
           isOpen={isCreateGroupOpen}
           currentUserId={currentUserId}
           onClose={() => setIsCreateGroupOpen(false)}
+          onCreated={(conversationId) => {
+            onSelect(conversationId);
+          }}
         />
       )}
 

@@ -3,7 +3,6 @@
 import ChatLayout from "./ChatLayout";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ChatConversation, ChatScreenProps } from "@/src/types/chat";
 import { createClient } from "@/src/lib/supabase/client";
 import MessageIcon from "@/src/components/icons/Message";
 import ChatWindow from "@/src/components/chat/ChatWindow";
@@ -11,6 +10,7 @@ import ChatSidebar from "@/src/components/chat/ChatSidebar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useConversations } from "@/src/hooks/useConversations";
 import { useRealtimeMessages } from "@/src/hooks/useRealtimeChat";
+import type { ChatConversation, ChatScreenProps } from "@/src/types/chat";
 
 import {
   useMessages,

@@ -15,6 +15,7 @@ import MessageImageGallery from "./message/MessageImageGallery";
 export default function MessageItem({
   message,
   isMine,
+  isGroup,
   groupMessages,
   onEditRequest,
 }: MessageItemProps) {
@@ -135,6 +136,16 @@ export default function MessageItem({
     }
   };
 
+  if (message.is_system) {
+    return (
+      <div className="flex w-full justify-center py-2">
+        <div className="max-w-[85%] rounded-md px-4 py-2 text-center bg-white text-xs text-muted-foreground">
+          {message.content}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`group flex w-full min-w-0 ${
@@ -162,7 +173,15 @@ export default function MessageItem({
             message.message_type === "image" ? "px-1 pb-2 pt-1" : "px-4 py-2.5"
           }`}
         >
-          {/* Deleted message */}
+          {/* Group sender name */}
+          {isGroup && !isMine && (
+            <p className="mb-1 px-2 text-xs font-semibold text-chart-4">
+              {message.sender_profile?.full_name ||
+                message.sender_profile?.username ||
+                "Unknown member"}
+            </p>
+          )}
+
           {isDeleted ? (
             <div
               className={`flex items-center gap-2 px-3 py-2 text-sm italic ${

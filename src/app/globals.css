@@ -124,6 +124,7 @@
   --primary-light: oklch(0.9 0.08 302.321);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0.008 326);
+  --scroll: oklch(0.9 0.003 9);
 
   --light-red: oklch(97.1% 0.093 17.9);
   --grey-50: oklch(0.985 0.002 247.8);
@@ -225,3 +226,27 @@
     @apply font-sans;
   }
 }
+
+/* Thin Chat Scrollbar */
+.chat-scrollbar {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--scroll) transparent;
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+
+/* .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+} */

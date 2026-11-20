@@ -4,6 +4,7 @@ import {
   useMutation,
   useQueryClient,
   useInfiniteQuery,
+  useQuery,
 } from "@tanstack/react-query";
 import { createClient } from "@/src/lib/supabase/client";
 
@@ -16,35 +17,6 @@ export function useCreateDirectConversation() {
     mutationFn: async (otherUserId: string) => {
       const { data, error } = await supabase.rpc("create_direct_conversation", {
         p_other_user_id: otherUserId,
-      });
-
-      if (error) throw error;
-      return data as string;
-    },
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    },
-  });
-}
-
-export function useCreateGroupConversation() {
-  const supabase = createClient();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationKey: ["createGroupConversation"],
-
-    mutationFn: async ({
-      title,
-      memberIds,
-    }: {
-      title: string;
-      memberIds: string[];
-    }) => {
-      const { data, error } = await supabase.rpc("create_group_conversation", {
-        p_title: title,
-        p_member_ids: memberIds,
       });
 
       if (error) throw error;
@@ -120,6 +92,26 @@ export function useMessages(conversationId: string) {
 
       const messages = [...(data ?? [])].reverse();
 
+      // Get unique sender IDs from the current message page.
+      const senderIds = [
+        ...new Set(messages.map((message) => message.sender_id)),
+      ];
+
+      // Fetch all sender profiles in one request.
+      const { data: senderProfiles, error: senderError } = senderIds.length
+        ? await supabase
+            .from("profiles")
+            .select("id, full_name, username, avatar_url")
+            .in("id", senderIds)
+        : { data: [], error: null };
+
+      if (senderError) throw senderError;
+
+      // Create sender lookup map.
+      const senderMap = new Map(
+        (senderProfiles ?? []).map((profile) => [profile.id, profile]),
+      );
+
       return Promise.all(
         messages.map(async (message) => {
           const deletedForMe = hiddenIds.has(message.id);
@@ -131,9 +123,15 @@ export function useMessages(conversationId: string) {
           ) {
             return {
               ...message,
+              sender_profile: senderMap.get(message.sender_id) ?? null,
               deleted_for_me: deletedForMe,
               attachment_url: null,
             };
+            // return {
+            //   ...message,
+            //   deleted_for_me: deletedForMe,
+            //   attachment_url: null,
+            // };
           }
 
           const { data: signedData, error: signedError } =
@@ -145,8 +143,14 @@ export function useMessages(conversationId: string) {
             console.error("Signed URL error:", signedError);
           }
 
+          // return {
+          //   ...message,
+          //   deleted_for_me: deletedForMe,
+          //   attachment_url: signedData?.signedUrl ?? null,
+          // };
           return {
             ...message,
+            sender_profile: senderMap.get(message.sender_id) ?? null,
             deleted_for_me: deletedForMe,
             attachment_url: signedData?.signedUrl ?? null,
           };
@@ -519,5 +523,247 @@ export function useSendImageGroup() {
         queryKey: ["conversations"],
       });
     },
+  });
+}
+
+export function useCreateGroupConversation() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      title,
+      memberIds,
+    }: {
+      title: string;
+      memberIds: string[];
+    }) => {
+      const { data, error } = await supabase.rpc("create_group_conversation", {
+        p_title: title,
+        p_member_ids: memberIds,
+      });
+
+      if (error) throw error;
+
+      return data as string;
+    },
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["conversations"],
+      });
+    },
+  });
+}
+
+export function useLeaveGroupConversation() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { data, error } = await supabase.rpc("leave_group_conversation", {
+        p_conversation_id: conversationId,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["conversations"],
+      });
+    },
+  });
+}
+
+export function useDeleteGroupConversation() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { data, error } = await supabase.rpc("delete_group_conversation", {
+        p_conversation_id: conversationId,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["conversations"],
+      });
+    },
+  });
+}
+
+export function useAddGroupMembers() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      memberIds,
+    }: {
+      conversationId: string;
+      memberIds: string[];
+    }) => {
+      const { data, error } = await supabase.rpc("add_group_members", {
+        p_conversation_id: conversationId,
+        p_member_ids: memberIds,
+      });
+
+      if (error) throw error;
+
+      return data;
+    },
+
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["conversations"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["messages", variables.conversationId],
+        }),
+      ]);
+    },
+  });
+}
+
+export function usePromoteGroupMember() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      memberId,
+    }: {
+      conversationId: string;
+      memberId: string;
+    }) => {
+      const { data, error } = await supabase.rpc("promote_group_member", {
+        p_conversation_id: conversationId,
+        p_member_id: memberId,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["conversations"],
+      });
+    },
+  });
+}
+
+export function useBanGroupMember() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      memberId,
+    }: {
+      conversationId: string;
+      memberId: string;
+    }) => {
+      const { data, error } = await supabase.rpc("ban_group_member", {
+        p_conversation_id: conversationId,
+        p_member_id: memberId,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["conversations"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["bannedGroupMembers", variables.conversationId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["messages", variables.conversationId],
+        }),
+      ]);
+    },
+  });
+}
+
+export function useUnbanGroupMember() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      memberId,
+    }: {
+      conversationId: string;
+      memberId: string;
+    }) => {
+      const { data, error } = await supabase.rpc("unban_group_member", {
+        p_conversation_id: conversationId,
+        p_member_id: memberId,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["conversations"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["bannedGroupMembers", variables.conversationId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["messages", variables.conversationId],
+        }),
+      ]);
+    },
+  });
+}
+
+export function useBannedGroupMembers(conversationId: string, enabled = true) {
+  const supabase = createClient();
+
+  return useQuery({
+    queryKey: ["bannedGroupMembers", conversationId],
+
+    queryFn: async () => {
+      const { data: bannedRows, error: bannedError } = await supabase
+        .from("conversation_members")
+        .select("user_id")
+        .eq("conversation_id", conversationId)
+        .eq("is_banned", true);
+
+      if (bannedError) throw bannedError;
+
+      const bannedIds = (bannedRows ?? []).map((row) => row.user_id);
+
+      if (bannedIds.length === 0) return [];
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url")
+        .in("id", bannedIds);
+
+      if (profilesError) throw profilesError;
+
+      return profiles ?? [];
+    },
+
+    enabled: enabled && !!conversationId,
+    staleTime: 30_000,
   });
 }

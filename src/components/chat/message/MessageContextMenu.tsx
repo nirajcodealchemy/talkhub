@@ -156,7 +156,7 @@ export default function MessageContextMenu({
 
       <div
         ref={triggerRef}
-        className={`absolute top-1/2 z-30 flex -translate-y-1/2 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 ${
+        className={`absolute top-1/2 z-1 flex -translate-y-1/2 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 ${
           isMine ? "-left-[76px]" : "-right-[76px]"
         }`}
       >

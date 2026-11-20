@@ -1,12 +1,162 @@
+// "use client";
+
+// import ChatHeader from "./ChatHeader";
+// import MessageList from "./MessageList";
+// import MessageInput from "./MessageInput";
+// import GroupInfoPanel from "./GroupInfoPanel";
+
+// import { useEffect, useState } from "react";
+// import { useEditMessage } from "@/src/hooks/useEditText";
+// import { ChatMessage, ChatWindowProps } from "@/src/types/chat";
+// import { useTypingIndicator } from "@/src/hooks/useTypingIndicator";
+// import AddMembersPanel from "./AddMembersPanel";
+// import { useUsers } from "@/src/hooks/useUsers";
+
+// export default function ChatWindow({
+//   onSend,
+//   onBack,
+//   onLoadOlder,
+//   conversation,
+//   onAttachment,
+//   onAttachments,
+//   currentUserId,
+//   isLoadingOlder,
+//   hasMoreMessages,
+// }: ChatWindowProps) {
+//   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(
+//     null,
+//   );
+
+//   const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
+//   const [isAddMembersOpen, setIsAddMembersOpen] = useState(false);
+
+//   const { isOtherUserTyping, notifyTyping, stopTyping } = useTypingIndicator(
+//     conversation.id,
+//     currentUserId,
+//   );
+//   const { data: users = [], isLoading: isUsersLoading } = useUsers();
+//   const { mutateAsync: editMessage, isPending: isEditing } = useEditMessage();
+
+//   useEffect(() => {
+//     setEditingMessage(null);
+//     setIsGroupInfoOpen(false);
+//     setIsAddMembersOpen(false);
+//   }, [conversation.id]);
+
+//   const handleEditRequest = (message: ChatMessage) => {
+//     setEditingMessage(message);
+//   };
+
+//   const handleCancelEdit = () => {
+//     setEditingMessage(null);
+//   };
+
+//   const handleEditSubmit = async (content: string) => {
+//     if (!editingMessage) return;
+
+//     await editMessage({
+//       messageId: editingMessage.id,
+//       conversationId: conversation.id,
+//       content,
+//     });
+
+//     setEditingMessage(null);
+//   };
+
+//   const handleGroupExited = () => {
+//     setIsGroupInfoOpen(false);
+//     onBack?.();
+//   };
+
+//   return (
+//     <div className="relative flex h-full min-h-0 min-w-0 w-full overflow-hidden">
+//       {/* Main Chat */}
+//       <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-chat-window-background">
+//         <ChatHeader
+//           onBack={onBack}
+//           conversation={conversation}
+//           currentUserId={currentUserId}
+//           onOpenGroupInfo={() => setIsGroupInfoOpen(true)}
+//         />
+
+//         <MessageList
+//           onLoadOlder={onLoadOlder}
+//           currentUserId={currentUserId}
+//           isLoadingOlder={isLoadingOlder}
+//           messages={conversation.messages}
+//           hasMoreMessages={hasMoreMessages}
+//           onEditMessage={handleEditRequest}
+//           isGroup={!!conversation.is_group}
+//           isOtherUserTyping={isOtherUserTyping}
+//         />
+
+//         <MessageInput
+//           onSend={onSend}
+//           isEditing={isEditing}
+//           onTyping={notifyTyping}
+//           onStopTyping={stopTyping}
+//           onAttachment={onAttachment}
+//           onAttachments={onAttachments}
+//           editingMessage={editingMessage}
+//           onCancelEdit={handleCancelEdit}
+//           onEditSubmit={handleEditSubmit}
+//           conversationId={conversation.id}
+//         />
+//       </section>
+
+//       {/* Group Info */}
+//       {conversation.is_group && isGroupInfoOpen && (
+//         <div
+//           className="
+//     absolute inset-0 z-40 bg-background
+//     lg:relative lg:inset-auto lg:z-auto
+//     lg:h-full lg:w-[400px]
+//     lg:min-w-[400px] lg:max-w-[400px] lg:shrink-0
+//   "
+//         >
+//           {isAddMembersOpen ? (
+//             <AddMembersPanel
+//               conversationId={conversation.id}
+//               users={users}
+//               existingMemberIds={
+//                 conversation.group_members?.map((member) => member.id) ?? []
+//               }
+//               currentUserId={currentUserId}
+//               onBack={() => setIsAddMembersOpen(false)}
+//               onAdded={() => {
+//                 setIsAddMembersOpen(false);
+//                 setIsGroupInfoOpen(true);
+//               }}
+//             />
+//           ) : (
+//             <GroupInfoPanel
+//               conversation={conversation}
+//               currentUserId={currentUserId}
+//               onClose={() => setIsGroupInfoOpen(false)}
+//               onGroupExited={handleGroupExited}
+//               onAddMembers={() => setIsAddMembersOpen(true)}
+//             />
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
 "use client";
 
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
+import GroupInfoPanel from "./GroupInfoPanel";
+import AddMembersPanel from "./AddMembersPanel";
+
 import { useEffect, useState } from "react";
 import { useEditMessage } from "@/src/hooks/useEditText";
 import { ChatMessage, ChatWindowProps } from "@/src/types/chat";
 import { useTypingIndicator } from "@/src/hooks/useTypingIndicator";
+import { useUsers } from "@/src/hooks/useUsers";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ChatWindow({
   onSend,
@@ -19,17 +169,28 @@ export default function ChatWindow({
   isLoadingOlder,
   hasMoreMessages,
 }: ChatWindowProps) {
+  const queryClient = useQueryClient();
+
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(
     null,
   );
+
+  const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
+  const [isAddMembersOpen, setIsAddMembersOpen] = useState(false);
+
   const { isOtherUserTyping, notifyTyping, stopTyping } = useTypingIndicator(
     conversation.id,
     currentUserId,
   );
+
+  const { data: users = [], isLoading: isUsersLoading } = useUsers();
+
   const { mutateAsync: editMessage, isPending: isEditing } = useEditMessage();
 
   useEffect(() => {
     setEditingMessage(null);
+    setIsGroupInfoOpen(false);
+    setIsAddMembersOpen(false);
   }, [conversation.id]);
 
   const handleEditRequest = (message: ChatMessage) => {
@@ -52,31 +213,90 @@ export default function ChatWindow({
     setEditingMessage(null);
   };
 
-  return (
-    <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-chat-window-background">
-      <ChatHeader conversation={conversation} onBack={onBack} />
+  const handleGroupExited = () => {
+    setIsGroupInfoOpen(false);
+    setIsAddMembersOpen(false);
+    onBack?.();
+  };
 
-      <MessageList
-        onLoadOlder={onLoadOlder}
-        currentUserId={currentUserId}
-        isLoadingOlder={isLoadingOlder}
-        messages={conversation.messages}
-        hasMoreMessages={hasMoreMessages}
-        onEditMessage={handleEditRequest}
-        isOtherUserTyping={isOtherUserTyping}
-      />
-      <MessageInput
-        onSend={onSend}
-        isEditing={isEditing}
-        onTyping={notifyTyping}
-        onStopTyping={stopTyping}
-        onAttachment={onAttachment}
-        onAttachments={onAttachments}
-        editingMessage={editingMessage}
-        onCancelEdit={handleCancelEdit}
-        onEditSubmit={handleEditSubmit}
-        conversationId={conversation.id}
-      />
-    </section>
+  const handleMembersAdded = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ["conversations"],
+    });
+
+    setIsAddMembersOpen(false);
+    setIsGroupInfoOpen(true);
+  };
+
+  return (
+    <div className="relative flex h-full min-h-0 min-w-0 w-full overflow-hidden">
+      {/* Main Chat */}
+      <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-chat-window-background">
+        <ChatHeader
+          onBack={() => onBack}
+          conversation={conversation}
+          currentUserId={currentUserId}
+          onOpenGroupInfo={() => setIsGroupInfoOpen(true)}
+        />
+
+        <MessageList
+          onLoadOlder={onLoadOlder}
+          currentUserId={currentUserId}
+          isLoadingOlder={isLoadingOlder}
+          messages={conversation.messages}
+          hasMoreMessages={hasMoreMessages}
+          onEditMessage={handleEditRequest}
+          isGroup={!!conversation.is_group}
+          isOtherUserTyping={isOtherUserTyping}
+        />
+
+        <MessageInput
+          onSend={onSend}
+          isEditing={isEditing}
+          onTyping={notifyTyping}
+          onStopTyping={stopTyping}
+          onAttachment={onAttachment}
+          onAttachments={onAttachments}
+          editingMessage={editingMessage}
+          onCancelEdit={handleCancelEdit}
+          onEditSubmit={handleEditSubmit}
+          conversationId={conversation.id}
+        />
+      </section>
+
+      {/* Group Info / Add Members */}
+      {conversation.is_group && isGroupInfoOpen && (
+        <div
+          className="
+            absolute inset-0 z-40 bg-background
+            lg:relative lg:inset-auto lg:z-auto
+            lg:h-full lg:w-[400px]
+            lg:min-w-[400px] lg:max-w-[400px] lg:shrink-0
+          "
+        >
+          {/* Add Members */}
+          {isAddMembersOpen ? (
+            <AddMembersPanel
+              conversationId={conversation.id}
+              users={users}
+              existingMemberIds={
+                conversation.group_members?.map((member) => member.id) ?? []
+              }
+              currentUserId={currentUserId}
+              onBack={() => setIsAddMembersOpen(false)}
+              onAdded={handleMembersAdded}
+            />
+          ) : (
+            <GroupInfoPanel
+              conversation={conversation}
+              currentUserId={currentUserId}
+              onClose={() => setIsGroupInfoOpen(false)}
+              onGroupExited={handleGroupExited}
+              onAddMembers={() => setIsAddMembersOpen(true)}
+            />
+          )}
+        </div>
+      )}
+    </div>
   );
 }

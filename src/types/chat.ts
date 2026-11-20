@@ -11,6 +11,7 @@ export type ChatMessage = {
   content: string;
   sender_id: string;
   created_at: string;
+  is_system?: boolean;
   reactions?: string[];
   reply_count?: number;
   conversation_id: string;
@@ -21,13 +22,14 @@ export type ChatMessage = {
   deleted_at?: string | null;
   delivered_at?: string | null;
   attachment_url?: string | null;
+  media_group_id?: string | null;
   attachment_path?: string | null;
   attachment_name?: string | null;
   attachment_type?: string | null;
   attachment_size?: number | null;
-  media_group_id?: string | null;
   is_deleted_for_everyone?: boolean;
   status?: "sent" | "delivered" | "read";
+  sender_profile?: MessageSenderProfile | null;
 };
 
 export type ChatConversation = {
@@ -43,8 +45,10 @@ export type ChatConversation = {
   other_user_avatar: string;
   last_message_time: string;
   other_user_username: string;
+  group_member_count?: number;
   last_message_read?: boolean;
   last_message_sender?: string;
+  group_members?: GroupMember[];
   other_user_id?: string | null;
   last_message_timestamp?: string;
   last_message_type?: MessageType;
@@ -64,7 +68,9 @@ export type ConversationModalProps = {
 };
 
 export type HeaderProps = {
-  onBack?: () => void;
+  onBack: () => void;
+  currentUserId?: string;
+  onOpenGroupInfo?: () => void;
   conversation: ChatConversation;
 };
 
@@ -111,17 +117,34 @@ export type ChatWindowProps = {
   isLoadingOlder: boolean;
   hasMoreMessages: boolean;
   conversation: ChatConversation;
+
   onSend: (message: string) => void;
   onAttachment?: (file: File) => void;
-
   // Multiple images as one group
   onAttachments?: (files: File[], caption?: string) => void;
+};
+
+export type MessageSenderProfile = {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+};
+
+export type GroupMember = {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  role: string;
+  is_banned?: boolean;
 };
 
 export type GroupModalProps = {
   isOpen: boolean;
   onClose: () => void;
   currentUserId: string;
+  onCreated?: (conversationId: string) => void;
 };
 
 export type MessageInputProps = {
@@ -139,12 +162,14 @@ export type MessageInputProps = {
 
 export type MessageItemProps = {
   isMine: boolean;
+  isGroup?: boolean;
   message: ChatMessage;
   groupMessages?: ChatMessage[];
   onEditRequest: (message: ChatMessage) => void;
 };
 
 export type MessageListProps = {
+  isGroup?: boolean;
   currentUserId: string;
   messages: ChatMessage[];
   isLoadingOlder: boolean;

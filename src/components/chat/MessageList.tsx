@@ -38,6 +38,7 @@ function getDateLabel(
 }
 
 export default function MessageList({
+  isGroup,
   messages,
   onLoadOlder,
   currentUserId,
@@ -284,7 +285,7 @@ export default function MessageList({
     <div
       ref={scrollRef}
       onScroll={handleScroll}
-      className="min-h-0 flex-1 overflow-y-auto bg-muted px-5 py-5 sm:px-6"
+      className="min-h-0 flex-1 overflow-y-auto chat-scrollbar bg-muted px-5 py-5 sm:px-6"
     >
       <div
         ref={contentRef}
@@ -326,11 +327,19 @@ export default function MessageList({
                       </span>
                     </div>
                   )}
+                  {/* <MessageItem
+                    key={item.key}
+                    message={item.message}
+                    groupMessages={item.groupMessages}
+                    isMine={item.message.sender_id === currentUserId}
+                    onEditRequest={onEditMessage}
+                  /> */}
                   <MessageItem
                     key={item.key}
                     message={item.message}
                     groupMessages={item.groupMessages}
                     isMine={item.message.sender_id === currentUserId}
+                    isGroup={isGroup}
                     onEditRequest={onEditMessage}
                   />
                 </div>

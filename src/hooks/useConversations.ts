@@ -37,26 +37,38 @@ export function useConversations(userId: string) {
       // 2. Fetch members of these conversations.
       const { data: allMembers, error: membersError } = await supabase
         .from("conversation_members")
-        .select("conversation_id, user_id, role")
+        .select("conversation_id, user_id, role,is_banned")
         .in("conversation_id", conversationIds);
 
       if (membersError) throw membersError;
 
       // 3. Collect other user IDs.
-      const otherUserIds = [
-        ...new Set(
-          (allMembers || [])
-            .filter((member) => member.user_id !== userId)
-            .map((member) => member.user_id),
-        ),
+      // const otherUserIds = [
+      //   ...new Set(
+      //     (allMembers || [])
+      //       .filter((member) => member.user_id !== userId)
+      //       .map((member) => member.user_id),
+      //   ),
+      // ];
+
+      const allMemberIds = [
+        ...new Set((allMembers || []).map((member) => member.user_id)),
       ];
 
       // 4. Fetch other users' profiles.
-      const { data: profiles, error: profilesError } = otherUserIds.length
+      // const { data: profiles, error: profilesError } = otherUserIds.length
+      //   ? await supabase
+      //       .from("profiles")
+      //       .select("id, full_name, username, avatar_url, phone")
+      //       .in("id", otherUserIds)
+      //   : { data: [], error: null };
+
+      // if (profilesError) throw profilesError;
+      const { data: profiles, error: profilesError } = allMemberIds.length
         ? await supabase
             .from("profiles")
             .select("id, full_name, username, avatar_url, phone")
-            .in("id", otherUserIds)
+            .in("id", allMemberIds)
         : { data: [], error: null };
 
       if (profilesError) throw profilesError;
@@ -95,11 +107,20 @@ export function useConversations(userId: string) {
           ? conv.title || "Group"
           : profile?.full_name || profile?.username || "User";
 
-        const avatar =
-          profile?.avatar_url ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(
-            name,
-          )}&background=8b34d7&color=fff`;
+        // const avatar =
+        //   profile?.avatar_url ||
+        //   `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        //     name,
+        //   )}&background=8b34d7&color=fff`;
+
+        const avatar = conv.is_group
+          ? `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              name,
+            )}&background=8b34d7&color=fff`
+          : profile?.avatar_url ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              name,
+            )}&background=8b34d7&color=fff`;
 
         const isDeletedForEveryone =
           conv.last_message_deleted_for_everyone === true;
@@ -111,6 +132,18 @@ export function useConversations(userId: string) {
         const lastMessageTime = conv.last_message_at
           ? new Date(conv.last_message_at)
           : null;
+        const groupMembers = members.map((member) => {
+          const profile = profilesById.get(member.user_id);
+
+          return {
+            id: member.user_id,
+            full_name: profile?.full_name ?? null,
+            username: profile?.username ?? null,
+            avatar_url: profile?.avatar_url ?? null,
+            role: member.role,
+            is_banned: member.is_banned,
+          };
+        });
 
         return {
           id: conv.conversation_id,
@@ -156,6 +189,9 @@ export function useConversations(userId: string) {
           unread_count: Number(conv.unread_count || 0),
 
           online: false,
+          group_members: conv.is_group ? groupMembers : [],
+
+          group_member_count: conv.is_group ? groupMembers.length : 0,
 
           // Full message history is loaded separately.
           messages: [],
