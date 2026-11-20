@@ -654,7 +654,6 @@ COMMIT;
 -- ---------------------------------------------------------------------------
 -- INSPECTION NOTES / KNOWN LIMITATIONS
 -- ---------------------------------------------------------------------------
--- 1. Production had 23 objects in chat-attachments and zero observed in chat-files.
 -- 2. Bucket file_size_limit and allowed_mime_types were NULL for all three buckets.
 -- 3. Production had no messages.status column in the inspected columns list.
 -- 4. Production had no create_group_conversation function in the inspected function list.

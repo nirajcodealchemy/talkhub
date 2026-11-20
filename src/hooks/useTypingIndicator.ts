@@ -1,7 +1,7 @@
 "use client";
 
+import { createClient } from "@/src/lib";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@/src/lib/supabase/client";
 
 export function useTypingIndicator(
   conversationId: string,

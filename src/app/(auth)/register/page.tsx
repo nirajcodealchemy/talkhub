@@ -10,7 +10,7 @@ import { validation } from "@/src/utils/validation";
 import { Button } from "@/src/components/ui/button";
 import AuthLayout from "@/src/components/AuthLayout";
 import { ChangeEvent, FormEvent, useState } from "react";
-import { Confirmation } from "@/src/components/modal/ConfirmationModal";
+import { ConfirmationModal } from "@/src/components";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -214,7 +214,7 @@ export default function SignupPage() {
           )}
         </Button>
       </form>
-      <Confirmation
+      <ConfirmationModal
         loading={loading}
         title={modalConfig.title}
         isOpen={modalConfig.isOpen}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Loader2, Trash2 } from "lucide-react";
 
 type Props = {
@@ -19,8 +20,8 @@ export default function DeleteMessageModal({
   isDeleting,
   deleteError,
 }: Props) {
+  const t = useTranslations("screen.chat.DeleteMessageModal");
   if (!isOpen) return null;
-
   return (
     <div
       className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
@@ -45,11 +46,11 @@ export default function DeleteMessageModal({
             id="delete-message-title"
             className="text-lg font-semibold tracking-tight"
           >
-            Delete this message?
+            {t("title")}
           </h2>
 
           <p className="mt-1.5 text-sm text-muted-foreground">
-            This action can’t be undone.
+            {t("description")}
           </p>
         </div>
 
@@ -60,7 +61,7 @@ export default function DeleteMessageModal({
             onClick={() => onDelete(false)}
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background py-3 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
           >
-            Delete for me
+            {t("deleteForMe")}
           </button>
 
           <button
@@ -69,12 +70,12 @@ export default function DeleteMessageModal({
             onClick={() => onDelete(true)}
             className="flex w-full cursor-pointer text-white items-center justify-center gap-2 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground transition hover:bg-destructive/80 disabled:opacity-50"
           >
-            Delete for everyone
+            {t("deleteForEveryone")}
           </button>
 
           {!isMine && (
             <p className="pt-1 text-center text-xs text-muted-foreground">
-              You can only delete someone else’s message for yourself.
+              {t("deleteRestrictionNote")}
             </p>
           )}
 

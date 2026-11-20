@@ -1,10 +1,10 @@
 "use client";
 
-import MessageItem from "./MessageItem";
 import { useTranslations } from "next-intl";
 import { ArrowDown, Loader2 } from "lucide-react";
-import { MessageListProps, RenderMessage } from "@/src/types/chat";
+import { MessageListProps, RenderMessage } from "@/src/types";
 import { useLayoutEffect, useMemo, useRef, useEffect, useState } from "react";
+import MessageItem from "./MessageItem";
 
 function getDateKey(dateString: string) {
   const date = new Date(dateString);

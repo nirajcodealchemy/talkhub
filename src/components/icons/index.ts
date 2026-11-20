@@ -1,0 +1,10 @@
+export { default as EmojiIcon } from "./EmojiIcon";
+export { default as FileIcon } from "./FileIcon";
+export { default as InfoIcon } from "./InfoIcon";
+export { default as MessageIcon } from "./Message";
+export { default as MicIcon } from "./MicIcon";
+export { default as PhoneIcon } from "./PhoneIcon";
+export { default as PlusIcon } from "./PlusIcon";
+export { default as SendIcon } from "./SendIcon";
+export { default as SparklesIcon } from "./SparklesIcon";
+export { default as VideoIcon } from "./VideoIcon";

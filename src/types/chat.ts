@@ -6,6 +6,14 @@ export type MessageType =
   | "file"
   | undefined;
 
+type GroupEventType =
+  | "member_added"
+  | "member_removed"
+  | "member_left"
+  | "member_banned"
+  | "member_unbanned"
+  | "group_name_changed";
+
 export type ChatMessage = {
   id: string;
   content: string;
@@ -44,6 +52,8 @@ export type ChatConversation = {
   other_user_phone: string;
   other_user_avatar: string;
   last_message_time: string;
+  avatar_url?: string | null;
+  is_deleted_for_me: boolean;
   other_user_username: string;
   group_member_count?: number;
   last_message_read?: boolean;
@@ -52,6 +62,7 @@ export type ChatConversation = {
   other_user_id?: string | null;
   last_message_timestamp?: string;
   last_message_type?: MessageType;
+  is_deleted_for_everyone: boolean;
   last_message_delivered?: boolean;
 };
 
@@ -148,6 +159,7 @@ export type GroupModalProps = {
 };
 
 export type MessageInputProps = {
+  isBanned?: boolean;
   isEditing: boolean;
   onTyping?: () => void;
   onCancelEdit: () => void;
@@ -191,6 +203,8 @@ export type UserListItemProps = {
   lastMessageReadAt?: string | null;
   lastMessageSenderId?: string | null;
   lastMessageDeliveredAt?: string | null;
+  isDeletedForEveryone: boolean | undefined;
+  isDeletedForMe: boolean | undefined;
   lastMessageType?: "text" | "image" | "file" | "video" | "audio" | null;
 };
 
@@ -220,6 +234,7 @@ export type ConversationSummary = {
   is_group: boolean;
   title: string | null;
   conversation_id: string;
+  avatar_url: string | null;
   last_message_at: string | null;
   last_message_type: string | null;
   last_message_content: string | null;

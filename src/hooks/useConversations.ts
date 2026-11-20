@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
+import { createClient } from "@/src/lib";
+import { getAvatarUrl } from "@/src/utils";
+import { ConversationSummary } from "../types";
 import { useQuery } from "@tanstack/react-query";
 import { useOnlineUsers } from "./useOnlineUsers";
-import { ConversationSummary } from "../types/chat";
-import { createClient } from "@/src/lib/supabase/client";
 import { useRealtimeConversations } from "./useRealtimeChat";
 
 export function useConversations(userId: string) {
@@ -42,28 +43,11 @@ export function useConversations(userId: string) {
 
       if (membersError) throw membersError;
 
-      // 3. Collect other user IDs.
-      // const otherUserIds = [
-      //   ...new Set(
-      //     (allMembers || [])
-      //       .filter((member) => member.user_id !== userId)
-      //       .map((member) => member.user_id),
-      //   ),
-      // ];
-
       const allMemberIds = [
         ...new Set((allMembers || []).map((member) => member.user_id)),
       ];
 
-      // 4. Fetch other users' profiles.
-      // const { data: profiles, error: profilesError } = otherUserIds.length
-      //   ? await supabase
-      //       .from("profiles")
-      //       .select("id, full_name, username, avatar_url, phone")
-      //       .in("id", otherUserIds)
-      //   : { data: [], error: null };
-
-      // if (profilesError) throw profilesError;
+      // 3. Fetch member profiles.
       const { data: profiles, error: profilesError } = allMemberIds.length
         ? await supabase
             .from("profiles")
@@ -73,7 +57,7 @@ export function useConversations(userId: string) {
 
       if (profilesError) throw profilesError;
 
-      // 5. Group members by conversation.
+      // 4. Group members by conversation.
       const membersByConversation = new Map<
         string,
         NonNullable<typeof allMembers>
@@ -88,12 +72,12 @@ export function useConversations(userId: string) {
         membersByConversation.set(member.conversation_id, existing);
       });
 
-      // 6. Create a profile lookup map.
+      // 5. Create a profile lookup map.
       const profilesById = new Map(
         (profiles || []).map((profile) => [profile.id, profile]),
       );
 
-      // 7. Build conversation summaries.
+      // 6. Build conversation summaries.
       return summaries.map((conv) => {
         const members = membersByConversation.get(conv.conversation_id) || [];
 
@@ -107,21 +91,12 @@ export function useConversations(userId: string) {
           ? conv.title || "Group"
           : profile?.full_name || profile?.username || "User";
 
-        // const avatar =
-        //   profile?.avatar_url ||
-        //   `https://ui-avatars.com/api/?name=${encodeURIComponent(
-        //     name,
-        //   )}&background=8b34d7&color=fff`;
-
+        // Generate a consistent avatar for groups and individual users.
         const avatar = conv.is_group
-          ? `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              name,
-            )}&background=8b34d7&color=fff`
-          : profile?.avatar_url ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              name,
-            )}&background=8b34d7&color=fff`;
+          ? conv.avatar_url || getAvatarUrl(name, null)
+          : getAvatarUrl(name, profile?.avatar_url);
 
+        // Deleted message states.
         const isDeletedForEveryone =
           conv.last_message_deleted_for_everyone === true;
 
@@ -132,14 +107,16 @@ export function useConversations(userId: string) {
         const lastMessageTime = conv.last_message_at
           ? new Date(conv.last_message_at)
           : null;
+
+        // Group members with their profile information.
         const groupMembers = members.map((member) => {
-          const profile = profilesById.get(member.user_id);
+          const memberProfile = profilesById.get(member.user_id);
 
           return {
             id: member.user_id,
-            full_name: profile?.full_name ?? null,
-            username: profile?.username ?? null,
-            avatar_url: profile?.avatar_url ?? null,
+            full_name: memberProfile?.full_name ?? null,
+            username: memberProfile?.username ?? null,
+            avatar_url: memberProfile?.avatar_url ?? null,
             role: member.role,
             is_banned: member.is_banned,
           };
@@ -156,12 +133,13 @@ export function useConversations(userId: string) {
           other_user_id: otherMember?.user_id || null,
           other_user_username: profile?.username || null,
           other_user_avatar: profile?.avatar_url || null,
+          avatar_url: conv.avatar_url ?? null,
+          // Keep message content separate from deletion state.
+          last_message: isDeleted ? "" : conv.last_message_content || "",
 
-          last_message: isDeletedForEveryone
-            ? "This message was deleted"
-            : isDeletedForMe
-              ? "You deleted this message"
-              : conv.last_message_content || "",
+          is_deleted: isDeleted,
+          is_deleted_for_everyone: isDeletedForEveryone,
+          is_deleted_for_me: isDeletedForMe,
 
           last_message_type: isDeleted
             ? "deleted"
@@ -189,6 +167,7 @@ export function useConversations(userId: string) {
           unread_count: Number(conv.unread_count || 0),
 
           online: false,
+
           group_members: conv.is_group ? groupMembers : [],
 
           group_member_count: conv.is_group ? groupMembers.length : 0,
@@ -205,7 +184,7 @@ export function useConversations(userId: string) {
     refetchOnWindowFocus: false,
   });
 
-  // 8. Update online status without refetching conversations.
+  // 7. Update online status without refetching conversations.
   const conversations = useMemo(() => {
     return (query.data ?? []).map((conversation) => ({
       ...conversation,

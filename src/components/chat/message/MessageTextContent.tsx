@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import type { MessageTextContentProps } from "@/src/types/chat";
+import type { MessageTextContentProps } from "@/src/types";
 
 const MESSAGE_LINE_LIMIT = 10;
 

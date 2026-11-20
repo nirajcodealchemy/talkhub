@@ -1,24 +1,21 @@
 "use client";
 
-import ChatLayout from "./ChatLayout";
+import { createClient } from "@/src/lib";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/src/lib/supabase/client";
-import MessageIcon from "@/src/components/icons/Message";
-import ChatWindow from "@/src/components/chat/ChatWindow";
-import ChatSidebar from "@/src/components/chat/ChatSidebar";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useConversations } from "@/src/hooks/useConversations";
-import { useRealtimeMessages } from "@/src/hooks/useRealtimeChat";
-import type { ChatConversation, ChatScreenProps } from "@/src/types/chat";
-
+import { ChatConversation, ChatScreenProps } from "@/src/types";
+import { ChatSidebar, ChatWindow, MessageIcon } from "@/src/components";
 import {
   useMessages,
   useSendMessage,
+  useConversations,
   useSendAttachment,
   useSendImageGroup,
+  useRealtimeMessages,
   useCreateDirectConversation,
-} from "@/src/hooks/useChat";
+} from "@/src/hooks";
+import ChatLayout from "./ChatLayout";
 
 export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
   const t = useTranslations("screen.chat.ChatScreen");

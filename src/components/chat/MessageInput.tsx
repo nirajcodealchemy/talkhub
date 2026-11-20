@@ -1,15 +1,11 @@
 "use client";
 
-import MicIcon from "../icons/MicIcon";
-import PlusIcon from "../icons/PlusIcon";
-import FileIcon from "../icons/FileIcon";
 import { useTranslations } from "next-intl";
-import { MessageInputProps } from "@/src/types/chat";
-import { X, Paperclip, Loader2 } from "lucide-react";
-import SendIcon from "@/src/components/icons/SendIcon";
+import { MessageInputProps } from "@/src/types";
 import { useRef, useState, DragEvent, useEffect } from "react";
-import EmojiPickerPopover from "./message-input/EmojiPickerPopover";
-import AttachmentPreviewList from "./message-input/AttachmentPreviewList";
+import { FileIcon, MicIcon, PlusIcon, SendIcon } from "../icons";
+import { X, Paperclip, Loader2, ShieldAlert } from "lucide-react";
+import { AttachmentPreviewList, EmojiPickerPopover } from "./message-input";
 import {
   MAX_FILE_SIZE,
   ALLOWED_EXTENSIONS,
@@ -26,6 +22,7 @@ export default function MessageInput({
   onAttachments,
   conversationId,
   editingMessage,
+  isBanned = false,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -97,6 +94,7 @@ export default function MessageInput({
   }
 
   const addFiles = (files: FileList | File[]) => {
+    if (isBanned) return;
     const newFiles = Array.from(files);
 
     setSelectedFiles((previous) => {
@@ -121,6 +119,7 @@ export default function MessageInput({
   };
 
   const handleSend = async () => {
+    if (isBanned) return;
     const value = message.trim();
 
     if (editingMessage) {
@@ -219,6 +218,27 @@ export default function MessageInput({
   };
 
   const canSend = !!message.trim() || selectedFiles.length > 0;
+
+  if (isBanned) {
+    return (
+      <div className="m-3 flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-4">
+        <div className="rounded-full bg-destructive/10 p-2">
+          <ShieldAlert className="h-5 w-5 text-destructive" />
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-destructive">
+            You are banned from this group
+          </p>
+
+          <p className="text-xs text-muted-foreground">
+            You cannot send messages in this group until the group admin unbans
+            you.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

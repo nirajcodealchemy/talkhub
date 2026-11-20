@@ -1,32 +1,35 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  X,
-  Search,
-  UserPlus,
-  LogOut,
-  Trash2,
-  Users,
-  Ban,
-  Undo2,
-} from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { HeaderProps } from "@/src/types/chat";
 import {
   useBanGroupMember,
-  useBannedGroupMembers,
-  useDeleteGroupConversation,
-  useLeaveGroupConversation,
-  usePromoteGroupMember,
   useUnbanGroupMember,
-} from "@/src/hooks/useChat";
+  useBannedGroupMembers,
+  usePromoteGroupMember,
+  useLeaveGroupConversation,
+  useDeleteGroupConversation,
+} from "@/src/hooks";
+import {
+  X,
+  Users,
+  Undo2,
+  Search,
+  LogOut,
+  Trash2,
+  UserPlus,
+  MoreVertical,
+  Camera,
+} from "lucide-react";
+import { createClient } from "@/src/lib";
 
 type GroupInfoPanelProps = {
   conversation: HeaderProps["conversation"];
   currentUserId?: string;
   onClose: () => void;
   onGroupExited?: () => void;
-  onAddMembers: () => void;
+  onAddMembers?: () => void;
 };
 
 type Tab = "members" | "banned";
@@ -40,13 +43,26 @@ export default function GroupInfoPanel({
 }: GroupInfoPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("members");
   const [search, setSearch] = useState("");
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [savedAvatarUrl, setSavedAvatarUrl] = useState(
+    conversation.avatar_url || "",
+  );
+  const queryClient = useQueryClient();
+
+  const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(
+    null,
+  );
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const members = conversation.group_members ?? [];
 
   const currentMember = members.find((member) => member.id === currentUserId);
 
-  const promoteMember = usePromoteGroupMember();
   const isAdmin = currentMember?.role === "admin";
+  const promoteMember = usePromoteGroupMember();
   const {
     data: bannedMembers = [],
     isLoading: isBannedMembersLoading,
@@ -146,6 +162,104 @@ export default function GroupInfoPanel({
       );
     }
   };
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      alert("Please select a JPG, PNG, or WEBP image.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setSelectedAvatar(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleSaveAvatar = async () => {
+    if (!selectedAvatar) return;
+
+    try {
+      setIsSavingAvatar(true);
+
+      const supabase = createClient();
+
+      const fileExtension = selectedAvatar.name.split(".").pop();
+      const filePath = `${conversation.id}/${Date.now()}.${fileExtension}`;
+
+      // Upload image to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("group-avatars")
+        .upload(filePath, selectedAvatar, {
+          contentType: selectedAvatar.type,
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public image URL
+      const { data } = supabase.storage
+        .from("group-avatars")
+        .getPublicUrl(filePath);
+
+      const avatarUrl = data.publicUrl;
+
+      // Update group avatar in conversations table through RPC
+      const { error: updateError } = await supabase.rpc("update_group_avatar", {
+        p_conversation_id: conversation.id,
+        p_avatar_url: avatarUrl,
+      });
+
+      if (updateError) throw updateError;
+      // Keep the local image visible immediately after saving; the public
+      // storage URL remains persisted for future sessions.
+      setSavedAvatarUrl(avatarPreview || avatarUrl);
+      // Keep the sidebar and chat header in sync without remounting the page.
+      if (currentUserId) {
+        queryClient.setQueryData(
+          ["conversations", currentUserId],
+          (oldData: any[] | undefined) => {
+            if (!oldData) return oldData;
+
+            return oldData.map((item) =>
+              item.id === conversation.id
+                ? {
+                    ...item,
+                    avatar: avatarUrl,
+                    avatar_url: avatarUrl,
+                  }
+                : item,
+            );
+          },
+        );
+      }
+
+      setSelectedAvatar(null);
+      setAvatarPreview(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Failed to update group avatar:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to update group avatar.",
+      );
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  };
+
   return (
     // <aside className="relative flex h-full w-[340px] min-w-[340px] max-w-[40%] shrink-0 flex-col overflow-hidden border-l border-border bg-background">
     <aside
@@ -167,7 +281,7 @@ export default function GroupInfoPanel({
           type="button"
           onClick={onClose}
           aria-label="Close group information"
-          className="rounded-full p-2 text-muted-foreground hover:bg-accent"
+          className="rounded-full p-2 cursor-pointer text-muted-foreground hover:bg-accent"
         >
           <X className="size-5" />
         </button>
@@ -175,16 +289,44 @@ export default function GroupInfoPanel({
 
       {/* Group details */}
       <div className="flex shrink-0 flex-col items-center border-b border-border px-4 py-6">
-        <img
-          src={
-            conversation.avatar ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              conversation.name || "Group",
-            )}&background=8b34d7&color=fff`
-          }
-          alt={conversation.name}
-          className="size-20 rounded-full object-cover"
-        />
+        {/* Avatar */}
+        <div className="relative size-24">
+          <img
+            src={
+              avatarPreview ||
+              savedAvatarUrl ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                conversation.name || "Group",
+              )}&background=8b34d7&color=fff`
+            }
+            alt={conversation.name}
+            className="size-20 rounded-full object-cover"
+            onError={(event) => {
+              console.error("Avatar failed to load:", event.currentTarget.src);
+            }}
+          />
+
+          {/* Camera Button */}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Change group avatar"
+              className="absolute -bottom-1 right-0 flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-4 ring-background transition-colors hover:bg-primary/90"
+            >
+              <Camera className="size-4" />
+            </button>
+          )}
+
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+        </div>
 
         <h3 className="mt-3 text-base font-semibold text-foreground">
           {conversation.name}
@@ -193,6 +335,33 @@ export default function GroupInfoPanel({
         <p className="mt-1 text-xs text-muted-foreground">
           {members.filter((member) => !member.is_banned).length} Members
         </p>
+        {selectedAvatar && (
+          <div className="mt-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAvatar(null);
+                setAvatarPreview(null);
+
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              }}
+              className="rounded-md border border-border px-4 py-2 text-sm"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSaveAvatar}
+              disabled={isSavingAvatar}
+              className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
+            >
+              {isSavingAvatar ? "Saving..." : "Save"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Group actions */}
@@ -201,7 +370,7 @@ export default function GroupInfoPanel({
           <button
             type="button"
             onClick={onAddMembers}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-chart-4 hover:bg-accent"
+            className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-chart-4 hover:bg-accent"
           >
             <UserPlus className="size-4" />
             Add Members
@@ -214,7 +383,7 @@ export default function GroupInfoPanel({
             setConfirmAction("leave");
           }}
           disabled={isActionPending}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
+          className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
         >
           <LogOut className="size-4" />
           Leave
@@ -228,7 +397,7 @@ export default function GroupInfoPanel({
               setConfirmAction("delete");
             }}
             disabled={isActionPending}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
+            className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
           >
             <Trash2 className="size-4" />
             Delete and Exit
@@ -244,7 +413,7 @@ export default function GroupInfoPanel({
             setActiveTab("members");
             setSearch("");
           }}
-          className={`rounded-full px-3 py-2 text-xs font-medium transition-colors ${
+          className={`rounded-full px-3 py-2 cursor-pointer text-xs font-medium transition-colors ${
             activeTab === "members"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground"
@@ -259,7 +428,7 @@ export default function GroupInfoPanel({
             setActiveTab("banned");
             setSearch("");
           }}
-          className={`rounded-full px-3 py-2 text-xs font-medium transition-colors ${
+          className={`rounded-full cursor-pointer px-3 py-2 text-xs font-medium transition-colors ${
             activeTab === "banned"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground"
@@ -329,55 +498,80 @@ export default function GroupInfoPanel({
                       )}
                     </div>
 
-                    {member.role === "admin" && (
+                    {member.role === "admin" ? (
                       <span className="shrink-0 rounded-full bg-chart-4/15 px-3 py-1 text-[10px] font-medium text-chart-4">
                         Admin
                       </span>
+                    ) : (
+                      isAdmin &&
+                      member.id !== currentUserId && (
+                        <div className="relative shrink-0">
+                          {/* Three-dot menu button */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveActionMenuId((current) =>
+                                current === member.id ? null : member.id,
+                              )
+                            }
+                            aria-label={`Actions for ${name}`}
+                            aria-expanded={activeActionMenuId === member.id}
+                            className="flex size-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+                          >
+                            <MoreVertical className="size-5" />
+                          </button>
+
+                          {/* Dropdown menu */}
+                          {activeActionMenuId === member.id && (
+                            <div className="absolute right-0 top-full z-50 mt-1 w-36 overflow-hidden rounded-lg border border-border bg-background p-1 shadow-lg">
+                              {/* Make Admin */}
+                              <button
+                                type="button"
+                                disabled={promoteMember.isPending}
+                                onClick={async () => {
+                                  setActiveActionMenuId(null);
+
+                                  try {
+                                    await promoteMember.mutateAsync({
+                                      conversationId: conversation.id,
+                                      memberId: member.id,
+                                    });
+                                  } catch (error: any) {
+                                    console.error("Failed to promote member:", {
+                                      message: error?.message,
+                                      code: error?.code,
+                                      details: error?.details,
+                                      hint: error?.hint,
+                                    });
+                                  }
+                                }}
+                                className="w-full rounded-md cursor-pointer px-3 py-2 text-left text-xs font-medium text-chart-4 hover:bg-accent disabled:opacity-50"
+                              >
+                                Make Admin
+                              </button>
+
+                              {/* Ban */}
+                              <button
+                                type="button"
+                                disabled={isActionPending}
+                                onClick={() => {
+                                  setActiveActionMenuId(null);
+                                  setSelectedMember({
+                                    id: member.id,
+                                    name,
+                                  });
+                                  setActionError("");
+                                  setConfirmAction("ban");
+                                }}
+                                className="w-full cursor-pointer rounded-md px-3 py-2 text-left text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                              >
+                                Ban
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
                     )}
-                    {isAdmin && member.role !== "admin" && (
-                      <button
-                        type="button"
-                        disabled={promoteMember.isPending}
-                        onClick={async () => {
-                          try {
-                            await promoteMember.mutateAsync({
-                              conversationId: conversation.id,
-                              memberId: member.id,
-                            });
-                          } catch (error: any) {
-                            console.error("Failed to promote member:", {
-                              message: error?.message,
-                              code: error?.code,
-                              details: error?.details,
-                              hint: error?.hint,
-                            });
-                          }
-                        }}
-                        className="rounded-full bg-chart-4/10 px-3 py-1 text-xs font-medium text-chart-4 hover:bg-chart-4/20 disabled:opacity-50"
-                      >
-                        Make Admin
-                      </button>
-                    )}
-                    {isAdmin &&
-                      member.id !== currentUserId &&
-                      member.role !== "admin" && (
-                        <button
-                          type="button"
-                          disabled={isActionPending}
-                          onClick={() => {
-                            setSelectedMember({
-                              id: member.id,
-                              name,
-                            });
-                            setActionError("");
-                            setConfirmAction("ban");
-                          }}
-                          className="flex items-center gap-1 rounded-full bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/20 disabled:opacity-50"
-                        >
-                          <Ban className="size-3.5" />
-                          Ban
-                        </button>
-                      )}
                   </div>
                 );
               })}
@@ -438,7 +632,7 @@ export default function GroupInfoPanel({
                       setActionError("");
                       setConfirmAction("unban");
                     }}
-                    className="flex items-center gap-1 rounded-full bg-chart-4/10 px-3 py-1 text-xs font-medium text-chart-4 hover:bg-chart-4/20 disabled:opacity-50"
+                    className="flex items-center gap-1 cursor-pointer rounded-full bg-chart-4/10 px-3 py-1 text-xs font-medium text-chart-4 hover:bg-chart-4/20 disabled:opacity-50"
                   >
                     <Undo2 className="size-3.5" />
                     Unban
@@ -519,7 +713,7 @@ export default function GroupInfoPanel({
                   setConfirmAction(null);
                   setActionError("");
                 }}
-                className="h-10 flex-1 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+                className="h-10 flex-1 cursor-pointer rounded-lg border border-border text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -528,7 +722,7 @@ export default function GroupInfoPanel({
                 type="button"
                 disabled={isActionPending}
                 onClick={handleConfirmAction}
-                className="h-10 flex-1 rounded-lg bg-destructive text-sm font-medium text-white hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-10 flex-1 cursor-pointer rounded-lg bg-destructive text-sm font-medium text-white hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isActionPending
                   ? "Processing..."

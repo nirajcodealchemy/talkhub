@@ -1,14 +1,13 @@
 "use client";
 
-import { Button } from "../ui/button";
+import { Button } from "../ui";
 import { useTranslations } from "next-intl";
-import { userRegex } from "@/src/utils/regex";
-import { QUERY_KEYS } from "@/src/lib/queryKeys";
+import { EditProfileProps } from "@/src/types";
 import { Camera, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { QUERY_KEYS, createClient } from "@/src/lib";
+import { userRegex, getAvatarUrl } from "@/src/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { EditProfileProps } from "@/src/types/profile";
-import { createClient } from "@/src/lib/supabase/client";
 
 export default function EditProfileModal({
   userId,
@@ -203,10 +202,7 @@ export default function EditProfileModal({
                 onClick={() => fileRef.current?.click()}
               >
                 <img
-                  src={
-                    displayedAvatar ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=8b34d7&color=fff`
-                  }
+                  src={getAvatarUrl(name, displayedAvatar)}
                   alt={t("profileAlt")}
                   className="h-24 w-24 rounded-full border-4 border-gray-100 object-cover"
                 />

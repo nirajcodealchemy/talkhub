@@ -1,16 +1,13 @@
 "use client";
 
+import { Button } from "../ui";
 import { useState } from "react";
-import { Button } from "../ui/button";
-import InfoIcon from "../icons/InfoIcon";
-import VideoIcon from "../icons/VideoIcon";
-import PhoneIcon from "../icons/PhoneIcon";
+import { HeaderProps } from "@/src/types";
 import { useTranslations } from "next-intl";
 import GroupInfoPanel from "./GroupInfoPanel";
-import SparklesIcon from "../icons/SparklesIcon";
-import type { HeaderProps } from "@/src/types/chat";
+import { ConversationInfoModal } from "../modal";
 import { ArrowLeft, MoreVertical, Users, X } from "lucide-react";
-import ConversationInfoModal from "../modal/ConversationInfoModal";
+import { InfoIcon, PhoneIcon, SparklesIcon, VideoIcon } from "../icons";
 
 export default function ChatHeader({
   onBack,
@@ -49,9 +46,17 @@ export default function ChatHeader({
           className="relative h-10 w-10 shrink-0 cursor-pointer"
         >
           {conversation.is_group ? (
-            <div className="flex h-full w-full items-center justify-center rounded-full bg-chart-4/10 text-chart-4">
-              <Users className="size-5" />
-            </div>
+            conversation.avatar_url ? (
+              <img
+                src={conversation.avatar_url}
+                alt={conversation.name}
+                className="h-full w-full rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-chart-4/10 text-chart-4">
+                <Users className="size-5" />
+              </div>
+            )
           ) : (
             <img
               alt={conversation.name}

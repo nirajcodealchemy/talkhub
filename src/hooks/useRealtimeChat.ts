@@ -1,8 +1,8 @@
 "use client";
 
+import { createClient } from "@/src/lib";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/src/lib/supabase/client";
 
 export function useRealtimeMessages(conversationId: string | null) {
   const supabase = useMemo(() => createClient(), []);
@@ -45,7 +45,7 @@ export function useRealtimeConversations(userId: string) {
   // Rebuild message subscriptions when the user joins a conversation.
   const [membershipVersion, setMembershipVersion] = useState(0);
 
-  // 1. Listen for new memberships belonging to this user.
+  // 1. Refresh membership state when this user's membership changes.
   useEffect(() => {
     if (!userId) return;
 
@@ -54,7 +54,7 @@ export function useRealtimeConversations(userId: string) {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "conversation_members",
           filter: `user_id=eq.${userId}`,

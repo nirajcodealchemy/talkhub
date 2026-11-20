@@ -5,8 +5,9 @@ import { Button } from "../ui/button";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmationModalData } from "@/src/types/modals";
+import { useTranslations } from "next-intl";
 
-export const Confirmation = ({
+const ConfirmationModal = ({
   title,
   isOpen,
   confirm,
@@ -17,6 +18,7 @@ export const Confirmation = ({
 }: ConfirmationModalData) => {
   const [mounted, setMounted] = useState(false);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
+  const t = useTranslations("screen.chat.CreateGroupModal");
 
   useEffect(() => {
     setMounted(true);
@@ -57,7 +59,7 @@ export const Confirmation = ({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            aria-label="Close modal"
+            aria-label={t("closeModal")}
             className="cursor-pointer bg-background text-foreground hover:bg-background disabled:opacity-50"
           >
             <X size={20} />
@@ -80,7 +82,7 @@ export const Confirmation = ({
               disabled={loading}
               className="!h-9 !min-w-[76px] cursor-pointer rounded-lg border border-border bg-background !px-4 !py-0 text-xs font-medium text-foreground shadow-none hover:bg-muted hover:text-foreground disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Cancel
+              {t("cancel")}
             </Button>
           ) : (
             ""
@@ -105,3 +107,5 @@ export const Confirmation = ({
     document.body,
   );
 };
+
+export default ConfirmationModal;

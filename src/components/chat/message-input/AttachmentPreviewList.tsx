@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { AttachmentPreviewListProps } from "@/src/types/chat";
+import { formatFileSize } from "@/src/utils";
+import { AttachmentPreviewListProps } from "@/src/types";
 import { FileText, Image as ImageIcon, File, X } from "lucide-react";
 
 export default function AttachmentPreviewList({
@@ -11,16 +12,6 @@ export default function AttachmentPreviewList({
   const t = useTranslations("screen.chat.MessageInput");
 
   if (files.length === 0) return null;
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} ${t("fileSizeBytes")}`;
-
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} ${t("fileSizeKilobytes")}`;
-    }
-
-    return `${(bytes / (1024 * 1024)).toFixed(1)} ${t("fileSizeMegabytes")}`;
-  };
 
   const getFileIcon = (file: File) => {
     if (file.type.startsWith("image/")) {

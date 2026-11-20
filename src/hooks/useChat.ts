@@ -1,12 +1,12 @@
 "use client";
 
+import { createClient } from "@/src/lib";
 import {
   useMutation,
   useQueryClient,
   useInfiniteQuery,
   useQuery,
 } from "@tanstack/react-query";
-import { createClient } from "@/src/lib/supabase/client";
 
 export function useCreateDirectConversation() {
   const supabase = createClient();
@@ -599,6 +599,41 @@ export function useDeleteGroupConversation() {
     },
   });
 }
+
+// export function useAddGroupMembers() {
+//   const supabase = createClient();
+//   const queryClient = useQueryClient();
+
+//   return useMutation({
+//     mutationFn: async ({
+//       conversationId,
+//       memberIds,
+//     }: {
+//       conversationId: string;
+//       memberIds: string[];
+//     }) => {
+//       const { data, error } = await supabase.rpc("add_group_members", {
+//         p_conversation_id: conversationId,
+//         p_member_ids: memberIds,
+//       });
+
+//       if (error) throw error;
+
+//       return data;
+//     },
+
+//     onSuccess: async (_, variables) => {
+//       await Promise.all([
+//         queryClient.invalidateQueries({
+//           queryKey: ["conversations"],
+//         }),
+//         queryClient.invalidateQueries({
+//           queryKey: ["messages", variables.conversationId],
+//         }),
+//       ]);
+//     },
+//   });
+// }
 
 export function useAddGroupMembers() {
   const supabase = createClient();

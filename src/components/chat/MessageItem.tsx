@@ -2,15 +2,17 @@
 
 import JSZip from "jszip";
 import { useState } from "react";
+import { MessageItemProps } from "@/src/types";
+import { useDeleteMessage } from "@/src/hooks";
 import { Ban, Check, CheckCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import type { MessageItemProps } from "@/src/types/chat";
-import { useDeleteMessage } from "@/src/hooks/useDelete";
-import MessageAttachment from "./message/MessageAttachment";
-import MessageTextContent from "./message/MessageTextContent";
-import MessageContextMenu from "./message/MessageContextMenu";
-import DeleteMessageModal from "./message/DeleteMessageModal";
-import MessageImageGallery from "./message/MessageImageGallery";
+import {
+  MessageContextMenu,
+  MessageImageGallery,
+  MessageAttachment,
+  MessageTextContent,
+  DeleteMessageModal,
+} from "./message";
 
 export default function MessageItem({
   message,

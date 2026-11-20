@@ -11,6 +11,7 @@ import {
   useCreateGroupConversation,
   useSearchUsers,
 } from "@/src/hooks/useChat";
+import { getAvatarUrl } from "@/src/utils/avatar";
 
 export default function CreateGroupModal({
   isOpen,
@@ -165,13 +166,14 @@ export default function CreateGroupModal({
                     onClick={() => handleAddUser(user)}
                     className="flex w-full cursor-pointer items-center gap-2 p-2 transition-colors hover:bg-accent"
                   >
-                    <div className="h-8 w-8 rounded-full bg-muted">
+                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted">
                       <img
-                        src={
-                          user.avatar_url ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name ?? "User")}&background=8b34d7&color=fff`
-                        }
+                        src={getAvatarUrl(
+                          user.full_name || user.username,
+                          user.avatar_url,
+                        )}
                         alt=""
+                        className="h-full w-full rounded-full object-cover"
                       />
                     </div>
 
@@ -181,7 +183,7 @@ export default function CreateGroupModal({
                       </p>
 
                       <p className="text-xs text-muted-foreground">
-                        @{user.full_name}
+                        @{user.username}
                       </p>
                     </div>
                   </Button>

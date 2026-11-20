@@ -148,7 +148,39 @@
         "image": "Image",
         "edited": "edited",
         "downloadAll": "Download all",
-        "PreparingZip": "Preparing ZIP..."
+        "PreparingZip": "Preparing ZIP...",
+        "moreOptions": "More options",
+        "copyMessage": "Copy message",
+        "moreMessageOptions": "More message options"
+      },
+      "DeleteMessageModal": {
+        "title": "Delete this message?",
+        "description": "This action can’t be undone.",
+        "deleteForMe": "Delete for me",
+        "deleteForEveryone": "Delete for everyone",
+        "deleteRestrictionNote": "You can only delete someone else’s message for yourself."
+      },
+      "ConversationInfoModal": {
+        "title": "Contact Information",
+        "close": "Close",
+        "fullName": "Full Name",
+        "phoneNumber": "Phone Number",
+        "notProvided": "Not provided"
+      },
+      "MessageContextMenu": {
+        "moreOptions": "More options",
+        "copyMessage": "Copy message",
+        "moreMessageOptions": "More message options"
+      },
+      "messageImageGallery": {
+        "downloadImage": "Download image",
+        "viewImageN": "View image {current} of {total}",
+        "imageGallery": "Image gallery",
+        "downloadCurrentImage": "Download current image",
+        "closeGallery": "Close gallery",
+        "previousImage": "Previous image",
+        "nextImage": "Next image",
+        "showImageN": "Show image {current}"
       }
     },
     "MessageList": {
@@ -160,7 +192,8 @@
       "image": "Image",
       "defaultUser": "User",
       "document": "Document",
-      "deletedMessagePlaceholder": "This message was deleted"
+      "deletedMessagePlaceholder": "This message was deleted",
+      "youDeletedMessage": "You deleted this message"
     }
   }
 }

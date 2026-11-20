@@ -1,7 +1,7 @@
 "use client";
 
+import { createClient } from "@/src/lib";
 import { useMutation } from "@tanstack/react-query";
-import { createClient } from "@/src/lib/supabase/client";
 
 export function useLogout() {
   return useMutation({
@@ -16,4 +16,3 @@ export function useLogout() {
     },
   });
 }
-

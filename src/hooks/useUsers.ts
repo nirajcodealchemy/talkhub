@@ -1,9 +1,9 @@
 "use client";
 
-import { ChatUser } from "../types/chat";
-import { QUERY_KEYS } from "../lib/queryKeys";
+import { QUERY_KEYS } from "../lib";
+import { ChatUser } from "../types";
+import { createClient } from "@/src/lib";
 import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/src/lib/supabase/client";
 
 export function useUsers() {
   const supabase = createClient();

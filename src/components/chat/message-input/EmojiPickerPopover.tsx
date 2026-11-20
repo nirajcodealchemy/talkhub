@@ -1,9 +1,9 @@
 "use client";
 
+import { EmojiIcon } from "../../icons";
 import { useTranslations } from "next-intl";
-import EmojiIcon from "../../icons/EmojiIcon";
 import { useEffect, useRef, useState } from "react";
-import { EmojiPickerPopoverProps } from "@/src/types/chat";
+import { EmojiPickerPopoverProps } from "@/src/types";
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
 
 export default function EmojiPickerPopover({

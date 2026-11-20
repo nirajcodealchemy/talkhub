@@ -1,18 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { formatFileSize } from "@/src/utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, X } from "lucide-react";
-import type { ChatMessage, MessageImageGalleryProps } from "@/src/types/chat";
+import type { ChatMessage, MessageImageGalleryProps } from "@/src/types";
 
 const STORAGE_KEY = "talkhub_downloaded_images";
-
-function formatFileSize(bytes?: number | null) {
-  if (!bytes) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 export default function MessageImageGallery({
   message,
@@ -20,6 +14,7 @@ export default function MessageImageGallery({
   isMine,
 }: MessageImageGalleryProps) {
   const t = useTranslations("screen.chat.MessageItem");
+  const t2 = useTranslations("screen.chat.messageImageGallery");
 
   const [downloadedImageIds, setDownloadedImageIds] = useState<Set<string>>(
     new Set(),
@@ -194,8 +189,8 @@ export default function MessageImageGallery({
             image.id,
           );
         }}
-        aria-label="Download image"
-        title="Download image"
+        aria-label={t2("downloadImage")}
+        title={t2("downloadImage")}
         className={`absolute left-1/2 top-1/2 z-30 flex -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-black/35 text-white shadow-lg backdrop-blur-sm transition hover:bg-black/50 ${
           compact ? "px-3 py-2" : "px-4 py-2.5"
         }`}
@@ -234,7 +229,10 @@ export default function MessageImageGallery({
                   key={image.id}
                   role="button"
                   tabIndex={isAccessible ? 0 : -1}
-                  aria-label={`View image ${index + 1} of ${images.length}`}
+                  aria-label={t2("viewImageN", {
+                    current: index + 1,
+                    total: images.length,
+                  })}
                   onKeyDown={(event) => {
                     if (
                       isAccessible &&
@@ -335,7 +333,7 @@ export default function MessageImageGallery({
           className="fixed inset-0 z-[120] flex flex-col bg-black/95 p-3 text-white sm:p-5"
           role="dialog"
           aria-modal="true"
-          aria-label="Image gallery"
+          aria-label={t2("imageGallery")}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               setActiveImageIndex(null);
@@ -364,7 +362,7 @@ export default function MessageImageGallery({
                       }
                     }}
                     className="flex h-10 cursor-pointer items-center gap-2 rounded-full bg-white/15 px-4 text-sm font-medium transition hover:bg-white/25"
-                    aria-label="Download current image"
+                    aria-label={t2("downloadCurrentImage")}
                   >
                     <Download size={18} />
                   </button>
@@ -374,7 +372,7 @@ export default function MessageImageGallery({
                 type="button"
                 onClick={() => setActiveImageIndex(null)}
                 className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25"
-                aria-label="Close gallery"
+                aria-label={t2("closeGallery")}
               >
                 <X size={21} />
               </button>
@@ -388,7 +386,7 @@ export default function MessageImageGallery({
                 onClick={() => moveGallery(-1)}
                 disabled={accessibleImageIndexes.length < 2}
                 className="absolute left-0 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-40 sm:left-2 sm:h-12 sm:w-12"
-                aria-label="Previous image"
+                aria-label={t2("previousImage")}
               >
                 <ChevronLeft size={26} />
               </button>
@@ -414,7 +412,7 @@ export default function MessageImageGallery({
                 onClick={() => moveGallery(1)}
                 disabled={accessibleImageIndexes.length < 2}
                 className="absolute right-0 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-40 sm:right-2 sm:h-12 sm:w-12"
-                aria-label="Next image"
+                aria-label={t2("nextImage")}
               >
                 <ChevronRight size={26} />
               </button>
@@ -432,7 +430,7 @@ export default function MessageImageGallery({
                     type="button"
                     onClick={() => setActiveImageIndex(index)}
                     disabled={!isAccessible}
-                    aria-label={`Show image ${index + 1}`}
+                    aria-label={t2("showImageN", { current: index + 1 })}
                     aria-current={activeImageIndex === index}
                     className={`h-12 w-12 shrink-0 overflow-hidden rounded-md border-2 transition sm:h-14 sm:w-14 ${
                       activeImageIndex === index

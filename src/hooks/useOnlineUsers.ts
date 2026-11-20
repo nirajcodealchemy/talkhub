@@ -1,7 +1,7 @@
 "use client";
 
+import { createClient } from "@/src/lib";
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/src/lib/supabase/client";
 
 export function useOnlineUsers(userId: string) {
   const supabase = useMemo(() => createClient(), []);

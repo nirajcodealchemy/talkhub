@@ -1,26 +1,26 @@
 "use client";
 
+import { ChatUser } from "@/src/types";
 import { useMemo, useState } from "react";
+import { useAddGroupMembers } from "@/src/hooks";
 import { ArrowLeft, Search, Users } from "lucide-react";
-import { useAddGroupMembers } from "@/src/hooks/useChat";
-import { ChatUser } from "@/src/types/chat";
 
 type AddMembersPanelProps = {
-  conversationId: string;
   users: ChatUser[];
-  existingMemberIds: string[];
-  currentUserId: string;
   onBack: () => void;
   onAdded: () => void;
+  currentUserId: string;
+  conversationId: string;
+  existingMemberIds: string[];
 };
 
 export default function AddMembersPanel({
-  conversationId,
   users,
-  existingMemberIds,
-  currentUserId,
   onBack,
   onAdded,
+  currentUserId,
+  conversationId,
+  existingMemberIds,
 }: AddMembersPanelProps) {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

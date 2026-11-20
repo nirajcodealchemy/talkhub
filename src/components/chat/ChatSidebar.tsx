@@ -1,16 +1,17 @@
 "use client";
 
-import { Button } from "../ui/button";
+import { Button } from "../ui";
 import UserListItem from "./UserListItem";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useUsers } from "@/src/hooks/useUsers";
-import { useLogout } from "@/src/hooks/useLogout";
-import EditProfileModal from "./EditProfileModal";
-import CreateGroupModal from "./CreateGroupModal";
-import type { ChatSideBarProps } from "@/src/types/chat";
+import { ChatSideBarProps } from "@/src/types";
+import { useLogout, useUsers } from "@/src/hooks";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Confirmation } from "@/src/components/modal/ConfirmationModal";
+import {
+  ConfirmationModal,
+  CreateGroupModal,
+  EditProfileModal,
+} from "../modal";
 import {
   X,
   Users,
@@ -129,9 +130,10 @@ export default function ChatSidebar({
     });
 
     // Combine and sort by latest message.
-    return [...groupItems, ...userItems].sort(
-      (a, b) => b.timestamp - a.timestamp,
-    );
+    // return [...groupItems, ...userItems].sort(
+    //   (a, b) => b.timestamp - a.timestamp,
+    // );
+    return [...groupItems, ...userItems];
   }, [conversations, filteredUsers, search]);
 
   async function handleStartChat(userId: string) {
@@ -304,7 +306,7 @@ export default function ChatSidebar({
                   </button>
                 );
               }
-              
+
               // Individual user item.
               const { user, conversation } = item;
 
@@ -317,6 +319,8 @@ export default function ChatSidebar({
                   isCurrentUser={false}
                   lastMessageType={conversation?.last_message_type}
                   lastMessageAt={conversation?.last_message_timestamp ?? null}
+                  isDeletedForEveryone={conversation?.is_deleted_for_everyone}
+                  isDeletedForMe={conversation?.is_deleted_for_me}
                   lastMessageSenderId={
                     conversation?.last_message_sender ?? null
                   }
@@ -376,7 +380,7 @@ export default function ChatSidebar({
       )}
 
       {/* Logout Confirmation */}
-      <Confirmation
+      <ConfirmationModal
         isOpen={showLogoutModal}
         onConfirm={handleLogout}
         title={t("logoutConfirmTitle")}

@@ -1,15 +1,9 @@
 "use client";
 
 import { useLocale } from "next-intl";
+import { formatFileSize } from "@/src/utils";
 import { Download, FileText } from "lucide-react";
-import type { ChatAttachmentProps } from "@/src/types/chat";
-
-function formatFileSize(bytes?: number | null) {
-  if (!bytes) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import type { ChatAttachmentProps } from "@/src/types";
 
 export default function MessageAttachment({
   message,

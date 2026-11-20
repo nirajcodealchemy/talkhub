@@ -41,6 +41,7 @@ export default function MessageContextMenu({
   const isDeleted = message.is_deleted_for_everyone || message.deleted_for_me;
 
   const t = useTranslations("screen.chat.MessageItem");
+  // const t2 = useTranslations("screen.chat.ConversationInfoModal");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -162,10 +163,10 @@ export default function MessageContextMenu({
       >
         <button
           type="button"
-          title="More options"
+          title={t("moreOptions")}
           onClick={handleToggle}
           aria-expanded={isOpen}
-          aria-label="More message options"
+          aria-label={t("moreMessageOptions")}
           className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground"
         >
           <MoreVertical size={17} />
@@ -174,8 +175,8 @@ export default function MessageContextMenu({
         {message.message_type === "text" && message.content && (
           <button
             type="button"
-            title="Copy message"
-            aria-label="Copy message"
+            title={t("copyMessage")}
+            aria-label={t("copyMessage")}
             onClick={() => void handleCopy()}
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground"
           >

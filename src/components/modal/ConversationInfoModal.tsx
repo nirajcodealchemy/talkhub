@@ -4,6 +4,8 @@ import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { Phone, UserRound, X } from "lucide-react";
 import { ConversationModalProps } from "@/src/types/chat";
+import { useTranslations } from "next-intl";
+import { getAvatarUrl } from "@/src/utils/avatar";
 
 export default function ConversationInfoModal({
   isOpen,
@@ -32,14 +34,13 @@ export default function ConversationInfoModal({
     };
   }, [isOpen, onClose]);
 
+  const t = useTranslations("screen.chat.ConversationInfoModal");
+
   if (!isOpen || !mounted) return null;
 
   const name = userId?.name || "User";
 
-  const avatar =
-    userId?.other_user_avatar ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=8b34d7&color=fff`;
-
+  const avatar = getAvatarUrl(name, userId?.other_user_avatar);
   return createPortal(
     <div
       className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4"
@@ -61,13 +62,13 @@ export default function ConversationInfoModal({
             id="contact-info-title"
             className="text-lg font-semibold text-foreground"
           >
-            Contact Information
+            {t("title")}
           </h2>
 
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("close")}
             className="cursor-pointer rounded-full p-2 text-muted-foreground transition hover:bg-muted"
           >
             <X size={20} />
@@ -94,7 +95,7 @@ export default function ConversationInfoModal({
               <UserRound size={20} className="shrink-0 text-chart-4" />
 
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Full Name</p>
+                <p className="text-xs text-muted-foreground">{t("fullName")}</p>
                 <p className="truncate text-sm font-medium text-foreground">
                   {userId?.name || "Not provided"}
                 </p>
@@ -106,9 +107,11 @@ export default function ConversationInfoModal({
               <Phone size={20} className="shrink-0 text-chart-4" />
 
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Phone Number</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("phoneNumber")}
+                </p>
                 <p className="text-sm font-medium text-foreground">
-                  {userId?.other_user_phone || "Not provided"}
+                  {userId?.other_user_phone || t("notProvided")}
                 </p>
               </div>
             </div>
