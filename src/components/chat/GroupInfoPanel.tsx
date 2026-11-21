@@ -23,6 +23,7 @@ import {
   Camera,
 } from "lucide-react";
 import { createClient } from "@/src/lib";
+import { useTranslations } from "next-intl";
 
 type GroupInfoPanelProps = {
   conversation: HeaderProps["conversation"];
@@ -50,7 +51,7 @@ export default function GroupInfoPanel({
     conversation.avatar_url || "",
   );
   const queryClient = useQueryClient();
-
+  const t = useTranslations("screen.chat.GroupInfoPanel");
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(
     null,
   );
@@ -274,7 +275,7 @@ export default function GroupInfoPanel({
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
         <div className="flex items-center gap-2">
           <Users className="size-5 text-foreground" />
-          <h2 className="font-semibold text-foreground">Group Info</h2>
+          <h2 className="font-semibold text-foreground">{t("groupInfo")}</h2>
         </div>
 
         <button
@@ -349,7 +350,7 @@ export default function GroupInfoPanel({
               }}
               className="rounded-md cursor-pointer border border-border px-4 py-2 text-sm"
             >
-              Cancel
+              {t("cancel")}
             </button>
 
             <button
@@ -373,7 +374,7 @@ export default function GroupInfoPanel({
             className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-chart-4 hover:bg-accent"
           >
             <UserPlus className="size-4" />
-            Add Members
+            {t("addMembers")}
           </button>
         )}
         <button
@@ -386,7 +387,7 @@ export default function GroupInfoPanel({
           className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
         >
           <LogOut className="size-4" />
-          Leave
+          {t("leave")}
         </button>
 
         {isAdmin && (
@@ -400,7 +401,7 @@ export default function GroupInfoPanel({
             className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
           >
             <Trash2 className="size-4" />
-            Delete and Exit
+            {t("deleteAndExit")}
           </button>
         )}
       </div>
@@ -419,7 +420,7 @@ export default function GroupInfoPanel({
               : "text-muted-foreground"
           }`}
         >
-          View Members
+          {t("viewMembers")}
         </button>
 
         <button
@@ -434,7 +435,7 @@ export default function GroupInfoPanel({
               : "text-muted-foreground"
           }`}
         >
-          Banned Members
+          {t("bannedMembers")}
         </button>
       </div>
 
@@ -486,7 +487,7 @@ export default function GroupInfoPanel({
                         {name}
                         {member.id === currentUserId && (
                           <span className="ml-1 text-xs text-muted-foreground">
-                            (You)
+                            {t("you")}
                           </span>
                         )}
                       </p>
@@ -500,7 +501,7 @@ export default function GroupInfoPanel({
 
                     {member.role === "admin" ? (
                       <span className="shrink-0 rounded-full bg-chart-4/15 px-3 py-1 text-[10px] font-medium text-chart-4">
-                        Admin
+                        {t("admin")}
                       </span>
                     ) : (
                       isAdmin &&
@@ -578,20 +579,20 @@ export default function GroupInfoPanel({
             </div>
           ) : (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              No members found.
+              {t("noMembersFound")}.
             </p>
           )
         ) : !isAdmin ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Only group admins can view banned members.
+            {t("onlyGroupAdminsCanViewBannedMembers")}
           </p>
         ) : isBannedMembersLoading ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Loading banned members...
+            {t("loadingBannedMembers")}
           </p>
         ) : bannedMembersError ? (
           <p className="py-8 text-center text-sm text-destructive">
-            Failed to load banned members.
+            {t("failedToLoadBannedMembers")}
           </p>
         ) : filteredBannedMembers.length > 0 ? (
           <div className="space-y-1">
@@ -635,7 +636,7 @@ export default function GroupInfoPanel({
                     className="flex items-center gap-1 cursor-pointer rounded-full bg-chart-4/10 px-3 py-1 text-xs font-medium text-chart-4 hover:bg-chart-4/20 disabled:opacity-50"
                   >
                     <Undo2 className="size-3.5" />
-                    Unban
+                    {t("unban")}
                   </button>
                 </div>
               );
@@ -643,7 +644,7 @@ export default function GroupInfoPanel({
           </div>
         ) : (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            No banned members found.
+            {t("noBannedMembersFound")}
           </p>
         )}
       </div>
@@ -731,8 +732,8 @@ export default function GroupInfoPanel({
                     : confirmAction === "delete"
                       ? "Delete and Exit"
                       : confirmAction === "ban"
-                        ? "Ban Member"
-                        : "Unban Member"}
+                        ? t("banMember")
+                        : t("unbanMember")}
               </button>
             </div>
           </div>

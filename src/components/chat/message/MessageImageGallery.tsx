@@ -266,7 +266,7 @@ export default function MessageImageGallery({
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <span className="text-xs text-muted-foreground">
-                        Loading image...
+                        {t2("loadingImage")}
                       </span>
                     </div>
                   )}

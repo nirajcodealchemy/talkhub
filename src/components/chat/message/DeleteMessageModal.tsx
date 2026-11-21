@@ -91,13 +91,13 @@ export default function DeleteMessageModal({
             onClick={onClose}
             className="w-full cursor-pointer rounded-xl border border-border py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
           >
-            Cancel
+            {t("cancel")}
           </button>
 
           {isDeleting && (
             <div className="flex items-center justify-center gap-2 pt-1 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Deleting…
+              {t("deleting")}
             </div>
           )}
         </div>

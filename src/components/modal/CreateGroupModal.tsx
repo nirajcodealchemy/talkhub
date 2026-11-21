@@ -192,7 +192,7 @@ export default function CreateGroupModal({
                   </p>
                 ) : searchResults.length === 0 ? (
                   <p className="p-4 text-center text-xs text-muted-foreground">
-                    No users found
+                    {t("noUsersFound")}
                   </p>
                 ) : (
                   <>
@@ -229,10 +229,6 @@ export default function CreateGroupModal({
                             <p className="truncate text-sm font-medium text-foreground">
                               {user.full_name || user.username}
                             </p>
-
-                            {/* <p className="truncate text-xs text-muted-foreground">
-                              @{user.username}
-                            </p> */}
                           </div>
 
                           <button
@@ -253,7 +249,7 @@ export default function CreateGroupModal({
 
                     {searchUsers.isFetchingNextPage && (
                       <p className="p-3 text-center text-xs text-muted-foreground">
-                        Loading more users...
+                        {t("loadingMoreUsers")}
                       </p>
                     )}
                   </>
@@ -307,13 +303,6 @@ export default function CreateGroupModal({
               {t("cancel")}
             </Button>
 
-            {/* <Button
-              onClick={handleCreate}
-              disabled
-              className="h-full flex-1 cursor-not-allowed bg-chart-4 text-white hover:bg-chart-5"
-            >
-              {t("createGroup")}
-            </Button> */}
             <Button
               onClick={handleCreate}
               disabled={

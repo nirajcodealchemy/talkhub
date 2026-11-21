@@ -194,8 +194,8 @@ export default function MessageItem({
 
               <span>
                 {message.is_deleted_for_everyone
-                  ? "This message was deleted"
-                  : "You deleted this message"}
+                  ? t("thisMessageWasDeleted")
+                  : t("youDeletedThisMessage")}
               </span>
             </div>
           ) : (

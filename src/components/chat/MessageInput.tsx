@@ -228,12 +228,11 @@ export default function MessageInput({
 
         <div>
           <p className="text-sm font-semibold text-destructive">
-            You are banned from this group
+            {t("bannedFromGroup")}
           </p>
 
           <p className="text-xs text-muted-foreground">
-            You cannot send messages in this group until the group admin unbans
-            you.
+            {t("bannedFromGroupDescription")}
           </p>
         </div>
       </div>
@@ -263,7 +262,7 @@ export default function MessageInput({
           <div className="flex items-center justify-between rounded-lg border-l-4 border-chart-4 bg-chart-4/5 px-3 py-2">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-chart-4">
-                Editing message
+                {t("editingMessage")}
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {editingMessage.content}

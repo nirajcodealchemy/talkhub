@@ -99,10 +99,13 @@
         "closeModal": "Close modal",
         "addMembers": "Add Members",
         "searching": "Searching...",
+        "selectUser": "Select {name}",
         "createGroup": "Create Group",
         "removeMember": "Remove {name}",
+        "noUsersFound": "No users found",
         "selectedMembers": "Selected Members",
         "groupNamePlaceholder": "Enter group name",
+        "loadingMoreUsers": "Loading more users...",
         "searchUsersPlaceholder": "Search users..."
       },
       "EditProfileModal": {
@@ -134,7 +137,11 @@
         "voiceMessage": "Voice message",
         "searchEmoji": "Search emoji...",
         "addAttachment": "Add attachment",
-        "typeMessage": "Type your message..."
+        "cancelEditing": "Cancel editing",
+        "editingMessage": "Editing message",
+        "typeMessage": "Type your message...",
+        "bannedFromGroup": "You are banned from this group",
+        "bannedFromGroupDescription": "You cannot send messages in this group until the group admin unbans you."
       },
       "MessageItem": {
         "download": "Download",
@@ -151,9 +158,13 @@
         "PreparingZip": "Preparing ZIP...",
         "moreOptions": "More options",
         "copyMessage": "Copy message",
-        "moreMessageOptions": "More message options"
+        "moreMessageOptions": "More message options",
+        "thisMessageWasDeleted": "This message was deleted",
+        "youDeletedThisMessage": "You deleted this message"
       },
       "DeleteMessageModal": {
+        "cancel": "Cancel",
+        "deleting": "Deleting...",
         "title": "Delete this message?",
         "description": "This action can’t be undone.",
         "deleteForMe": "Delete for me",
@@ -180,13 +191,40 @@
         "closeGallery": "Close gallery",
         "previousImage": "Previous image",
         "nextImage": "Next image",
-        "showImageN": "Show image {current}"
+        "showImageN": "Show image {current}",
+        "loadingImage": "Loading image..."
+      },
+      "AddMembersPanel": {
+        "backToGroupInfo": "Back to group information"
+      },
+      "GroupInfoPanel": {
+        "closeGroupInfo": "Close group information",
+        "changeGroupAvatar": "Change group avatar",
+        "memberActions": "Actions for {name}",
+        "groupInfo": "Group Info",
+        "cancel": "Cancel",
+        "addMembers": "Add Members",
+        "deleteAndExit": "Delete and Exit",
+        "leave": "Leave",
+        "viewMembers": "View Members",
+        "bannedMembers": "Banned Members",
+        "you": "(You)",
+        "admin": "Admin",
+        "unban": "Unban",
+        "banMember": "Ban Member",
+        "unbanMember": "Unban Member",
+        "noBannedMembersFound": "No banned members found.",
+        "noMembersFound": "No members found.",
+        "onlyGroupAdminsCanViewBannedMembers": "Only group admins can view banned members",
+        "loadingBannedMembers": "Loading banned members...",
+        "failedToLoadBannedMembers.": "Failed to load banned members."
       }
     },
     "MessageList": {
       "today": "Today",
       "emptyMessage": "No messages yet. Send a message to start the conversation!",
-      "yesterday": "Yesterday"
+      "yesterday": "Yesterday",
+      "scrollToNewMessages": "Scroll to {count} new messages"
     },
     "UserListItem": {
       "image": "Image",
@@ -194,6 +232,12 @@
       "document": "Document",
       "deletedMessagePlaceholder": "This message was deleted",
       "youDeletedMessage": "You deleted this message"
+    },
+    "AddMember": {
+      "clear": "Clear",
+      "addMembers": "Add Members",
+      "noUsersFound": "No users found.",
+      "tryAnotherSearch": "Try another search."
     }
   }
 }

@@ -4,6 +4,7 @@ import { ChatUser } from "@/src/types";
 import { useMemo, useState } from "react";
 import { useAddGroupMembers } from "@/src/hooks";
 import { ArrowLeft, Search, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type AddMembersPanelProps = {
   users: ChatUser[];
@@ -24,6 +25,9 @@ export default function AddMembersPanel({
 }: AddMembersPanelProps) {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const t = useTranslations("screen.AddMember");
+
   const addMembers = useAddGroupMembers();
 
   const availableUsers = useMemo(() => {
@@ -84,7 +88,9 @@ export default function AddMembersPanel({
           <ArrowLeft className="size-5" />
         </button>
 
-        <h2 className="text-sm font-semibold text-foreground">Add Members</h2>
+        <h2 className="text-sm font-semibold text-foreground">
+          {t("addMembers")}
+        </h2>
       </div>
 
       {/* Search */}
@@ -105,7 +111,7 @@ export default function AddMembersPanel({
               onClick={() => setSearch("")}
               className="text-xs text-muted-foreground"
             >
-              Clear
+              {t("clear")}
             </button>
           )}
         </div>
@@ -161,10 +167,12 @@ export default function AddMembersPanel({
             <Users className="size-8 text-muted-foreground" />
 
             <p className="text-sm font-medium text-foreground">
-              No users found
+              {t("noUsersFound")}
             </p>
 
-            <p className="text-xs text-muted-foreground">Try another search.</p>
+            <p className="text-xs text-muted-foreground">
+              {t("tryAnotherSearch")}
+            </p>
           </div>
         )}
       </div>

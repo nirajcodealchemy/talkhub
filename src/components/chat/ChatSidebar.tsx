@@ -3,9 +3,10 @@
 import { Button } from "../ui";
 import UserListItem from "./UserListItem";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ChatSideBarProps } from "@/src/types";
 import { useLogout, useUsers } from "@/src/hooks";
+import { formatMessageTime } from "@/src/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ConfirmationModal,
@@ -30,6 +31,7 @@ export default function ChatSidebar({
   currentUserId,
 }: ChatSideBarProps) {
   const t = useTranslations("screen.chat.ChatSidebar");
+  const locale = useLocale();
 
   const router = useRouter();
   const logoutMutation = useLogout();
@@ -299,21 +301,34 @@ export default function ChatSidebar({
 
                     {/* Group Details */}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {group.name}
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {group.name}
+                        </p>
+
+                        {group.last_message_timestamp && (
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                            {formatMessageTime(
+                              group.last_message_timestamp,
+                              locale,
+                            )}
+                          </span>
+                        )}
+                      </div>
 
                       <p className="truncate text-xs text-muted-foreground">
                         {group.last_message || "Group created"}
                       </p>
                     </div>
 
-                    {/* Unread Count */}
                     {group.unread_count > 0 && (
-                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-chart-4 px-1.5 text-xs text-white">
-                        {group.unread_count}
-                      </span>
+                      <div>
+                        <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-chart-4 px-1.5 text-xs text-white">
+                          {group.unread_count}
+                        </span>
+                      </div>
                     )}
+                    {/* Unread Count */}
                   </button>
                 );
               }

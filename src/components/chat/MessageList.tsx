@@ -327,13 +327,7 @@ export default function MessageList({
                       </span>
                     </div>
                   )}
-                  {/* <MessageItem
-                    key={item.key}
-                    message={item.message}
-                    groupMessages={item.groupMessages}
-                    isMine={item.message.sender_id === currentUserId}
-                    onEditRequest={onEditMessage}
-                  /> */}
+
                   <MessageItem
                     key={item.key}
                     message={item.message}

@@ -6,7 +6,7 @@ import { HeaderProps } from "@/src/types";
 import { useTranslations } from "next-intl";
 import GroupInfoPanel from "./GroupInfoPanel";
 import { ConversationInfoModal } from "../modal";
-import { ArrowLeft, MoreVertical, Users, X } from "lucide-react";
+import { ArrowLeft, MoreVertical, X } from "lucide-react";
 import { InfoIcon, PhoneIcon, SparklesIcon, VideoIcon } from "../icons";
 
 export default function ChatHeader({
@@ -177,10 +177,6 @@ export default function ChatHeader({
 
             <Button
               type="button"
-              // onClick={() => {
-              //   setIsMenuOpen(false);
-              //   setIsInfoOpen(true);
-              // }}
               onClick={() => {
                 if (conversation.is_group) {
                   onOpenGroupInfo?.();
@@ -197,14 +193,6 @@ export default function ChatHeader({
         )}
       </div>
 
-      {/* Conversation information modal */}
-      {/* {conversation.other_user_id && (
-        <ConversationInfoModal
-          isOpen={isInfoOpen}
-          userId={conversation}
-          onClose={() => setIsInfoOpen(false)}
-        />
-      )} */}
       {/* Group information panel */}
       {conversation.is_group && isInfoOpen && (
         <GroupInfoPanel

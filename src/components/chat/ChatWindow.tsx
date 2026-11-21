@@ -1,14 +1,14 @@
 "use client";
 
+import ChatHeader from "./ChatHeader";
+import MessageList from "./MessageList";
+import MessageInput from "./MessageInput";
 import { useEffect, useState } from "react";
 import GroupInfoPanel from "./GroupInfoPanel";
 import AddMembersPanel from "./AddMembersPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChatMessage, ChatWindowProps } from "@/src/types";
 import { useEditMessage, useTypingIndicator, useUsers } from "@/src/hooks";
-import ChatHeader from "./ChatHeader";
-import MessageList from "./MessageList";
-import MessageInput from "./MessageInput";
 
 export default function ChatWindow({
   onSend,
