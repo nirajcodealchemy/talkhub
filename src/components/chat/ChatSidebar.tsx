@@ -154,7 +154,8 @@ export default function ChatSidebar({
     try {
       await logoutMutation.mutateAsync();
       setShowLogoutModal(false);
-      router.push("/login");
+      router.replace("/login");
+      router.refresh();
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -282,8 +283,18 @@ export default function ChatSidebar({
                     }`}
                   >
                     {/* Group Avatar */}
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-chart-4/10">
-                      <Users className="h-5 w-5 text-chart-4" />
+                    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full">
+                      {group.avatar_url || group.avatar ? (
+                        <img
+                          src={group.avatar_url || group.avatar}
+                          alt={group.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-chart-4/10">
+                          <Users className="h-5 w-5 text-chart-4" />
+                        </div>
+                      )}
                     </div>
 
                     {/* Group Details */}

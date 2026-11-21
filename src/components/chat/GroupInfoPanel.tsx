@@ -312,7 +312,7 @@ export default function GroupInfoPanel({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               aria-label="Change group avatar"
-              className="absolute -bottom-1 right-0 flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-4 ring-background transition-colors hover:bg-primary/90"
+              className="absolute cursor-pointer -bottom-1 right-0 flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-4 ring-background transition-colors hover:bg-primary/90"
             >
               <Camera className="size-4" />
             </button>
@@ -347,7 +347,7 @@ export default function GroupInfoPanel({
                   fileInputRef.current.value = "";
                 }
               }}
-              className="rounded-md border border-border px-4 py-2 text-sm"
+              className="rounded-md cursor-pointer border border-border px-4 py-2 text-sm"
             >
               Cancel
             </button>
@@ -356,7 +356,7 @@ export default function GroupInfoPanel({
               type="button"
               onClick={handleSaveAvatar}
               disabled={isSavingAvatar}
-              className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
+              className="rounded-md cursor-pointer bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
             >
               {isSavingAvatar ? "Saving..." : "Save"}
             </button>
@@ -457,7 +457,7 @@ export default function GroupInfoPanel({
       </div>
 
       {/* Member list */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 overscroll-contain chat-scrollbar">
         {activeTab === "members" ? (
           filteredMembers.length > 0 ? (
             <div className="space-y-1">

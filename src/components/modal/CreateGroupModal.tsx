@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "../ui/button";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Profile } from "@/src/types/profile";
-import { X, Users, Search } from "lucide-react";
-import { GroupModalProps } from "@/src/types/chat";
-import {
-  useCreateGroupConversation,
-  useSearchUsers,
-} from "@/src/hooks/useChat";
 import { getAvatarUrl } from "@/src/utils/avatar";
+import { GroupModalProps } from "@/src/types/chat";
+import { X, Users, Search, Check } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useSearchUsers,
+  useCreateGroupConversation,
+} from "@/src/hooks/useChat";
 
 export default function CreateGroupModal({
   isOpen,
@@ -23,18 +23,46 @@ export default function CreateGroupModal({
 
   const [title, setTitle] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<Array<Profile>>([]);
 
-  const searchUsers = useSearchUsers();
-  // const createGroup = useCreateGroupConversation();
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  const trimmedSearch = searchQuery.trim();
+  const isSearching = trimmedSearch.length > 0;
+  const isDebouncingSearch = trimmedSearch !== debouncedQuery;
+  const searchUsers = useSearchUsers(
+    isSearching ? debouncedQuery : "",
+    isOpen && (isSearching ? debouncedQuery.length >= 2 : !isSearchFocused),
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery.trim());
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const searchResults = useMemo(
+    () =>
+      (searchUsers.data?.pages.flat() ?? []).filter(
+        (user) => user.id !== currentUserId,
+      ),
+    [searchUsers.data, currentUserId],
+  );
 
   const createGroup = useCreateGroupConversation();
 
   const handleCreate = async () => {
     const groupName = title.trim();
 
-    if (!groupName || selectedUsers.length < 2) return;
+    if (selectedUsers.length < 2) return;
+    if (!groupName) {
+      titleInputRef.current?.focus();
+      return;
+    }
 
     try {
       const conversationId = await createGroup.mutateAsync({
@@ -44,7 +72,6 @@ export default function CreateGroupModal({
 
       setTitle("");
       setSearchQuery("");
-      setSearchResults([]);
       setSelectedUsers([]);
       onCreated?.(conversationId);
       onClose();
@@ -53,28 +80,9 @@ export default function CreateGroupModal({
     }
   };
 
-  const handleSearch = async (query: string) => {
-    if (query.trim().length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
-    try {
-      const results = await searchUsers.mutateAsync(query.trim());
-      setSearchResults(results || []);
-    } catch (err) {
-      console.error(err);
-      setSearchResults([]);
-    }
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
   };
-
-  // const handleAddUser = (user: Profile) => {
-  //   if (selectedUsers.find((u) => u.id === user.id)) return;
-
-  //   setSelectedUsers((prev) => [...prev, user]);
-  //   setSearchQuery("");
-  //   setSearchResults([]);
-  // };
 
   const handleAddUser = (user: Profile) => {
     if (user.id === currentUserId) return;
@@ -82,16 +90,22 @@ export default function CreateGroupModal({
     if (selectedUsers.some((u) => u.id === user.id)) return;
 
     setSelectedUsers((prev) => [...prev, user]);
-    setSearchQuery("");
-    setSearchResults([]);
   };
 
   const handleRemoveUser = (userId: string) => {
     setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
+  const handleCancel = () => {
+    setTitle("");
+    setSearchQuery("");
+    setDebouncedQuery("");
+    setIsSearchFocused(false);
+    setSelectedUsers([]);
+    onClose();
+  };
+
   if (!isOpen) return null;
-  console.log(searchResults);
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="w-full max-w-md rounded-xl bg-background shadow-xl">
@@ -106,7 +120,7 @@ export default function CreateGroupModal({
           </div>
 
           <Button
-            onClick={onClose}
+            onClick={handleCancel}
             type="button"
             aria-label={t("closeModal")}
             className="cursor-pointer rounded-full p-1 text-muted-foreground transition-colors hover:bg-accent"
@@ -123,6 +137,7 @@ export default function CreateGroupModal({
             </label>
 
             <input
+              ref={titleInputRef}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t("groupNamePlaceholder")}
@@ -141,59 +156,114 @@ export default function CreateGroupModal({
 
               <input
                 value={searchQuery}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSearchQuery(value);
-                  handleSearch(value);
-                }}
+                onChange={(e) => handleSearch(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
                 placeholder={t("searchUsersPlaceholder")}
                 className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-chart-4 focus:ring-1 focus:ring-chart-4"
               />
             </div>
 
-            {searchUsers.isPending && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {t("searching")}
-              </p>
-            )}
+            {/* User Results */}
+            {(!isSearchFocused || trimmedSearch.length >= 2) && (
+              <div
+                className="mt-2 max-h-60 overflow-y-auto overscroll-contain chat-scrollbar rounded-lg border border-border"
+                onScroll={(e) => {
+                  const element = e.currentTarget;
 
-            {searchResults.length > 0 && (
-              <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-border">
-                {searchResults.map((user) => (
-                  <Button
-                    key={user.id}
-                    type="button"
-                    onClick={() => handleAddUser(user)}
-                    className="flex w-full cursor-pointer items-center gap-2 p-2 transition-colors hover:bg-accent"
-                  >
-                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted">
-                      <img
-                        src={getAvatarUrl(
-                          user.full_name || user.username,
-                          user.avatar_url,
-                        )}
-                        alt=""
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    </div>
+                  const isAtBottom =
+                    element.scrollHeight -
+                      element.scrollTop -
+                      element.clientHeight <
+                    30;
 
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium text-foreground">
-                        {user.full_name || user.username}
+                  if (
+                    isAtBottom &&
+                    searchUsers.hasNextPage &&
+                    !searchUsers.isFetchingNextPage
+                  ) {
+                    searchUsers.fetchNextPage();
+                  }
+                }}
+              >
+                {isDebouncingSearch || searchUsers.isLoading ? (
+                  <p className="p-4 text-center text-xs text-muted-foreground">
+                    {t("searching")}
+                  </p>
+                ) : searchResults.length === 0 ? (
+                  <p className="p-4 text-center text-xs text-muted-foreground">
+                    No users found
+                  </p>
+                ) : (
+                  <>
+                    {searchResults.map((user) => {
+                      const isSelected = selectedUsers.some(
+                        (selected) => selected.id === user.id,
+                      );
+
+                      return (
+                        <div
+                          key={user.id}
+                          className="flex cursor-pointer items-center gap-2 border-b border-border p-2 last:border-0 hover:bg-accent"
+                          onClick={() => {
+                            if (isSelected) {
+                              handleRemoveUser(user.id);
+                            } else {
+                              handleAddUser(user);
+                            }
+                          }}
+                          aria-label={`Select ${user.full_name || user.username}`}
+                        >
+                          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted">
+                            <img
+                              src={getAvatarUrl(
+                                user.full_name || user.username,
+                                user.avatar_url,
+                              )}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {user.full_name || user.username}
+                            </p>
+
+                            {/* <p className="truncate text-xs text-muted-foreground">
+                              @{user.username}
+                            </p> */}
+                          </div>
+
+                          <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={isSelected}
+                            className={`flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors ${
+                              isSelected
+                                ? "border-chart-4 bg-chart-4 text-white"
+                                : "border-input bg-background text-transparent hover:border-chart-4"
+                            }`}
+                          >
+                            {isSelected && <Check className="h-3.5 w-3.5" />}
+                          </button>
+                        </div>
+                      );
+                    })}
+
+                    {searchUsers.isFetchingNextPage && (
+                      <p className="p-3 text-center text-xs text-muted-foreground">
+                        Loading more users...
                       </p>
-
-                      <p className="text-xs text-muted-foreground">
-                        @{user.username}
-                      </p>
-                    </div>
-                  </Button>
-                ))}
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
 
           {/* Selected Members */}
-          {selectedUsers.length > 0 && (
+          {/* {selectedUsers.length > 0 && (
             <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">
                 {t("selectedMembers")} ({selectedUsers.length})
@@ -225,12 +295,12 @@ export default function CreateGroupModal({
                 })}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Footer Buttons */}
           <div className="flex h-10 gap-2">
             <Button
-              onClick={onClose}
+              onClick={handleCancel}
               variant="outline"
               className="h-full flex-1 cursor-pointer"
             >
@@ -247,9 +317,7 @@ export default function CreateGroupModal({
             <Button
               onClick={handleCreate}
               disabled={
-                !title.trim() ||
-                selectedUsers.length < 2 ||
-                createGroup.isPending
+                selectedUsers.length < 2 || createGroup.isPending || !title
               }
               className="h-full flex-1 cursor-pointer bg-chart-4 text-white hover:bg-chart-5 disabled:cursor-not-allowed disabled:opacity-50"
             >

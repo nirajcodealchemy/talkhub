@@ -29,18 +29,31 @@ export function useCreateDirectConversation() {
   });
 }
 
-export function useSearchUsers() {
+export function useSearchUsers(query: string, enabled = true) {
   const supabase = createClient();
 
-  return useMutation({
-    mutationKey: ["searchUsers"],
-    mutationFn: async (query: string) => {
+  return useInfiniteQuery({
+    queryKey: ["searchUsers", query],
+    enabled: enabled && (query.trim().length === 0 || query.trim().length >= 2),
+
+    initialPageParam: 0,
+
+    queryFn: async ({ pageParam }) => {
       const { data, error } = await supabase.rpc("search_chat_users", {
-        p_query: query,
+        p_query: query.trim(),
+        p_limit: 10,
+        p_offset: pageParam,
       });
 
       if (error) throw error;
-      return data;
+
+      return data ?? [];
+    },
+
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 10) return undefined;
+
+      return allPages.reduce((total, page) => total + page.length, 0);
     },
   });
 }

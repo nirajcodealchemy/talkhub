@@ -53,9 +53,14 @@ export default function ChatHeader({
                 className="h-full w-full rounded-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-chart-4/10 text-chart-4">
-                <Users className="size-5" />
-              </div>
+              // <div className="flex h-full w-full items-center justify-center rounded-full bg-chart-4/10 text-chart-4">
+              //   <Users className="size-5" />
+              // </div>
+              <img
+                src={conversation.avatar_url || conversation.avatar}
+                alt={conversation.name}
+                className="h-full w-full rounded-full object-cover"
+              />
             )
           ) : (
             <img
@@ -66,16 +71,6 @@ export default function ChatHeader({
           )}
         </div>
 
-        {/* User details */}
-        {/* <div className="min-w-0">
-          <h2 className="truncate text-[15px] font-semibold text-foreground">
-            {conversation.name}
-          </h2>
-
-          <p className="text-[12px] text-muted-foreground">
-            {conversation.online ? t("online") : t("offline")}
-          </p>
-        </div> */}
         <div className="min-w-0">
           <h2 className="truncate text-[15px] font-semibold text-foreground">
             {conversation.name}

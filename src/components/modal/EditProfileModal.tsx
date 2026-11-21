@@ -95,6 +95,14 @@ export default function EditProfileModal({
     setSelectedFile(file);
   };
 
+  const handleCancel = () => {
+    setName(oldName);
+    setSelectedFile(null);
+    setError("");
+    if (fileRef.current) fileRef.current.value = "";
+    onClose();
+  };
+
   const handleSave = async () => {
     if (!name.trim()) {
       setError(t("nameRequired"));
@@ -180,7 +188,7 @@ export default function EditProfileModal({
 
           <Button
             type="button"
-            onClick={onClose}
+            onClick={handleCancel}
             disabled={loading}
             aria-label={t("closeModal")}
             className="cursor-pointer rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent"
@@ -270,7 +278,7 @@ export default function EditProfileModal({
             <div className="mt-6 flex justify-end gap-3">
               <Button
                 type="button"
-                onClick={onClose}
+                onClick={handleCancel}
                 disabled={loading}
                 className="cursor-pointer h-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
               >
@@ -281,7 +289,10 @@ export default function EditProfileModal({
                 type="button"
                 onClick={handleSave}
                 disabled={
-                  loading || fetching || !isNameValid || name === oldName
+                  loading ||
+                  fetching ||
+                  !isNameValid ||
+                  (name === oldName && !selectedFile)
                 }
                 className="flex  h-full cursor-pointer items-center gap-2 rounded-lg bg-chart-4 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-chart-5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
               >
