@@ -4,10 +4,10 @@ import { Button } from "../ui";
 import { useTranslations } from "next-intl";
 import { EditProfileProps } from "@/src/types";
 import { Camera, Loader2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { QUERY_KEYS, createClient } from "@/src/lib";
 import { userRegex, getAvatarUrl } from "@/src/utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function EditProfileModal({
   userId,
@@ -17,7 +17,6 @@ export default function EditProfileModal({
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [oldName, setOldName] = useState("");
-  const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [fetching, setFetching] = useState(false);
@@ -64,17 +63,30 @@ export default function EditProfileModal({
     };
   }, [isOpen, userId]);
 
-  useEffect(() => {
-    if (!selectedFile) {
-      setPreview("");
-      return;
-    }
+  // useEffect(() => {
+  //   if (!selectedFile) {
+  //     setPreview("");
+  //     return;
+  //   }
 
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setPreview(objectUrl);
+  //   const objectUrl = URL.createObjectURL(selectedFile);
+  //   setPreview(objectUrl);
 
-    return () => URL.revokeObjectURL(objectUrl);
+  //   return () => URL.revokeObjectURL(objectUrl);
+  // }, [selectedFile]);
+  const preview = useMemo(() => {
+    if (!selectedFile) return "";
+
+    return URL.createObjectURL(selectedFile);
   }, [selectedFile]);
+
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
 
   if (!isOpen) return null;
 
@@ -188,8 +200,8 @@ export default function EditProfileModal({
 
           <Button
             type="button"
-            onClick={handleCancel}
             disabled={loading}
+            onClick={handleCancel}
             aria-label={t("closeModal")}
             className="cursor-pointer rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent"
           >
@@ -278,8 +290,8 @@ export default function EditProfileModal({
             <div className="mt-6 flex justify-end gap-3">
               <Button
                 type="button"
-                onClick={handleCancel}
                 disabled={loading}
+                onClick={handleCancel}
                 className="cursor-pointer h-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
               >
                 {t("cancel")}
@@ -288,13 +300,13 @@ export default function EditProfileModal({
               <Button
                 type="button"
                 onClick={handleSave}
+                className="flex  h-full cursor-pointer items-center gap-2 rounded-lg bg-chart-4 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-chart-5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
                 disabled={
                   loading ||
                   fetching ||
                   !isNameValid ||
                   (name === oldName && !selectedFile)
                 }
-                className="flex  h-full cursor-pointer items-center gap-2 rounded-lg bg-chart-4 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-chart-5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
               >
                 {loading && <Loader2 size={16} className="animate-spin" />}
 

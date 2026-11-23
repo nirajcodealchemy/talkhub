@@ -131,11 +131,10 @@ export default function ChatSidebar({
       };
     });
 
-    // Combine and sort by latest message.
-    // return [...groupItems, ...userItems].sort(
-    //   (a, b) => b.timestamp - a.timestamp,
-    // );
-    return [...groupItems, ...userItems];
+    // Keep direct chats and groups together, with the most recently active first.
+    return [...groupItems, ...userItems].sort(
+      (a, b) => b.timestamp - a.timestamp,
+    );
   }, [conversations, filteredUsers, search]);
 
   async function handleStartChat(userId: string) {
@@ -166,7 +165,7 @@ export default function ChatSidebar({
   return (
     <aside className="flex h-full min-h-0 w-full flex-col overflow-hidden border-r border-border bg-background">
       {/* Sidebar Header */}
-      <header className="flex h-[64px] shrink-0 items-center justify-between border-b border-border px-4">
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
         <h1 className="text-[22px] font-bold tracking-tight text-foreground">
           {t("chats")}
         </h1>
@@ -190,7 +189,7 @@ export default function ChatSidebar({
                   setIsMenuOpen(false);
                   setIsCreateGroupOpen(true);
                 }}
-                className="flex h-[40px] w-full cursor-pointer items-center justify-start gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="flex h-10 w-full cursor-pointer items-center justify-start gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
                 <Users className="h-4 w-4" />
                 <span>{t("createGroup")}</span>
@@ -202,7 +201,7 @@ export default function ChatSidebar({
                   setIsMenuOpen(false);
                   setIsEditProfileOpen(true);
                 }}
-                className="flex h-[40px] w-full cursor-pointer items-center justify-start gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="flex h-10 w-full cursor-pointer items-center justify-start gap-2.5 px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
                 <UserRoundPen className="h-4 w-4" />
                 <span>{t("editProfile")}</span>
@@ -214,7 +213,7 @@ export default function ChatSidebar({
                   setIsMenuOpen(false);
                   setShowLogoutModal(true);
                 }}
-                className="flex h-[40px] w-full cursor-pointer items-center justify-start gap-2.5 px-4 py-3 text-left text-sm font-medium text-destructive transition-colors hover:bg-logout-red-light"
+                className="flex h-10 w-full cursor-pointer items-center justify-start gap-2.5 px-4 py-3 text-left text-sm font-medium text-destructive transition-colors hover:bg-logout-red-light"
               >
                 <LogOut className="h-4 w-4" />
                 <span>{t("logout")}</span>
@@ -287,6 +286,7 @@ export default function ChatSidebar({
                     {/* Group Avatar */}
                     <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full">
                       {group.avatar_url || group.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={group.avatar_url || group.avatar}
                           alt={group.name}

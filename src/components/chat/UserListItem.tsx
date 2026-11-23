@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useTranslations } from "next-intl";
@@ -99,9 +100,9 @@ export default function UserListItem({
       type="button"
       onClick={onClick}
       disabled={isCurrentUser || isOpening}
-      className="flex h-[68px] w-full cursor-pointer items-center gap-3 bg-background px-4 text-left transition-colors hover:bg-muted disabled:cursor-default disabled:hover:bg-background"
+      className="flex h-17 w-full cursor-pointer items-center gap-3 bg-background px-4 text-left transition-colors hover:bg-muted disabled:cursor-default disabled:hover:bg-background"
     >
-      <div className="relative h-[48px] w-[48px] shrink-0">
+      <div className="relative h-12 w-12 shrink-0">
         <img
           src={avatar}
           alt={name}

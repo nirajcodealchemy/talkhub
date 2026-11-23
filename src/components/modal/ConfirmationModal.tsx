@@ -3,9 +3,9 @@
 import { X } from "lucide-react";
 import { Button } from "../ui/button";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmationModalData } from "@/src/types/modals";
-import { useTranslations } from "next-intl";
 
 const ConfirmationModal = ({
   title,
@@ -21,6 +21,7 @@ const ConfirmationModal = ({
   const t = useTranslations("screen.chat.CreateGroupModal");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -43,8 +44,8 @@ const ConfirmationModal = ({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div
-        role="alertdialog"
         aria-modal="true"
+        role="alertdialog"
         aria-labelledby="confirmation-title"
         aria-describedby="confirmation-message"
         className="w-full max-w-sm rounded-xl bg-background p-6 shadow-xl"

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useTranslations } from "next-intl";
@@ -328,7 +329,7 @@ export default function MessageInput({
           }}
           placeholder={t("typeMessage")}
           rows={1}
-          className=" w-full max-h-[120px] min-h-[24px] resize-none overflow-y-auto bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
+          className=" w-full max-h-30 min-h-6 resize-none overflow-y-auto bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
         />
 
         <hr className="-mx-6 w-auto border-0 border-t border-border" />

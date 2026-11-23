@@ -40,6 +40,7 @@ export default function ChatWindow({
   const { mutateAsync: editMessage, isPending: isEditing } = useEditMessage();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditingMessage(null);
     setIsGroupInfoOpen(false);
     setIsAddMembersOpen(false);
@@ -125,31 +126,27 @@ export default function ChatWindow({
       {/* Group Info / Add Members */}
       {conversation.is_group && isGroupInfoOpen && (
         <div
-          className="
-            absolute inset-0 z-40 bg-background
-            lg:relative lg:inset-auto lg:z-auto
-            lg:h-full lg:w-[400px]
-            lg:min-w-[400px] lg:max-w-[400px] lg:shrink-0
+          className="absolute inset-0 z-40 bg-background lg:relative lg:inset-auto lg:z-auto lg:h-full lg:w-[400px] lg:min-w-[400px] lg:max-w-[400px] lg:shrink-0
           "
         >
           {/* Add Members */}
           {isAddMembersOpen ? (
             <AddMembersPanel
-              conversationId={conversation.id}
               users={users}
+              onAdded={handleMembersAdded}
+              currentUserId={currentUserId}
+              conversationId={conversation.id}
+              onBack={() => setIsAddMembersOpen(false)}
               existingMemberIds={
                 conversation.group_members?.map((member) => member.id) ?? []
               }
-              currentUserId={currentUserId}
-              onBack={() => setIsAddMembersOpen(false)}
-              onAdded={handleMembersAdded}
             />
           ) : (
             <GroupInfoPanel
               conversation={conversation}
               currentUserId={currentUserId}
-              onClose={() => setIsGroupInfoOpen(false)}
               onGroupExited={handleGroupExited}
+              onClose={() => setIsGroupInfoOpen(false)}
               onAddMembers={() => setIsAddMembersOpen(true)}
             />
           )}

@@ -9,8 +9,8 @@ import AuthInput from "@/src/components/AuthInput";
 import { validation } from "@/src/utils/validation";
 import { Button } from "@/src/components/ui/button";
 import AuthLayout from "@/src/components/AuthLayout";
-import { ChangeEvent, FormEvent, useState } from "react";
 import { ConfirmationModal } from "@/src/components";
+import { ChangeEvent, FormEvent, useState } from "react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -62,7 +62,6 @@ export default function SignupPage() {
       [name]: fieldError[name],
     }));
 
-    // setMessage("");
     setSubmitError("");
   };
 
@@ -71,7 +70,6 @@ export default function SignupPage() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // setMessage("");
     setSubmitError("");
 
     const validationErrors = validation(data);
@@ -101,8 +99,6 @@ export default function SignupPage() {
         err instanceof Error
           ? err.message
           : "Registration failed. Please try again.";
-
-      //   setSubmitError(message);
 
       setModalConfig({
         isOpen: true,

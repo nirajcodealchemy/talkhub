@@ -176,6 +176,9 @@ export function useRealtimeConversations(userId: string) {
               read_at: string | null;
               conversation_id: string;
               delivered_at: string | null;
+              content: string;
+              message_type: string;
+              edited_at: string | null;
               is_deleted_for_everyone?: boolean;
             };
 
@@ -203,17 +206,18 @@ export function useRealtimeConversations(userId: string) {
                       : !!updated.read_at,
                     last_message: updated.is_deleted_for_everyone
                       ? "This message was deleted"
-                      : conversation.last_message,
+                      : updated.content,
                     last_message_type: updated.is_deleted_for_everyone
                       ? "deleted"
-                      : conversation.last_message_type,
+                      : updated.message_type,
                   };
                 });
               },
             );
 
-            // Refresh when a message is deleted for everyone.
-            if (updated.is_deleted_for_everyone) {
+            // Refresh the summary after edits and deletions so every client
+            // gets the current sidebar preview from the conversation query.
+            if (updated.edited_at || updated.is_deleted_for_everyone) {
               void queryClient.invalidateQueries({
                 queryKey: ["messages", updated.conversation_id],
                 exact: true,

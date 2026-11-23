@@ -1,10 +1,10 @@
 "use client";
 
+import MessageItem from "./MessageItem";
 import { useTranslations } from "next-intl";
 import { ArrowDown, Loader2 } from "lucide-react";
 import { MessageListProps, RenderMessage } from "@/src/types";
 import { useLayoutEffect, useMemo, useRef, useEffect, useState } from "react";
-import MessageItem from "./MessageItem";
 
 function getDateKey(dateString: string) {
   const date = new Date(dateString);
@@ -50,12 +50,10 @@ export default function MessageList({
   const initialScrollDone = useRef(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-
+  const contentRef = useRef<HTMLDivElement>(null);
   const previousHeightRef = useRef<number | null>(null);
   const previousLastMessageId = useRef<string | null>(null);
-
   // Keep track of whether the user is viewing the latest messages.
   const shouldStickToBottomRef = useRef(true);
   const firstUnreadMessageIdRef = useRef<string | null>(null);
@@ -176,6 +174,7 @@ export default function MessageList({
         scrollToBottom("smooth");
 
         shouldStickToBottomRef.current = true;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setNewMessageCount(0);
         firstUnreadMessageIdRef.current = null;
       }

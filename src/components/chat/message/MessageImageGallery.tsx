@@ -9,9 +9,9 @@ import type { ChatMessage, MessageImageGalleryProps } from "@/src/types";
 const STORAGE_KEY = "talkhub_downloaded_images";
 
 export default function MessageImageGallery({
+  isMine,
   message,
   groupMessages,
-  isMine,
 }: MessageImageGalleryProps) {
   const t = useTranslations("screen.chat.MessageItem");
   const t2 = useTranslations("screen.chat.messageImageGallery");
@@ -53,6 +53,7 @@ export default function MessageImageGallery({
       if (savedIds) {
         const parsedIds: unknown = JSON.parse(savedIds);
         if (Array.isArray(parsedIds)) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setDownloadedImageIds(
             new Set(
               parsedIds.filter((id): id is string => typeof id === "string"),
@@ -384,9 +385,9 @@ export default function MessageImageGallery({
               <button
                 type="button"
                 onClick={() => moveGallery(-1)}
+                aria-label={t2("previousImage")}
                 disabled={accessibleImageIndexes.length < 2}
                 className="absolute left-0 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-40 sm:left-2 sm:h-12 sm:w-12"
-                aria-label={t2("previousImage")}
               >
                 <ChevronLeft size={26} />
               </button>
@@ -409,10 +410,10 @@ export default function MessageImageGallery({
             {images.length > 1 && (
               <button
                 type="button"
+                aria-label={t2("nextImage")}
                 onClick={() => moveGallery(1)}
                 disabled={accessibleImageIndexes.length < 2}
                 className="absolute right-0 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-40 sm:right-2 sm:h-12 sm:w-12"
-                aria-label={t2("nextImage")}
               >
                 <ChevronRight size={26} />
               </button>
@@ -426,12 +427,12 @@ export default function MessageImageGallery({
 
                 return (
                   <button
-                    key={image.id}
                     type="button"
-                    onClick={() => setActiveImageIndex(index)}
+                    key={image.id}
                     disabled={!isAccessible}
-                    aria-label={t2("showImageN", { current: index + 1 })}
                     aria-current={activeImageIndex === index}
+                    onClick={() => setActiveImageIndex(index)}
+                    aria-label={t2("showImageN", { current: index + 1 })}
                     className={`h-12 w-12 shrink-0 overflow-hidden rounded-md border-2 transition sm:h-14 sm:w-14 ${
                       activeImageIndex === index
                         ? "border-white opacity-100"

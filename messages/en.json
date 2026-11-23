@@ -144,39 +144,39 @@
         "bannedFromGroupDescription": "You cannot send messages in this group until the group admin unbans you."
       },
       "MessageItem": {
+        "edit": "Edit",
+        "image": "Image",
+        "delete": "Delete",
+        "edited": "edited",
         "download": "Download",
-        "sharedAttachment": "Shared attachment",
-        "replies": "{count, plural, one {# Reply} other {# Replies}}",
         "readMore": "Read more",
         "readLess": "Read less",
         "textCopied": "Text copied!",
-        "edit": "Edit",
-        "delete": "Delete",
-        "image": "Image",
-        "edited": "edited",
         "downloadAll": "Download all",
-        "PreparingZip": "Preparing ZIP...",
         "moreOptions": "More options",
         "copyMessage": "Copy message",
+        "PreparingZip": "Preparing ZIP...",
+        "sharedAttachment": "Shared attachment",
         "moreMessageOptions": "More message options",
+        "youDeletedThisMessage": "You deleted this message",
         "thisMessageWasDeleted": "This message was deleted",
-        "youDeletedThisMessage": "You deleted this message"
+        "replies": "{count, plural, one {# Reply} other {# Replies}}"
       },
       "DeleteMessageModal": {
         "cancel": "Cancel",
         "deleting": "Deleting...",
-        "title": "Delete this message?",
-        "description": "This action can’t be undone.",
         "deleteForMe": "Delete for me",
+        "title": "Delete this message?",
         "deleteForEveryone": "Delete for everyone",
+        "description": "This action can’t be undone.",
         "deleteRestrictionNote": "You can only delete someone else’s message for yourself."
       },
       "ConversationInfoModal": {
-        "title": "Contact Information",
         "close": "Close",
         "fullName": "Full Name",
         "phoneNumber": "Phone Number",
-        "notProvided": "Not provided"
+        "notProvided": "Not provided",
+        "title": "Contact Information"
       },
       "MessageContextMenu": {
         "moreOptions": "More options",
@@ -184,54 +184,54 @@
         "moreMessageOptions": "More message options"
       },
       "messageImageGallery": {
-        "downloadImage": "Download image",
-        "viewImageN": "View image {current} of {total}",
-        "imageGallery": "Image gallery",
-        "downloadCurrentImage": "Download current image",
-        "closeGallery": "Close gallery",
-        "previousImage": "Previous image",
         "nextImage": "Next image",
+        "imageGallery": "Image gallery",
+        "closeGallery": "Close gallery",
+        "downloadImage": "Download image",
+        "previousImage": "Previous image",
+        "loadingImage": "Loading image...",
         "showImageN": "Show image {current}",
-        "loadingImage": "Loading image..."
+        "viewImageN": "View image {current} of {total}",
+        "downloadCurrentImage": "Download current image"
       },
       "AddMembersPanel": {
         "backToGroupInfo": "Back to group information"
       },
       "GroupInfoPanel": {
-        "closeGroupInfo": "Close group information",
-        "changeGroupAvatar": "Change group avatar",
-        "memberActions": "Actions for {name}",
-        "groupInfo": "Group Info",
-        "cancel": "Cancel",
-        "addMembers": "Add Members",
-        "deleteAndExit": "Delete and Exit",
-        "leave": "Leave",
-        "viewMembers": "View Members",
-        "bannedMembers": "Banned Members",
         "you": "(You)",
+        "leave": "Leave",
         "admin": "Admin",
         "unban": "Unban",
+        "cancel": "Cancel",
+        "groupInfo": "Group Info",
         "banMember": "Ban Member",
+        "addMembers": "Add Members",
+        "viewMembers": "View Members",
         "unbanMember": "Unban Member",
-        "noBannedMembersFound": "No banned members found.",
+        "bannedMembers": "Banned Members",
+        "deleteAndExit": "Delete and Exit",
+        "memberActions": "Actions for {name}",
         "noMembersFound": "No members found.",
-        "onlyGroupAdminsCanViewBannedMembers": "Only group admins can view banned members",
+        "changeGroupAvatar": "Change group avatar",
+        "closeGroupInfo": "Close group information",
+        "noBannedMembersFound": "No banned members found.",
         "loadingBannedMembers": "Loading banned members...",
-        "failedToLoadBannedMembers.": "Failed to load banned members."
+        "failedToLoadBannedMembers.": "Failed to load banned members.",
+        "onlyGroupAdminsCanViewBannedMembers": "Only group admins can view banned members"
       }
     },
     "MessageList": {
       "today": "Today",
-      "emptyMessage": "No messages yet. Send a message to start the conversation!",
       "yesterday": "Yesterday",
-      "scrollToNewMessages": "Scroll to {count} new messages"
+      "scrollToNewMessages": "Scroll to {count} new messages",
+      "emptyMessage": "No messages yet. Send a message to start the conversation!"
     },
     "UserListItem": {
       "image": "Image",
       "defaultUser": "User",
       "document": "Document",
-      "deletedMessagePlaceholder": "This message was deleted",
-      "youDeletedMessage": "You deleted this message"
+      "youDeletedMessage": "You deleted this message",
+      "deletedMessagePlaceholder": "This message was deleted"
     },
     "AddMember": {
       "clear": "Clear",

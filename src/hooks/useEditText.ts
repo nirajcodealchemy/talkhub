@@ -42,7 +42,31 @@ export function useEditMessage() {
       return data;
     },
 
-    onSuccess: (_data, variables) => {
+    onSuccess: (updatedMessage, variables) => {
+      // Keep the sidebar preview in sync immediately when the edited message
+      // is the latest message in this conversation.
+      queryClient.setQueriesData(
+        { queryKey: ["conversations"] },
+        (oldData: any[] | undefined) => {
+          if (!oldData) return oldData;
+
+          return oldData.map((conversation) => {
+            if (
+              conversation.id !== variables.conversationId ||
+              conversation.last_message_timestamp !== updatedMessage.created_at
+            ) {
+              return conversation;
+            }
+
+            return {
+              ...conversation,
+              last_message: updatedMessage.content,
+              last_message_type: updatedMessage.message_type,
+            };
+          });
+        },
+      );
+
       void queryClient.invalidateQueries({
         queryKey: ["messages", variables.conversationId],
       });

@@ -16,8 +16,8 @@ import {
 export default function CreateGroupModal({
   isOpen,
   onClose,
-  currentUserId,
   onCreated,
+  currentUserId,
 }: GroupModalProps) {
   const t = useTranslations("screen.chat.CreateGroupModal");
 

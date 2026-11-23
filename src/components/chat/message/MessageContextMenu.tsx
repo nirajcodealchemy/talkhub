@@ -163,9 +163,9 @@ export default function MessageContextMenu({
       >
         <button
           type="button"
-          title={t("moreOptions")}
-          onClick={handleToggle}
           aria-expanded={isOpen}
+          onClick={handleToggle}
+          title={t("moreOptions")}
           aria-label={t("moreMessageOptions")}
           className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground"
         >
@@ -196,9 +196,9 @@ export default function MessageContextMenu({
 
             <div
               ref={menuRef}
-              className="fixed z-[9999] w-44 overflow-hidden rounded-lg border border-border bg-popover p-1 shadow-xl"
-              style={{ top: position.top, left: position.left }}
               onClick={(event) => event.stopPropagation()}
+              style={{ top: position.top, left: position.left }}
+              className="fixed z-[9999] w-44 overflow-hidden rounded-lg border border-border bg-popover p-1 shadow-xl"
             >
               {!isMine && isImageGroup && (
                 <button

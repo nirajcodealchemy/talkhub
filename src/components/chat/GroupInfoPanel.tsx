@@ -1,8 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { createClient } from "@/src/lib";
+import { useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { HeaderProps } from "@/src/types/chat";
+import type { ChatConversation } from "@/src/types/chat";
 import {
   useBanGroupMember,
   useUnbanGroupMember,
@@ -17,23 +20,12 @@ import {
   Undo2,
   Search,
   LogOut,
+  Camera,
   Trash2,
   UserPlus,
   MoreVertical,
-  Camera,
 } from "lucide-react";
-import { createClient } from "@/src/lib";
-import { useTranslations } from "next-intl";
-
-type GroupInfoPanelProps = {
-  conversation: HeaderProps["conversation"];
-  currentUserId?: string;
-  onClose: () => void;
-  onGroupExited?: () => void;
-  onAddMembers?: () => void;
-};
-
-type Tab = "members" | "banned";
+import { GroupInfoPanelProps, Tab } from "@/src/types/group";
 
 export default function GroupInfoPanel({
   conversation,
@@ -42,22 +34,24 @@ export default function GroupInfoPanel({
   onGroupExited,
   onAddMembers,
 }: GroupInfoPanelProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("members");
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<Tab>("members");
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [savedAvatarUrl, setSavedAvatarUrl] = useState(
     conversation.avatar_url || "",
   );
-  const queryClient = useQueryClient();
-  const t = useTranslations("screen.chat.GroupInfoPanel");
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(
     null,
   );
 
+  const queryClient = useQueryClient();
+  const t = useTranslations("screen.chat.GroupInfoPanel");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const members = conversation.group_members ?? [];
 
   const currentMember = members.find((member) => member.id === currentUserId);
@@ -227,7 +221,7 @@ export default function GroupInfoPanel({
       if (currentUserId) {
         queryClient.setQueryData(
           ["conversations", currentUserId],
-          (oldData: any[] | undefined) => {
+          (oldData: ChatConversation[] | undefined) => {
             if (!oldData) return oldData;
 
             return oldData.map((item) =>

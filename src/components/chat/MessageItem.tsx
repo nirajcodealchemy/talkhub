@@ -154,7 +154,7 @@ export default function MessageItem({
         isMine ? "justify-end" : "justify-start"
       }`}
     >
-      <div className="relative w-fit min-w-[120px] max-w-[75%]">
+      <div className="relative w-fit min-w-30 max-w-[75%]">
         {/* Message context menu */}
         <MessageContextMenu
           isMine={isMine}
@@ -166,6 +166,13 @@ export default function MessageItem({
         />
 
         {/* Message bubble */}
+        {isGroup && !isMine && (
+          <p className="mb-1 px-2 text-xs font-semibold text-chart-4">
+            {message.sender_profile?.full_name ||
+              message.sender_profile?.username ||
+              "Unknown member"}
+          </p>
+        )}
         <div
           className={`relative rounded-[18px] shadow-sm ${
             isMine
@@ -176,13 +183,6 @@ export default function MessageItem({
           }`}
         >
           {/* Group sender name */}
-          {isGroup && !isMine && (
-            <p className="mb-1 px-2 text-xs font-semibold text-chart-4">
-              {message.sender_profile?.full_name ||
-                message.sender_profile?.username ||
-                "Unknown member"}
-            </p>
-          )}
 
           {isDeleted ? (
             <div

@@ -2,10 +2,10 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
-import { Phone, UserRound, X } from "lucide-react";
-import { ConversationModalProps } from "@/src/types/chat";
 import { useTranslations } from "next-intl";
 import { getAvatarUrl } from "@/src/utils/avatar";
+import { Phone, UserRound, X } from "lucide-react";
+import { ConversationModalProps } from "@/src/types/chat";
 
 export default function ConversationInfoModal({
   isOpen,
@@ -15,6 +15,7 @@ export default function ConversationInfoModal({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
