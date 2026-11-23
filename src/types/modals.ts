@@ -20,5 +20,6 @@ export type AddMembersPanelProps = {
   onAdded: () => void;
   currentUserId: string;
   conversationId: string;
+  isUsersLoading: boolean;
   existingMemberIds: string[];
 };

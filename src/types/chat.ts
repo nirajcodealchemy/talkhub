@@ -77,12 +77,14 @@ export type ConversationModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
+export type AIAction = "reply" | "summary";
 
 export type HeaderProps = {
   onBack: () => void;
   currentUserId?: string;
   onOpenGroupInfo?: () => void;
   conversation: ChatConversation;
+  onAIAction?: (action: AIAction) => void;
 };
 
 export type ChatListProps = {
@@ -166,6 +168,8 @@ export type MessageInputProps = {
   onStopTyping?: () => void;
   conversationId: string | null;
   editingMessage: ChatMessage | null;
+  suggestedReply?: string | null;
+  onSuggestionApplied?: () => void;
   onEditSubmit: (content: string) => Promise<void>;
   onSend: (message: string) => void | Promise<void>;
   onAttachment?: (file: File) => void | Promise<void>;

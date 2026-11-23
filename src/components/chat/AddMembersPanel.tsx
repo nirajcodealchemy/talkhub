@@ -74,7 +74,7 @@ export default function AddMembersPanel({
           type="button"
           onClick={onBack}
           aria-label="Back to group information"
-          className="rounded-full p-1 hover:bg-accent"
+          className="rounded-full cursor-pointer p-1 hover:bg-accent"
         >
           <ArrowLeft className="size-5" />
         </button>

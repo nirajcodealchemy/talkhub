@@ -360,8 +360,8 @@ export default function GroupInfoPanel({
       </div>
 
       {/* Group actions */}
-      <div className="shrink-0 space-y-1 border-b border-border p-3">
-        {isAdmin && (
+      {isAdmin && (
+        <div className="shrink-0 space-y-1 border-b border-border p-3">
           <button
             type="button"
             onClick={onAddMembers}
@@ -370,21 +370,7 @@ export default function GroupInfoPanel({
             <UserPlus className="size-4" />
             {t("addMembers")}
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => {
-            setActionError("");
-            setConfirmAction("leave");
-          }}
-          disabled={isActionPending}
-          className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
-        >
-          <LogOut className="size-4" />
-          {t("leave")}
-        </button>
 
-        {isAdmin && (
           <button
             type="button"
             onClick={() => {
@@ -397,8 +383,8 @@ export default function GroupInfoPanel({
             <Trash2 className="size-4" />
             {t("deleteAndExit")}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="grid shrink-0 grid-cols-2 rounded-full bg-muted p-1 mx-3 mt-3">
@@ -641,6 +627,18 @@ export default function GroupInfoPanel({
             {t("noBannedMembersFound")}
           </p>
         )}
+        <button
+          type="button"
+          onClick={() => {
+            setActionError("");
+            setConfirmAction("leave");
+          }}
+          disabled={isActionPending}
+          className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
+        >
+          <LogOut className="size-4" />
+          {t("leave")}
+        </button>
       </div>
       {/* Confirmation modal */}
       {confirmAction && (

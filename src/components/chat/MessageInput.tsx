@@ -12,6 +12,8 @@ import {
   ALLOWED_EXTENSIONS,
   ALLOWED_FILE_TYPES,
 } from "@/src/constant/attachmentFile";
+import { useMessages } from "@/src/hooks";
+import { MESSAGE_SUGGESTIONS } from "@/src/constant/messageSuggestions";
 
 export default function MessageInput({
   onSend,
@@ -23,6 +25,8 @@ export default function MessageInput({
   onAttachments,
   conversationId,
   editingMessage,
+  suggestedReply,
+  onSuggestionApplied,
   isBanned = false,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
@@ -30,6 +34,7 @@ export default function MessageInput({
   const [isDragging, setIsDragging] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false);
 
   const dragCounter = useRef(0);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -75,6 +80,53 @@ export default function MessageInput({
   useEffect(() => {
     textareaRef.current?.focus();
   }, [conversationId]);
+
+  useEffect(() => {
+    setSuggestionsDismissed(false);
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (!suggestedReply) return;
+
+    setMessage(suggestedReply);
+
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+
+      if (!textarea) return;
+
+      textarea.focus();
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    });
+
+    onSuggestionApplied?.();
+  }, [suggestedReply, onSuggestionApplied]);
+
+  // Track whether suggestions were dismissed in this conversation
+
+  // Get messages for the currently selected conversation
+  const {
+    data: messagesData,
+    isLoading: isMessagesLoading,
+    isError: isMessagesError,
+  } = useMessages(conversationId ?? "");
+
+  // Check whether this conversation already has messages
+  const hasMessages =
+    messagesData?.pages.some((page) => page.length > 0) ?? false;
+
+  // Show suggestions only for a new conversation
+  const showSuggestions =
+    !!conversationId &&
+    !isMessagesLoading &&
+    !isMessagesError &&
+    !hasMessages &&
+    !suggestionsDismissed &&
+    !editingMessage &&
+    !isBanned;
 
   function validateAttachment(file: File): string | null {
     if (file.size > MAX_FILE_SIZE) {
@@ -170,6 +222,8 @@ export default function MessageInput({
       for (const file of otherFiles) {
         await onAttachment?.(file);
       }
+      // Hide suggestions after the first successful send
+      setSuggestionsDismissed(true);
 
       setMessage("");
       setSelectedFiles([]);
@@ -241,200 +295,235 @@ export default function MessageInput({
   }
 
   return (
-    <div
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      className="relative m-3 shrink-0 rounded-md bg-background px-6 py-3"
-    >
-      {isDragging && (
-        <div className="absolute inset-2 z-50 flex items-center justify-center rounded-xl border-2 border-dashed border-chart-4 bg-chart-4/5">
-          <div className="flex flex-col items-center gap-2 text-chart-4">
-            <Paperclip size={28} />
-            <p className="text-sm font-semibold">{t("dropFiles")}</p>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-2">
-        {/* Editing message indicator */}
-        {editingMessage && (
-          <div className="flex items-center justify-between rounded-lg border-l-4 border-chart-4 bg-chart-4/5 px-3 py-2">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-chart-4">
-                {t("editingMessage")}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {editingMessage.content}
-              </p>
-            </div>
-
+    <div>
+      {showSuggestions && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide bg-transparent px-5 py-3">
+          {MESSAGE_SUGGESTIONS.map((suggestion) => (
             <button
+              key={suggestion}
               type="button"
               onClick={() => {
-                setMessage("");
-                setSelectedFiles([]);
-                onCancelEdit();
-                textareaRef.current?.focus();
+                setMessage(suggestion);
+
+                requestAnimationFrame(() => {
+                  const textarea = textareaRef.current;
+
+                  if (!textarea) return;
+
+                  textarea.focus();
+                  textarea.style.height = "auto";
+                  textarea.style.height = `${Math.min(
+                    textarea.scrollHeight,
+                    120,
+                  )}px`;
+                });
               }}
-              className="ml-3 shrink-0 cursor-pointer rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-              aria-label="Cancel editing"
+              className="shrink-0 cursor-pointer rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-accent"
             >
-              <X size={18} />
+              {suggestion}
             </button>
+          ))}
+        </div>
+      )}
+      <div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        className="relative m-3 shrink-0 rounded-md bg-background px-6 py-3"
+      >
+        {isDragging && (
+          <div className="absolute inset-2 z-50 flex items-center justify-center rounded-xl border-2 border-dashed border-chart-4 bg-chart-4/5">
+            <div className="flex flex-col items-center gap-2 text-chart-4">
+              <Paperclip size={28} />
+              <p className="text-sm font-semibold">{t("dropFiles")}</p>
+            </div>
           </div>
         )}
 
-        <AttachmentPreviewList files={selectedFiles} onRemove={removeFile} />
+        <div className="flex flex-col gap-2">
+          {/* Editing message indicator */}
+          {editingMessage && (
+            <div className="flex items-center justify-between rounded-lg border-l-4 border-chart-4 bg-chart-4/5 px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-chart-4">
+                  {t("editingMessage")}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {editingMessage.content}
+                </p>
+              </div>
 
-        <textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(event) => {
-            const value = event.target.value;
-
-            setMessage(value);
-
-            if (!editingMessage) {
-              if (value.trim()) {
-                onTyping?.();
-              } else {
-                onStopTyping?.();
-              }
-            }
-
-            event.target.style.height = "auto";
-            event.target.style.height = `${Math.min(
-              event.target.scrollHeight,
-              120,
-            )}px`;
-          }}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter") return;
-
-            // Shift + Enter = New line
-            if (event.shiftKey) {
-              event.stopPropagation();
-              return;
-            }
-
-            // Don't send while composing text (IME)
-            if (event.nativeEvent.isComposing) return;
-
-            // Enter = Send message
-            event.preventDefault();
-            event.stopPropagation();
-            handleSend();
-          }}
-          placeholder={t("typeMessage")}
-          rows={1}
-          className=" w-full max-h-30 min-h-6 resize-none overflow-y-auto bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
-        />
-
-        <hr className="-mx-6 w-auto border-0 border-t border-border" />
-
-        <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <div className="relative">
               <button
                 type="button"
-                aria-label={t("addAttachment")}
-                onClick={() => setAttachmentOpen(!attachmentOpen)}
-                className="cursor-pointer rounded-full p-1 text-grey-400 transition-colors hover:text-chart-4"
+                onClick={() => {
+                  setMessage("");
+                  setSelectedFiles([]);
+                  onCancelEdit();
+                  textareaRef.current?.focus();
+                }}
+                className="ml-3 shrink-0 cursor-pointer rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                aria-label="Cancel editing"
               >
-                {attachmentOpen ? <X size={20} /> : <PlusIcon />}
+                <X size={18} />
+              </button>
+            </div>
+          )}
+
+          {/* <AttachmentPreviewList files={selectedFiles} onRemove={removeFile} /> */}
+
+          <AttachmentPreviewList files={selectedFiles} onRemove={removeFile} />
+
+          {/* Quick Message Suggestions */}
+
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(event) => {
+              const value = event.target.value;
+
+              setMessage(value);
+
+              if (!editingMessage) {
+                if (value.trim()) {
+                  onTyping?.();
+                } else {
+                  onStopTyping?.();
+                }
+              }
+
+              event.target.style.height = "auto";
+              event.target.style.height = `${Math.min(
+                event.target.scrollHeight,
+                120,
+              )}px`;
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter") return;
+
+              // Shift + Enter = New line
+              if (event.shiftKey) {
+                event.stopPropagation();
+                return;
+              }
+
+              // Don't send while composing text (IME)
+              if (event.nativeEvent.isComposing) return;
+
+              // Enter = Send message
+              event.preventDefault();
+              event.stopPropagation();
+              handleSend();
+            }}
+            placeholder={t("typeMessage")}
+            rows={1}
+            className=" w-full max-h-30 min-h-6 resize-none overflow-y-auto bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
+          />
+
+          <hr className="-mx-6 w-auto border-0 border-t border-border" />
+
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label={t("addAttachment")}
+                  onClick={() => setAttachmentOpen(!attachmentOpen)}
+                  className="cursor-pointer rounded-full p-1 text-grey-400 transition-colors hover:text-chart-4"
+                >
+                  {attachmentOpen ? <X size={20} /> : <PlusIcon />}
+                </button>
+
+                {attachmentOpen && (
+                  <div className="absolute bottom-9 left-0 z-30 w-40 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                    >
+                      <Paperclip size={15} />
+                      {t("attachFiles")}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.gif,.webp,.zip,.pdf,.xls,.xlsx,.csv,.doc,.docx,.ppt,.pptx"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+
+                  for (const file of files) {
+                    const error = validateAttachment(file);
+
+                    if (error) {
+                      // Replace with your existing toast notification if available.
+                      alert(error);
+                      e.target.value = "";
+                      return;
+                    }
+                  }
+
+                  // Continue with your existing attachment selection logic.
+                  addFiles(files);
+
+                  e.target.value = "";
+                }}
+              />
+
+              <button
+                type="button"
+                aria-label={t("voiceMessage")}
+                disabled
+                className="cursor-not-allowed rounded-full p-1 text-grey-400 transition-colors hover:text-grey-600"
+              >
+                <MicIcon />
               </button>
 
-              {attachmentOpen && (
-                <div className="absolute bottom-9 left-0 z-30 w-40 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
-                  >
-                    <Paperclip size={15} />
-                    {t("attachFiles")}
-                  </button>
-                </div>
-              )}
+              <EmojiPickerPopover
+                onEmojiSelect={(emoji) =>
+                  setMessage((previous) => previous + emoji)
+                }
+              />
+
+              <button
+                type="button"
+                aria-label={t("sticker")}
+                disabled
+                className="cursor-not-allowed rounded-full p-1 text-grey-400 transition-colors hover:text-grey-600"
+              >
+                <FileIcon />
+              </button>
             </div>
 
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".jpg,.jpeg,.png,.gif,.webp,.zip,.pdf,.xls,.xlsx,.csv,.doc,.docx,.ppt,.pptx"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const files = Array.from(e.target.files || []);
-
-                for (const file of files) {
-                  const error = validateAttachment(file);
-
-                  if (error) {
-                    // Replace with your existing toast notification if available.
-                    alert(error);
-                    e.target.value = "";
-                    return;
-                  }
-                }
-
-                // Continue with your existing attachment selection logic.
-                addFiles(files);
-
-                e.target.value = "";
-              }}
-            />
-
             <button
               type="button"
-              aria-label={t("voiceMessage")}
-              disabled
-              className="cursor-not-allowed rounded-full p-1 text-grey-400 transition-colors hover:text-grey-600"
+              aria-label={t("sendMessage")}
+              onClick={handleSend}
+              disabled={!canSend}
+              className={`flex cursor-pointer items-center justify-center rounded-full transition-colors ${
+                canSend
+                  ? "bg-chart-4 text-white hover:bg-chart-5"
+                  : "bg-grey-100 text-grey-300"
+              } disabled:cursor-not-allowed`}
             >
-              <MicIcon />
-            </button>
-
-            <EmojiPickerPopover
-              onEmojiSelect={(emoji) =>
-                setMessage((previous) => previous + emoji)
-              }
-            />
-
-            <button
-              type="button"
-              aria-label={t("sticker")}
-              disabled
-              className="cursor-not-allowed rounded-full p-1 text-grey-400 transition-colors hover:text-grey-600"
-            >
-              <FileIcon />
+              {isSending ? (
+                <Loader2 size={19} className="animate-spin" />
+              ) : (
+                <>
+                  {message.length === 0 && selectedFiles.length === 0 ? (
+                    <SendIcon color={null} />
+                  ) : (
+                    <SendIcon color="var(--chart-4)" />
+                  )}
+                </>
+              )}
             </button>
           </div>
-
-          <button
-            type="button"
-            aria-label={t("sendMessage")}
-            onClick={handleSend}
-            disabled={!canSend}
-            className={`flex cursor-pointer items-center justify-center rounded-full transition-colors ${
-              canSend
-                ? "bg-chart-4 text-white hover:bg-chart-5"
-                : "bg-grey-100 text-grey-300"
-            } disabled:cursor-not-allowed`}
-          >
-            {isSending ? (
-              <Loader2 size={19} className="animate-spin" />
-            ) : (
-              <>
-                {message.length === 0 && selectedFiles.length === 0 ? (
-                  <SendIcon color={null} />
-                ) : (
-                  <SendIcon color="var(--chart-4)" />
-                )}
-              </>
-            )}
-          </button>
         </div>
       </div>
     </div>

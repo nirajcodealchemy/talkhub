@@ -2,26 +2,49 @@
 "use client";
 
 import { Button } from "../ui";
-import { useState } from "react";
 import { HeaderProps } from "@/src/types";
 import { useTranslations } from "next-intl";
 import GroupInfoPanel from "./GroupInfoPanel";
+import AIChatTools from "./aiChat/AIChatTools";
 import { ConversationInfoModal } from "../modal";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, MoreVertical, X } from "lucide-react";
 import { InfoIcon, PhoneIcon, SparklesIcon, VideoIcon } from "../icons";
 
 export default function ChatHeader({
   onBack,
+  onAIAction,
   conversation,
   currentUserId,
   onOpenGroupInfo,
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isAiMenuOpen, setIsAiMenuOpen] = useState(false);
+
+  const aiMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        aiMenuRef.current &&
+        !aiMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAiMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const t = useTranslations("screen.chat.ChatHeader");
+
   return (
-    <header className="relative z-20 flex h-[64px] shrink-0 items-center justify-between border-b border-border bg-background px-3 sm:px-5">
+    <header className="relative z-20 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background px-3 sm:px-5">
       {/* User details */}
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         {/* Mobile back button */}
@@ -54,9 +77,6 @@ export default function ChatHeader({
                 className="h-full w-full rounded-full object-cover"
               />
             ) : (
-              // <div className="flex h-full w-full items-center justify-center rounded-full bg-chart-4/10 text-chart-4">
-              //   <Users className="size-5" />
-              // </div>
               <img
                 src={conversation.avatar_url || conversation.avatar}
                 alt={conversation.name}
@@ -107,13 +127,23 @@ export default function ChatHeader({
           <PhoneIcon className="size-6 cursor-not-allowed " />
         </Button>
 
-        <Button
-          type="button"
-          aria-label={t("chatToolsAriaLabel")}
-          className=" bg-white rounded-full p-1 text-muted-foreground cursor-not-allowed hover:bg-white"
-        >
-          <SparklesIcon className="size-6 cursor-not-allowed " />
-        </Button>
+        <div className="relative" ref={aiMenuRef}>
+          <button
+            type="button"
+            aria-label="AI tools"
+            aria-expanded={isAiMenuOpen}
+            onClick={() => setIsAiMenuOpen((prev) => !prev)}
+            className="cursor-pointer rounded-full p-1 text-foreground hover:bg-accent"
+          >
+            <SparklesIcon className="" />
+          </button>
+          {isAiMenuOpen && (
+            <AIChatTools
+              onAIAction={onAIAction}
+              onClose={() => setIsAiMenuOpen(false)}
+            />
+          )}
+        </div>
 
         <Button
           type="button"
@@ -167,14 +197,28 @@ export default function ChatHeader({
               {t("voiceCall")}
             </Button>
 
-            <Button
-              type="button"
-              disabled
-              className="flex w-full cursor-not-allowed bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
-            >
-              <SparklesIcon className="size-6 cursor-not-allowed " />
-              {t("chatTools")}
-            </Button>
+            <div ref={aiMenuRef}>
+              <Button
+                type="button"
+                aria-expanded={isAiMenuOpen}
+                onClick={() => setIsAiMenuOpen((prev) => !prev)}
+                className="flex w-full cursor-pointer items-center justify-start gap-3 bg-white px-4 py-4 text-sm text-muted-foreground hover:bg-accent"
+              >
+                <SparklesIcon className="size-6" />
+                {t("chatTools")}
+              </Button>
+
+              {isAiMenuOpen && (
+                <AIChatTools
+                  mobile
+                  onAIAction={onAIAction}
+                  onClose={() => {
+                    setIsAiMenuOpen(false);
+                    setIsMenuOpen(false);
+                  }}
+                />
+              )}
+            </div>
 
             <Button
               type="button"
