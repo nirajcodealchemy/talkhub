@@ -259,7 +259,7 @@ export default function ChatWindow({
                   <button
                     type="button"
                     onClick={() => handleAIAction(activeAiPanel)}
-                    className="text-xs font-medium text-primary"
+                    className="text-xs cursor-pointer font-medium text-primary"
                   >
                     Retry
                   </button>
@@ -274,7 +274,7 @@ export default function ChatWindow({
                     key={index}
                     type="button"
                     onClick={() => handleSuggestionSelect(suggestion)}
-                    className="w-full rounded-md border border-border px-3 py-2 text-left text-sm hover:bg-accent"
+                    className="w-full cursor-pointer rounded-md border border-border px-3 py-2 text-left text-sm hover:bg-accent"
                   >
                     {suggestion}
                   </button>

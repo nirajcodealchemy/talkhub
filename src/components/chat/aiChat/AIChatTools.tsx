@@ -32,7 +32,7 @@ export default function AIChatTools({
         <button
           type="button"
           onClick={() => handleAction("reply")}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm text-foreground hover:bg-accent"
+          className="flex w-full items-center gap-3 cursor-pointer rounded-lg px-3 py-3 text-sm text-foreground hover:bg-accent"
         >
           <MessageSquareText size={18} />
           Suggest a reply
@@ -41,7 +41,7 @@ export default function AIChatTools({
         <button
           type="button"
           onClick={() => handleAction("summary")}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm text-foreground hover:bg-accent"
+          className="flex w-full items-center gap-3 cursor-pointer rounded-lg px-3 py-3 text-sm text-foreground hover:bg-accent"
         >
           <MessagesSquare size={18} />
           Communication summary
