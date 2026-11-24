@@ -316,7 +316,7 @@ export default function ChatWindow({
       {/* Group Info / Add Members */}
       {conversation.is_group && isGroupInfoOpen && (
         <div
-          className="absolute inset-0 z-40 bg-background lg:relative lg:inset-auto lg:z-auto lg:h-full lg:w-[400px] lg:min-w-[400px] lg:max-w-[400px] lg:shrink-0
+          className="absolute inset-0 z-40 bg-background lg:relative lg:inset-auto lg:z-auto lg:h-full lg:w-100 lg:min-w-100 lg:max-w-100 lg:shrink-0
           "
         >
           {/* Add Members */}

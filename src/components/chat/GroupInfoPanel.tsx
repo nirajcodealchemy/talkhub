@@ -256,12 +256,8 @@ export default function GroupInfoPanel({
   };
 
   return (
-    // <aside className="relative flex h-full w-[340px] min-w-[340px] max-w-[40%] shrink-0 flex-col overflow-hidden border-l border-border bg-background">
     <aside
-      className="
-  flex h-full w-full min-w-0 flex-col
-  overflow-hidden border-l border-border bg-background
-  lg:w-full lg:min-w-0 lg:shrink-0
+      className="flex h-full w-full min-w-0 flex-col overflow-hidden border-l border-border bg-background lg:w-full lg:min-w-0 lg:shrink-0
   
 "
     >
@@ -627,23 +623,28 @@ export default function GroupInfoPanel({
             {t("noBannedMembersFound")}
           </p>
         )}
-        <button
-          type="button"
-          onClick={() => {
-            setActionError("");
-            setConfirmAction("leave");
-          }}
-          disabled={isActionPending}
-          className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
-        >
-          <LogOut className="size-4" />
-          {t("leave")}
-        </button>
+
+        {activeTab === "members" ? (
+          <button
+            type="button"
+            onClick={() => {
+              setActionError("");
+              setConfirmAction("leave");
+            }}
+            disabled={isActionPending}
+            className="flex w-full items-center cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
+          >
+            <LogOut className="size-4" />
+            {t("leave")}
+          </button>
+        ) : (
+          ""
+        )}
       </div>
       {/* Confirmation modal */}
       {confirmAction && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4"
+          className="fixed inset-0 z-70 flex items-center justify-center bg-black/60 px-4"
           role="presentation"
         >
           <div
