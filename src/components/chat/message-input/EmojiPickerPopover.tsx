@@ -49,7 +49,7 @@ export default function EmojiPickerPopover({
 
       {emojiOpen && (
         <div
-          className="fixed bottom-[90px] left-1/2 z-[100] w-[calc(100vw-24px)] max-w-[270px] -translate-x-1/2 sm:absolute sm:bottom-12 sm:left-0 sm:w-[350px] sm:translate-x-0
+          className="fixed bottom-[90px] left-1/2 z-100 w-[calc(100vw-24px)] max-w-[270px] -translate-x-1/2 sm:absolute sm:bottom-12 sm:left-0 sm:w-[350px] sm:translate-x-0
           "
         >
           <EmojiPicker

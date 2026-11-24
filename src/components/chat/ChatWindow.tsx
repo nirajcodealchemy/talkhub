@@ -7,9 +7,9 @@ import ReactMarkdown from "react-markdown";
 import GroupInfoPanel from "./GroupInfoPanel";
 import AddMembersPanel from "./AddMembersPanel";
 import { Loader2, Sparkles, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChatMessage, ChatWindowProps } from "@/src/types";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditMessage, useTypingIndicator, useUsers } from "@/src/hooks";
 
 type AICacheData = {

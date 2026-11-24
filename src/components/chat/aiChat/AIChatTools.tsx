@@ -1,6 +1,7 @@
 "use client";
 
 import { MessageSquareText, MessagesSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type AIAction = "reply" | "summary";
 
@@ -19,7 +20,7 @@ export default function AIChatTools({
     onAIAction?.(action);
     onClose?.();
   };
-
+  const t = useTranslations("screen.AiChatTools");
   return (
     <div className="relative">
       <div
@@ -35,7 +36,7 @@ export default function AIChatTools({
           className="flex w-full items-center gap-2 cursor-pointer rounded-lg px-2 py-3 text-sm text-foreground hover:bg-accent"
         >
           <MessageSquareText size={18} />
-          Suggest a reply
+          {t("suggestReply")}
         </button>
 
         <button
@@ -44,8 +45,7 @@ export default function AIChatTools({
           className="flex w-full items-center gap-2 wrap-break-word cursor-pointer rounded-lg px-2 py-3 text-sm text-foreground hover:bg-accent sm:flex"
         >
           <MessagesSquare size={18} />
-          <span>Communication</span>
-          <span>summary</span>
+          {t("communicationSummary")}
         </button>
       </div>
     </div>

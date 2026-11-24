@@ -30,7 +30,6 @@ export default function UserListItem({
   isDeletedForEveryone = false,
 }: UserListItemProps) {
   const t = useTranslations("screen.UserListItem");
-  // const locale = useLocale();
 
   const name = user.full_name || user.username || t("defaultUser");
 

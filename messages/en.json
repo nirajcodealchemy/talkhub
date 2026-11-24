@@ -238,6 +238,10 @@
       "addMembers": "Add Members",
       "noUsersFound": "No users found.",
       "tryAnotherSearch": "Try another search."
+    },
+    "AiChatTools": {
+      "suggestReply": "Suggest a reply",
+      "communicationSummary": "Communication summary"
     }
   }
 }
