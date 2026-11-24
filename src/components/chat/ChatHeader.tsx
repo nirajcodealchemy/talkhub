@@ -178,11 +178,11 @@ export default function ChatHeader({
         </Button>
 
         {isMenuOpen && (
-          <div className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-border bg-popover py-1.5 text-popover-foreground shadow-lg">
+          <div className="absolute right-0 top-11 z-50 w-57 rounded-xl border border-border bg-popover py-1.5 text-popover-foreground shadow-lg">
             <Button
               type="button"
               disabled
-              className="flex w-full cursor-not-allowed bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
+              className="flex w-full cursor-not-allowed bg-white items-center justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
             >
               <VideoIcon className="size-6 cursor-not-allowed " />
               {t("videoCall")}
@@ -191,7 +191,7 @@ export default function ChatHeader({
             <Button
               type="button"
               disabled
-              className="flex w-full cursor-not-allowed bg-white items-center  justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
+              className="flex w-full cursor-not-allowed bg-white items-center justify-start gap-3 px-4 py-4 text-sm text-muted-foreground"
             >
               <PhoneIcon className="size-6 cursor-not-allowed " />
               {t("voiceCall")}

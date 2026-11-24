@@ -64,11 +64,18 @@ Do not include markdown or explanations.`
 Summarize the following conversation from the last 48 hours:
 ${conversation}
 
-Include:
-- Main topics discussed
-- Important decisions or updates
-- Questions that need answers
-- Any pending tasks or follow-ups
+Include these sections:
+
+**Main topics discussed:**
+**Important decisions or updates:**
+**Questions that need answers:**
+**Any pending tasks or follow-ups:**
+
+Formatting rules:
+- Return the summary using Markdown.
+- Use **bold** for each section heading.
+- Do not display literal asterisks as text.
+- Keep the summary clear and concise.
 
 Make the summary clear and concise.`;
 

@@ -1,16 +1,21 @@
 "use client";
-
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import { createClient } from "@/src/lib";
 import MessageInput from "./MessageInput";
+import ReactMarkdown from "react-markdown";
 import GroupInfoPanel from "./GroupInfoPanel";
 import AddMembersPanel from "./AddMembersPanel";
 import { Loader2, Sparkles, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChatMessage, ChatWindowProps } from "@/src/types";
 import { useEditMessage, useTypingIndicator, useUsers } from "@/src/hooks";
+
+type AICacheData = {
+  suggestions: string[];
+  summary: string;
+};
 
 export default function ChatWindow({
   onSend,
@@ -32,21 +37,20 @@ export default function ChatWindow({
   const [aiSummary, setAiSummary] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
+  const [isAddMembersOpen, setIsAddMembersOpen] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [activeAiPanel, setActiveAiPanel] = useState<AIAction | null>(null);
   const [suggestedReply, setSuggestedReply] = useState<string | null>(null);
-
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(
     null,
   );
-
-  const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
-  const [isAddMembersOpen, setIsAddMembersOpen] = useState(false);
-
   const { isOtherUserTyping, notifyTyping, stopTyping } = useTypingIndicator(
     conversation.id,
     currentUserId,
   );
+
+  const aiCache = useRef<Map<string, AICacheData>>(new Map());
 
   const { data: users = [], isLoading: isUsersLoading } = useUsers();
   const { mutateAsync: editMessage, isPending: isEditing } = useEditMessage();
@@ -100,6 +104,26 @@ export default function ChatWindow({
   };
 
   const handleAIAction = async (action: AIAction) => {
+    const cacheKey = `${conversation.id}-${action}`;
+
+    // 1. Check cache first
+    const cachedData = aiCache.current.get(cacheKey);
+
+    if (cachedData) {
+      setActiveAiPanel(action);
+      setAiError(null);
+
+      if (action === "reply") {
+        setAiSuggestions(cachedData.suggestions);
+      } else {
+        setAiSummary(cachedData.summary);
+      }
+
+      setIsAiLoading(false);
+      return;
+    }
+
+    // 2. No cache found, generate a new response
     setActiveAiPanel(action);
     setAiSuggestions([]);
     setAiSummary("");
@@ -107,7 +131,6 @@ export default function ChatWindow({
     setIsAiLoading(true);
 
     try {
-      // Get messages from the last 48 hours
       const twoDaysAgo = new Date(
         Date.now() - 48 * 60 * 60 * 1000,
       ).toISOString();
@@ -129,7 +152,7 @@ export default function ChatWindow({
         throw new Error("No text messages found in the last 48 hours.");
       }
 
-      // Format messages for the AI API
+      // 3. Format messages
       const formattedMessages = data.map((message) => ({
         sender:
           message.sender_id === currentUserId
@@ -141,7 +164,7 @@ export default function ChatWindow({
         created_at: message.created_at,
       }));
 
-      // Send messages to the AI API
+      // 4. Call Gemini API through Next.js API route
       const response = await fetch("/api/ai", {
         method: "POST",
         headers: {
@@ -153,10 +176,8 @@ export default function ChatWindow({
         }),
       });
 
-      // Parse API response
       const result = await response.json().catch(() => null);
 
-      // Handle API errors
       if (!response.ok) {
         console.error("AI API error:", {
           status: response.status,
@@ -170,11 +191,25 @@ export default function ChatWindow({
         );
       }
 
-      // Update UI with AI response
+      // 5. Save response and update UI
       if (action === "reply") {
-        setAiSuggestions(result?.suggestions ?? []);
+        const suggestions = result?.suggestions ?? [];
+
+        setAiSuggestions(suggestions);
+
+        aiCache.current.set(cacheKey, {
+          suggestions,
+          summary: "",
+        });
       } else {
-        setAiSummary(result?.summary ?? "");
+        const summary = result?.summary ?? "";
+
+        setAiSummary(summary);
+
+        aiCache.current.set(cacheKey, {
+          suggestions: [],
+          summary,
+        });
       }
     } catch (error) {
       console.error("AI generation error:", error);
@@ -211,6 +246,7 @@ export default function ChatWindow({
         />
 
         <MessageList
+          key={conversation.id}
           onLoadOlder={onLoadOlder}
           currentUserId={currentUserId}
           isLoadingOlder={isLoadingOlder}
@@ -223,7 +259,7 @@ export default function ChatWindow({
 
         {/* AI Result Panel */}
         {activeAiPanel && (
-          <div className="mx-3 mb-2 max-h-60 shrink-0 overflow-y-auto rounded-lg border border-border bg-background shadow-sm">
+          <div className="mx-3 mb-2 max-h-60 shrink-0 rounded-lg border overflow-y-auto border-border bg-background shadow-sm overscroll-contain chat-scrollbar">
             <div className="sticky top-0 flex items-center justify-between border-b border-border bg-background px-3 py-2">
               <div className="flex items-center gap-2">
                 <Sparkles size={16} className="text-primary" />
@@ -244,7 +280,7 @@ export default function ChatWindow({
               </button>
             </div>
 
-            <div className="space-y-2 p-2">
+            <div className="space-y-2 p-2 ">
               {isAiLoading && (
                 <div className="flex items-center justify-center gap-2 py-5 text-sm text-muted-foreground">
                   <Loader2 size={17} className="animate-spin" />
@@ -284,9 +320,43 @@ export default function ChatWindow({
                 !aiError &&
                 activeAiPanel === "summary" &&
                 aiSummary && (
-                  <p className="whitespace-pre-wrap px-2 py-2 text-sm leading-relaxed">
-                    {aiSummary}
-                  </p>
+                  // <p className="whitespace-pre-wrap px-2 py-2 text-sm leading-relaxed">
+                  //   {aiSummary}
+                  // </p>
+                  <div className="prose prose-sm max-w-none text-foreground">
+                    <ReactMarkdown
+                      components={{
+                        h1: ({ children }) => (
+                          <h1 className="mb-2 text-base font-semibold">
+                            {children}
+                          </h1>
+                        ),
+                        h2: ({ children }) => (
+                          <h2 className="mb-2 mt-3 text-sm font-semibold">
+                            {children}
+                          </h2>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-foreground">
+                            {children}
+                          </strong>
+                        ),
+                        p: ({ children }) => (
+                          <p className="mb-2 text-sm leading-6">{children}</p>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="ml-5 list-disc space-y-1">
+                            {children}
+                          </ul>
+                        ),
+                        li: ({ children }) => (
+                          <li className="text-sm leading-6">{children}</li>
+                        ),
+                      }}
+                    >
+                      {aiSummary}
+                    </ReactMarkdown>
+                  </div>
                 )}
             </div>
           </div>
