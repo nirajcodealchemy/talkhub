@@ -2,11 +2,12 @@
 
 import { createClient } from "@/src/lib";
 import {
+  useQuery,
   useMutation,
   useQueryClient,
   useInfiniteQuery,
-  useQuery,
 } from "@tanstack/react-query";
+import { ChatMessage } from "../types";
 
 export function useCreateDirectConversation() {
   const supabase = createClient();
@@ -125,6 +126,49 @@ export function useMessages(conversationId: string) {
         (senderProfiles ?? []).map((profile) => [profile.id, profile]),
       );
 
+      // Load the original messages referenced by replies on this page.
+      const replyIds = [
+        ...new Set(
+          messages
+            .map((message) => message.reply_to_id)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+
+      const { data: repliedMessages, error: replyError } = replyIds.length
+        ? await supabase.from("messages").select("*").in("id", replyIds)
+        : { data: [], error: null };
+
+      if (replyError) throw replyError;
+
+      const replySenderIds = [
+        ...new Set((repliedMessages ?? []).map((message) => message.sender_id)),
+      ];
+
+      const { data: replySenderProfiles, error: replySenderError } =
+        replySenderIds.length
+          ? await supabase
+              .from("profiles")
+              .select("id, full_name, username, avatar_url")
+              .in("id", replySenderIds)
+          : { data: [], error: null };
+
+      if (replySenderError) throw replySenderError;
+
+      const replySenderMap = new Map(
+        (replySenderProfiles ?? []).map((profile) => [profile.id, profile]),
+      );
+
+      const replyMessageMap = new Map(
+        (repliedMessages ?? []).map((message) => [
+          message.id,
+          {
+            ...message,
+            sender_profile: replySenderMap.get(message.sender_id) ?? null,
+          },
+        ]),
+      );
+
       return Promise.all(
         messages.map(async (message) => {
           const deletedForMe = hiddenIds.has(message.id);
@@ -139,6 +183,9 @@ export function useMessages(conversationId: string) {
               sender_profile: senderMap.get(message.sender_id) ?? null,
               deleted_for_me: deletedForMe,
               attachment_url: null,
+              reply_to_message: message.reply_to_id
+                ? (replyMessageMap.get(message.reply_to_id) ?? null)
+                : null,
             };
             // return {
             //   ...message,
@@ -166,6 +213,9 @@ export function useMessages(conversationId: string) {
             sender_profile: senderMap.get(message.sender_id) ?? null,
             deleted_for_me: deletedForMe,
             attachment_url: signedData?.signedUrl ?? null,
+            reply_to_message: message.reply_to_id
+              ? (replyMessageMap.get(message.reply_to_id) ?? null)
+              : null,
           };
         }),
       );
@@ -200,6 +250,7 @@ export function useSendMessage() {
       conversationId: string;
       content: string;
       messageType?: "text" | "image" | "file";
+      replyToId?: string | null;
     }) => {
       const {
         data: { user },
@@ -217,6 +268,7 @@ export function useSendMessage() {
           sender_id: user.id,
           content: message.content,
           message_type: message.messageType || "text",
+          reply_to_id: message.replyToId ?? null,
         })
         .select()
         .single();
@@ -250,6 +302,7 @@ export function useSendMessage() {
         sender_id: user?.id ?? "",
         content: variables.content,
         created_at: new Date().toISOString(),
+        reply_to_id: variables.replyToId ?? null,
         conversation_id: variables.conversationId,
         message_type: variables.messageType || "text",
       };
@@ -814,5 +867,61 @@ export function useBannedGroupMembers(conversationId: string, enabled = true) {
 
     enabled: enabled && !!conversationId,
     staleTime: 30_000,
+  });
+}
+
+export function useForwardMessage() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["forwardMessage"],
+
+    mutationFn: async ({
+      targetConversationId,
+      originalMessage,
+    }: {
+      targetConversationId: string;
+      originalMessage: ChatMessage;
+    }) => {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error("You must be logged in to forward messages.");
+      }
+
+      if (originalMessage.message_type !== "text") {
+        throw new Error("Only text messages can be forwarded right now.");
+      }
+
+      const { data, error } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: targetConversationId,
+          sender_id: user.id,
+          content: originalMessage.content,
+          message_type: "text",
+          forwarded_from_id: originalMessage.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    },
+
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: ["messages", variables.targetConversationId],
+      });
+
+      void queryClient.invalidateQueries({
+        queryKey: ["conversations"],
+      });
+    },
   });
 }

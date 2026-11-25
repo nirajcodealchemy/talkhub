@@ -10,7 +10,12 @@ import { Loader2, Sparkles, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChatMessage, ChatWindowProps } from "@/src/types";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useEditMessage, useTypingIndicator, useUsers } from "@/src/hooks";
+import {
+  useEditMessage,
+  useForwardMessage,
+  useTypingIndicator,
+  useUsers,
+} from "@/src/hooks";
 
 type AICacheData = {
   suggestions: string[];
@@ -27,6 +32,9 @@ export default function ChatWindow({
   currentUserId,
   isLoadingOlder,
   hasMoreMessages,
+  replyTo,
+  onReply,
+  onForward,
 }: ChatWindowProps) {
   const queryClient = useQueryClient();
 
@@ -49,6 +57,12 @@ export default function ChatWindow({
     conversation.id,
     currentUserId,
   );
+  const [messageToForward, setMessageToForward] = useState<ChatMessage | null>(
+    null,
+  );
+
+  const { mutateAsync: forwardMessage, isPending: isForwarding } =
+    useForwardMessage();
 
   const aiCache = useRef<Map<string, AICacheData>>(new Map());
 
@@ -246,7 +260,9 @@ export default function ChatWindow({
         />
 
         <MessageList
+          onReply={onReply}
           key={conversation.id}
+          onForward={onForward}
           onLoadOlder={onLoadOlder}
           currentUserId={currentUserId}
           isLoadingOlder={isLoadingOlder}
@@ -363,6 +379,8 @@ export default function ChatWindow({
         )}
         <MessageInput
           onSend={onSend}
+          replyTo={replyTo}
+          onCancelReply={() => onReply(null)}
           isEditing={isEditing}
           onTyping={notifyTyping}
           onStopTyping={stopTyping}

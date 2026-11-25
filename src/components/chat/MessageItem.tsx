@@ -2,7 +2,7 @@
 
 import JSZip from "jszip";
 import { useState } from "react";
-import { MessageItemProps } from "@/src/types";
+import { ChatMessage, MessageItemProps } from "@/src/types";
 import { useDeleteMessage } from "@/src/hooks";
 import { Ban, Check, CheckCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -20,11 +20,17 @@ export default function MessageItem({
   isGroup,
   groupMessages,
   onEditRequest,
+  onReply,
+  onForward,
 }: MessageItemProps) {
   const locale = useLocale();
 
   const [deleteError, setDeleteError] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [messageToForward, setMessageToForward] = useState<ChatMessage | null>(
+    null,
+  );
 
   const { mutateAsync: deleteMessage, isPending: isDeleting } =
     useDeleteMessage();
@@ -163,6 +169,8 @@ export default function MessageItem({
           isImageGroup={isImageGroup}
           onDelete={handleOpenDeleteModal}
           onDownloadGroup={handleDownloadImageGroupAsZip}
+          onReply={() => onReply(message)}
+          onForward={() => onForward(message)}
         />
 
         {/* Message bubble */}
@@ -200,6 +208,41 @@ export default function MessageItem({
             </div>
           ) : (
             <>
+              {message.reply_to_message && (
+                <div
+                  className={`mb-2 rounded-md border-l-4 px-3 py-2 ${
+                    isMine
+                      ? "border-white/70 bg-chart-0"
+                      : "border-chart-4 bg-background/70"
+                  }`}
+                >
+                  <p
+                    className={`truncate text-xs font-semibold ${
+                      isMine ? "text-white" : "text-chart-4"
+                    }`}
+                  >
+                    {message.reply_to_message.sender_profile?.full_name ||
+                      message.reply_to_message.sender_profile?.username ||
+                      "Unknown user"}
+                  </p>
+
+                  <p
+                    className={`line-clamp-2 whitespace-pre-wrap break-words text-xs ${
+                      isMine ? "text-white/80" : "text-muted-foreground"
+                    }`}
+                  >
+                    {message.reply_to_message.is_deleted_for_everyone
+                      ? "This message was deleted"
+                      : message.reply_to_message.content ||
+                        (message.reply_to_message.message_type === "image"
+                          ? "Photo"
+                          : "Attachment")}
+                  </p>
+                </div>
+              )}
+              {message.forwarded_from_id && (
+                <p className="mb-1 text-xs italic opacity-70">Forwarded</p>
+              )}
               {/* Image message */}
               {message.message_type === "image" && (
                 <MessageImageGallery

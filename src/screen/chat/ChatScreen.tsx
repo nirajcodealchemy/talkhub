@@ -4,8 +4,8 @@ import { createClient } from "@/src/lib";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChatConversation, ChatScreenProps } from "@/src/types";
 import { ChatSidebar, ChatWindow, MessageIcon } from "@/src/components";
+import { ChatConversation, ChatMessage, ChatScreenProps } from "@/src/types";
 import {
   useMessages,
   useSendMessage,
@@ -14,10 +14,17 @@ import {
   useSendImageGroup,
   useRealtimeMessages,
   useCreateDirectConversation,
+  useForwardMessage,
 } from "@/src/hooks";
 import ChatLayout from "./ChatLayout";
+import ForwardMessageModal from "@/src/components/modal/ForwardMessageModal";
 
 export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [messageToForward, setMessageToForward] = useState<ChatMessage | null>(
+    null,
+  );
+
   const t = useTranslations("screen.chat.ChatScreen");
   const queryClient = useQueryClient();
   const supabase = useMemo(() => createClient(), []);
@@ -36,6 +43,8 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
 
   const { mutateAsync: createDirectConversation } =
     useCreateDirectConversation();
+  const { mutateAsync: forwardMessage, isPending: isForwarding } =
+    useForwardMessage();
 
   const [selectedId, setSelectedId] = useState<string>("");
 
@@ -192,7 +201,8 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
 
   // SEND TEXT MESSAGE
 
-  async function handleSend(content: string) {
+  // SEND TEXT MESSAGE
+  async function handleSendFromInput(content: string, replyToId?: string) {
     if (!selectedId || !content.trim()) return;
 
     try {
@@ -200,7 +210,10 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
         conversationId: selectedId,
         content: content.trim(),
         messageType: "text",
+        replyToId: replyToId ?? null,
       });
+
+      setReplyTo(null);
     } catch (error) {
       console.error("Message sending failed:", error);
     }
@@ -238,7 +251,6 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
   }
 
   // LOADING
-
   if (isLoading) {
     return (
       <ChatLayout>
@@ -250,6 +262,29 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
   }
 
   // UI
+  const handleReply = (message: ChatMessage | null) => {
+    setReplyTo(message);
+  };
+
+  const handleForwardMessage = async (
+    targetConversationIds: string[],
+    message: ChatMessage,
+  ) => {
+    try {
+      await Promise.all(
+        targetConversationIds.map((targetConversationId) =>
+          forwardMessage({
+            targetConversationId,
+            originalMessage: message,
+          }),
+        ),
+      );
+
+      setMessageToForward(null);
+    } catch (error) {
+      console.error("Message forwarding failed:", error);
+    }
+  };
 
   return (
     <ChatLayout>
@@ -274,7 +309,9 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
       >
         {conversationWithMessages ? (
           <ChatWindow
-            onSend={handleSend}
+            replyTo={replyTo}
+            onReply={handleReply}
+            onSend={handleSendFromInput}
             currentUserId={currentUserId}
             onAttachment={handleAttachment}
             hasMoreMessages={!!hasNextPage}
@@ -283,6 +320,7 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
             onLoadOlder={() => fetchNextPage()}
             isLoadingOlder={isFetchingNextPage}
             conversation={conversationWithMessages}
+            onForward={(message) => setMessageToForward(message)}
           />
         ) : (
           <div className="hidden flex-1 flex-col items-center justify-center bg-muted px-6 text-center md:flex">
@@ -300,6 +338,14 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
           </div>
         )}
       </div>
+      <ForwardMessageModal
+        message={messageToForward}
+        conversations={conversations}
+        currentConversationId={selectedId}
+        isForwarding={isForwarding}
+        onClose={() => setMessageToForward(null)}
+        onForward={handleForwardMessage}
+      />
     </ChatLayout>
   );
 }

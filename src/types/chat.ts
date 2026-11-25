@@ -27,6 +27,7 @@ export type ChatMessage = {
   deleted_for_me?: boolean;
   message_type: MessageType;
   edited_at?: string | null;
+  reply_to_id: string | null;
   deleted_at?: string | null;
   delivered_at?: string | null;
   attachment_url?: string | null;
@@ -35,7 +36,9 @@ export type ChatMessage = {
   attachment_name?: string | null;
   attachment_type?: string | null;
   attachment_size?: number | null;
+  forwarded_from_id?: string | null;
   is_deleted_for_everyone?: boolean;
+  reply_to_message?: ChatMessage | null;
   status?: "sent" | "delivered" | "read";
   sender_profile?: MessageSenderProfile | null;
 };
@@ -130,11 +133,13 @@ export type ChatWindowProps = {
   isLoadingOlder: boolean;
   hasMoreMessages: boolean;
   conversation: ChatConversation;
-
-  onSend: (message: string) => void;
   onAttachment?: (file: File) => void;
   // Multiple images as one group
   onAttachments?: (files: File[], caption?: string) => void;
+  onSend: (message: string, replyToId?: string) => void | Promise<void>;
+  replyTo: ChatMessage | null;
+  onReply: (message: ChatMessage | null) => void;
+  onForward: (message: ChatMessage) => void;
 };
 
 export type MessageSenderProfile = {
@@ -166,10 +171,12 @@ export type MessageInputProps = {
   onTyping?: () => void;
   onCancelEdit: () => void;
   onStopTyping?: () => void;
+  onCancelReply?: () => void;
+  replyTo?: ChatMessage | null;
   conversationId: string | null;
-  editingMessage: ChatMessage | null;
   suggestedReply?: string | null;
   onSuggestionApplied?: () => void;
+  editingMessage: ChatMessage | null;
   onEditSubmit: (content: string) => Promise<void>;
   onSend: (message: string) => void | Promise<void>;
   onAttachment?: (file: File) => void | Promise<void>;
@@ -182,6 +189,8 @@ export type MessageItemProps = {
   message: ChatMessage;
   groupMessages?: ChatMessage[];
   onEditRequest: (message: ChatMessage) => void;
+  onReply: (message: ChatMessage) => void;
+  onForward: (message: ChatMessage) => void;
 };
 
 export type MessageListProps = {
@@ -193,6 +202,8 @@ export type MessageListProps = {
   hasMoreMessages: boolean;
   isOtherUserTyping?: boolean;
   onEditMessage: (message: ChatMessage) => void;
+  onReply: (message: ChatMessage) => void;
+  onForward: (message: ChatMessage) => void;
 };
 
 export type UserListItemProps = {

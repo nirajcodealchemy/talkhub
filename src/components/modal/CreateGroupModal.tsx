@@ -258,41 +258,6 @@ export default function CreateGroupModal({
             )}
           </div>
 
-          {/* Selected Members */}
-          {/* {selectedUsers.length > 0 && (
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">
-                {t("selectedMembers")} ({selectedUsers.length})
-              </label>
-
-              <div className="flex flex-wrap gap-2">
-                {selectedUsers.map((user) => {
-                  const userName = user.full_name || user.username || "";
-
-                  return (
-                    <div
-                      key={user.id}
-                      className="flex items-center gap-1 rounded-full bg-chart-4/10 px-2 py-1"
-                    >
-                      <span className="text-xs text-chart-4">{userName}</span>
-
-                      <Button
-                        type="button"
-                        onClick={() => handleRemoveUser(user.id)}
-                        aria-label={t("removeMember", {
-                          name: userName,
-                        })}
-                        className="cursor-pointer text-chart-4 transition-colors hover:text-chart-5 h-0 w-0"
-                      >
-                        <X />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )} */}
-
           {/* Footer Buttons */}
           <div className="flex h-10 gap-2">
             <Button

@@ -39,12 +39,14 @@ function getDateLabel(
 
 export default function MessageList({
   isGroup,
+  onReply,
   messages,
+  onForward,
   onLoadOlder,
   currentUserId,
+  onEditMessage,
   isLoadingOlder,
   hasMoreMessages,
-  onEditMessage,
   isOtherUserTyping,
 }: MessageListProps) {
   const initialScrollDone = useRef(false);
@@ -334,6 +336,8 @@ export default function MessageList({
                     isMine={item.message.sender_id === currentUserId}
                     isGroup={isGroup}
                     onEditRequest={onEditMessage}
+                    onReply={onReply}
+                    onForward={onForward}
                   />
                 </div>
               );

@@ -6,9 +6,11 @@ import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/src/types/chat";
 import {
   Copy,
+  Reply,
   Pencil,
   Trash2,
   Loader2,
+  Forward,
   Download,
   MoreVertical,
 } from "lucide-react";
@@ -18,15 +20,19 @@ type Props = {
   onEdit: () => void;
   message: ChatMessage;
   onDelete: () => void;
+  onReply?: () => void;
   isImageGroup: boolean;
+  onForward?: () => void;
   onDownloadGroup: () => Promise<void>;
 };
 
 export default function MessageContextMenu({
   isMine,
   onEdit,
+  onReply,
   message,
   onDelete,
+  onForward,
   isImageGroup,
   onDownloadGroup,
 }: Props) {
@@ -229,6 +235,30 @@ export default function MessageContextMenu({
                   {t("edit")}
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onReply?.();
+                }}
+                className="flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
+              >
+                <Reply size={16} />
+                Reply
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onForward?.();
+                }}
+                className="flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
+              >
+                <Forward size={16} />
+                Forward
+              </button>
 
               <button
                 type="button"

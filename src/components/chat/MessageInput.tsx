@@ -17,17 +17,19 @@ import { MESSAGE_SUGGESTIONS } from "@/src/constant/messageSuggestions";
 
 export default function MessageInput({
   onSend,
+  replyTo,
   onTyping,
   onAttachment,
   onCancelEdit,
   onEditSubmit,
   onStopTyping,
   onAttachments,
+  onCancelReply,
   conversationId,
   editingMessage,
   suggestedReply,
-  onSuggestionApplied,
   isBanned = false,
+  onSuggestionApplied,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -215,7 +217,7 @@ export default function MessageInput({
       if (imageFiles.length > 0) {
         await onAttachments?.(imageFiles, value);
       } else if (value) {
-        await onSend(value);
+        await onSend(value, replyTo?.id);
       }
 
       // Send other files individually.
@@ -342,6 +344,30 @@ export default function MessageInput({
         )}
 
         <div className="flex flex-col gap-2">
+          {replyTo && !editingMessage && (
+            <div className="flex items-center justify-between rounded-lg border-l-4 border-chart-4 bg-chart-4/5 px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-chart-4">
+                  Replying to{" "}
+                  {replyTo.sender_profile?.full_name ||
+                    replyTo.sender_profile?.username ||
+                    "Unknown user"}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {replyTo.content || "Attachment"}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={onCancelReply}
+                className="ml-3 shrink-0 rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                aria-label="Cancel reply"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          )}
           {/* Editing message indicator */}
           {editingMessage && (
             <div className="flex items-center justify-between rounded-lg border-l-4 border-chart-4 bg-chart-4/5 px-3 py-2">
@@ -371,11 +397,9 @@ export default function MessageInput({
           )}
 
           {/* <AttachmentPreviewList files={selectedFiles} onRemove={removeFile} /> */}
-
           <AttachmentPreviewList files={selectedFiles} onRemove={removeFile} />
 
           {/* Quick Message Suggestions */}
-
           <textarea
             ref={textareaRef}
             value={message}
