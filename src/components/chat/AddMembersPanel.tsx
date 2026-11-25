@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useAddGroupMembers } from "@/src/hooks";
 import { AddMembersPanelProps } from "@/src/types";
 import { ArrowLeft, Search, Users } from "lucide-react";
+import { getAvatarUrl } from "@/src/utils";
 
 export default function AddMembersPanel({
   users,
@@ -133,7 +134,7 @@ export default function AddMembersPanel({
                   <img
                     src={
                       user.avatar_url ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=8b34d7&color=fff`
+                      getAvatarUrl(user.username, user.avatar_url)
                     }
                     alt={name}
                     className="size-9 shrink-0 rounded-full object-cover"

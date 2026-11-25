@@ -1,3 +1,5 @@
+ALTER TABLE public.messages
+ADD COLUMN IF NOT EXISTS is_deleted_for_everyone boolean NOT NULL DEFAULT false;
 
 CREATE OR REPLACE FUNCTION public.get_user_conversations()
 RETURNS TABLE (

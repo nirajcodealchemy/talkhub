@@ -18,7 +18,8 @@ const ConfirmationModal = ({
 }: ConfirmationModalData) => {
   const [mounted, setMounted] = useState(false);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
-  const t = useTranslations("screen.chat.CreateGroupModal");
+
+  const t = useTranslations("common");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -60,7 +61,7 @@ const ConfirmationModal = ({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            aria-label={t("closeModal")}
+            aria-label={t("close")}
             className="cursor-pointer bg-background text-foreground hover:bg-background disabled:opacity-50"
           >
             <X size={20} />

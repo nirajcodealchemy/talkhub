@@ -1,3 +1,4 @@
+import { createClient } from "@/src/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 type AIMessage = {
@@ -13,6 +14,21 @@ type RequestBody = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify Supabase authentication
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized. Please login first." },
+        { status: 401 },
+      );
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {

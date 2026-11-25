@@ -26,6 +26,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { GroupInfoPanelProps, Tab } from "@/src/types/group";
+import { getAvatarUrl } from "@/src/utils";
 
 export default function GroupInfoPanel({
   conversation,
@@ -271,7 +272,7 @@ export default function GroupInfoPanel({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close group information"
+          aria-label={t("closeGroupInfo")}
           className="rounded-full p-2 cursor-pointer text-muted-foreground hover:bg-accent"
         >
           <X className="size-5" />
@@ -286,9 +287,7 @@ export default function GroupInfoPanel({
             src={
               avatarPreview ||
               savedAvatarUrl ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                conversation.name || "Group",
-              )}&background=8b34d7&color=fff`
+              getAvatarUrl(conversation.name, null)
             }
             alt={conversation.name}
             className="size-20 rounded-full object-cover"
@@ -302,7 +301,7 @@ export default function GroupInfoPanel({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              aria-label="Change group avatar"
+              aria-label={t("changeGroupAvatar")}
               className="absolute cursor-pointer -bottom-1 right-0 flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-4 ring-background transition-colors hover:bg-primary/90"
             >
               <Camera className="size-4" />
@@ -448,12 +447,7 @@ export default function GroupInfoPanel({
                     className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-accent"
                   >
                     <img
-                      src={
-                        member.avatar_url ||
-                        `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                          name,
-                        )}&background=8b34d7&color=fff`
-                      }
+                      src={getAvatarUrl(name, member.avatar_url)}
                       alt={name}
                       className="size-9 shrink-0 rounded-full object-cover"
                     />
@@ -582,10 +576,7 @@ export default function GroupInfoPanel({
                   className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-accent"
                 >
                   <img
-                    src={
-                      member.avatar_url ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=8b34d7&color=fff`
-                    }
+                    src={getAvatarUrl(name, member.avatar_url)}
                     alt={name}
                     className="size-9 shrink-0 rounded-full object-cover"
                   />

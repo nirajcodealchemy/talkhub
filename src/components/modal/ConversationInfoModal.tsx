@@ -44,7 +44,7 @@ export default function ConversationInfoModal({
   const avatar = getAvatarUrl(name, userId?.other_user_avatar);
   return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-99999 flex items-center justify-center bg-black/40 p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -55,7 +55,7 @@ export default function ConversationInfoModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="contact-info-title"
-        className="relative z-[100000] w-full max-w-sm overflow-hidden rounded-2xl bg-background shadow-xl"
+        className="relative z-100000 w-full max-w-sm overflow-hidden rounded-2xl bg-background shadow-xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -98,7 +98,7 @@ export default function ConversationInfoModal({
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">{t("fullName")}</p>
                 <p className="truncate text-sm font-medium text-foreground">
-                  {userId?.name || "Not provided"}
+                  {userId?.name || t("notProvided")}
                 </p>
               </div>
             </div>

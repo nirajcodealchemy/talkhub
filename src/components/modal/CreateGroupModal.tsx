@@ -310,7 +310,7 @@ export default function CreateGroupModal({
               }
               className="h-full flex-1 cursor-pointer bg-chart-4 text-white hover:bg-chart-5 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {createGroup.isPending ? "Creating..." : t("createGroup")}
+              {createGroup.isPending ? t("creating") : t("createGroup")}
             </Button>
           </div>
         </div>

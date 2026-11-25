@@ -243,5 +243,9 @@
       "suggestReply": "Suggest a reply",
       "communicationSummary": "Communication summary"
     }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close"
   }
 }

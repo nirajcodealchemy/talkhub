@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useTranslations } from "next-intl";
@@ -213,7 +214,7 @@ export default function MessageImageGallery({
       {isImageGroup ? (
         <>
           <div
-            className={`grid max-w-[340px] gap-1 overflow-hidden rounded-xl ${
+            className={`grid max-w-85 gap-1 overflow-hidden rounded-xl ${
               images.length === 2
                 ? "aspect-[4/3] grid-cols-2"
                 : images.length === 3
@@ -310,7 +311,7 @@ export default function MessageImageGallery({
               src={message.attachment_url!}
               alt={message.attachment_name || t("sharedAttachment")}
               loading="lazy"
-              className={`max-h-[320px] w-full rounded-lg object-contain transition-all duration-300 ${
+              className={`max-h-80 w-full rounded-lg object-contain transition-all duration-300 ${
                 !isMine && !downloadedImageIds.has(message.id)
                   ? "scale-105 blur-md"
                   : ""
@@ -331,7 +332,7 @@ export default function MessageImageGallery({
 
       {activeImageIndex !== null && (
         <div
-          className="fixed inset-0 z-[120] flex flex-col bg-black/95 p-3 text-white sm:p-5"
+          className="fixed inset-0 z-120 flex flex-col bg-black/95 p-3 text-white sm:p-5"
           role="dialog"
           aria-modal="true"
           aria-label={t2("imageGallery")}
