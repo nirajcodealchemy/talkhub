@@ -4,8 +4,10 @@ import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/src/types/chat";
+import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
 import {
   Copy,
+  Plus,
   Reply,
   Pencil,
   Trash2,
@@ -23,6 +25,8 @@ type Props = {
   onReply?: () => void;
   isImageGroup: boolean;
   onForward?: () => void;
+  quickReactions: string[];
+  onReact: (emoji: string) => void;
   onDownloadGroup: () => Promise<void>;
 };
 
@@ -34,15 +38,27 @@ export default function MessageContextMenu({
   onDelete,
   onForward,
   isImageGroup,
+  quickReactions,
   onDownloadGroup,
+  onReact,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isReactionOpen, setIsReactionOpen] = useState(false);
+  const [isAllEmojiOpen, setIsAllEmojiOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [emojiPickerPosition, setEmojiPickerPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 350,
+    height: 350,
+  });
 
-  const triggerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const reactionPickerRef = useRef<HTMLDivElement>(null);
+  const allEmojiPickerRef = useRef<HTMLDivElement>(null);
 
   const isDeleted = message.is_deleted_for_everyone || message.deleted_for_me;
 
@@ -50,16 +66,20 @@ export default function MessageContextMenu({
   // const t2 = useTranslations("screen.chat.ConversationInfoModal");
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen && !isReactionOpen && !isAllEmojiOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
 
       if (
         !triggerRef.current?.contains(target) &&
-        !menuRef.current?.contains(target)
+        !menuRef.current?.contains(target) &&
+        !reactionPickerRef.current?.contains(target) &&
+        !allEmojiPickerRef.current?.contains(target)
       ) {
         setIsOpen(false);
+        setIsReactionOpen(false);
+        setIsAllEmojiOpen(false);
       }
     };
 
@@ -74,7 +94,46 @@ export default function MessageContextMenu({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, isReactionOpen, isAllEmojiOpen]);
+
+  useEffect(() => {
+    if (!isAllEmojiOpen) return;
+
+    const updateEmojiPickerPosition = () => {
+      const reactionBounds = reactionPickerRef.current?.getBoundingClientRect();
+
+      if (!reactionBounds) return;
+
+      const margin = 8;
+      const gap = 8;
+
+      const width = Math.min(350, window.innerWidth - margin * 2);
+      const height = Math.min(350, window.innerHeight - margin * 2);
+
+      const left = Math.max(
+        margin,
+        Math.min(reactionBounds.left, window.innerWidth - width - margin),
+      );
+
+      const belowTop = reactionBounds.bottom + gap;
+      const top =
+        belowTop + height <= window.innerHeight - margin
+          ? belowTop
+          : Math.max(margin, reactionBounds.top - height - gap);
+
+      setEmojiPickerPosition({ top, left, width, height });
+    };
+
+    updateEmojiPickerPosition();
+
+    window.addEventListener("resize", updateEmojiPickerPosition);
+    window.addEventListener("scroll", updateEmojiPickerPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateEmojiPickerPosition);
+      window.removeEventListener("scroll", updateEmojiPickerPosition, true);
+    };
+  }, [isAllEmojiOpen]);
 
   const handleToggle = () => {
     if (isOpen) {
@@ -103,7 +162,7 @@ export default function MessageContextMenu({
   };
 
   const handleCopy = async () => {
-    const content = message.content ?? "";
+    const content = message.content || message.attachment_url || "";
     if (!content) return;
 
     try {
@@ -143,6 +202,10 @@ export default function MessageContextMenu({
     }
   };
 
+  const handleOpenAllEmojis = () => {
+    setIsAllEmojiOpen((open) => !open);
+  };
+
   if (
     isDeleted ||
     !["text", "image", "file"].includes(message.message_type ?? "")
@@ -164,7 +227,7 @@ export default function MessageContextMenu({
       <div
         ref={triggerRef}
         className={`absolute top-1/2 z-1 flex -translate-y-1/2 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 ${
-          isMine ? "-left-[76px]" : "-right-[76px]"
+          isMine ? "-left-[112px]" : "-right-[112px]"
         }`}
       >
         <button
@@ -178,25 +241,97 @@ export default function MessageContextMenu({
           <MoreVertical size={17} />
         </button>
 
-        {message.message_type === "text" && message.content && (
-          <button
-            type="button"
-            title={t("copyMessage")}
-            aria-label={t("copyMessage")}
-            onClick={() => void handleCopy()}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground"
+        <button
+          type="button"
+          title={t("copyMessage")}
+          aria-label={t("copyMessage")}
+          disabled={!message.content && !message.attachment_url}
+          onClick={() => void handleCopy()}
+          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Copy size={15} />
+        </button>
+
+        <button
+          type="button"
+          aria-label="Add reaction"
+          aria-expanded={isReactionOpen}
+          onClick={() => {
+            setIsReactionOpen((open) => !open);
+            setIsAllEmojiOpen(false);
+          }}
+          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground"
+        >
+          <Plus size={17} />
+        </button>
+
+        {isReactionOpen && (
+          <div
+            ref={reactionPickerRef}
+            className={`absolute bottom-full z-10000 mb-2 flex items-center gap-1 rounded-full border border-border bg-popover p-1.5 shadow-lg ${
+              isMine ? "left-0" : "right-0"
+            }`}
           >
-            <Copy size={15} />
-          </button>
+            {quickReactions.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                aria-label={`React with ${emoji}`}
+                onClick={() => {
+                  onReact(emoji);
+                  setIsReactionOpen(false);
+                }}
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-xl transition hover:scale-125 hover:bg-accent"
+              >
+                {emoji}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-label="Choose another emoji"
+              onClick={handleOpenAllEmojis}
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            >
+              <Plus size={19} />
+            </button>
+          </div>
         )}
       </div>
+
+      {isAllEmojiOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={allEmojiPickerRef}
+            style={{
+              position: "fixed",
+              top: emojiPickerPosition.top,
+              left: emojiPickerPosition.left,
+              width: emojiPickerPosition.width,
+              height: emojiPickerPosition.height,
+            }}
+            className="z-10001 overflow-hidden rounded-lg shadow-xl"
+          >
+            <EmojiPicker
+              width="100%"
+              height="100%"
+              onEmojiClick={(emojiData: EmojiClickData) => {
+                onReact(emojiData.emoji);
+                setIsReactionOpen(false);
+                setIsAllEmojiOpen(false);
+              }}
+              previewConfig={{ showPreview: false }}
+            />
+          </div>,
+          document.body,
+        )}
 
       {isOpen &&
         typeof document !== "undefined" &&
         createPortal(
           <>
             <div
-              className="fixed inset-0 z-[9998]"
+              className="fixed inset-0 z-9998"
               onClick={() => setIsOpen(false)}
             />
 
@@ -204,7 +339,7 @@ export default function MessageContextMenu({
               ref={menuRef}
               onClick={(event) => event.stopPropagation()}
               style={{ top: position.top, left: position.left }}
-              className="fixed z-[9999] w-44 overflow-hidden rounded-lg border border-border bg-popover p-1 shadow-xl"
+              className="fixed z-9999 w-44 overflow-hidden rounded-lg border border-border bg-popover p-1 shadow-xl"
             >
               {!isMine && isImageGroup && (
                 <button

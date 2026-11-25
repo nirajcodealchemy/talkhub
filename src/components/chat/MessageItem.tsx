@@ -2,7 +2,7 @@
 
 import JSZip from "jszip";
 import { useState } from "react";
-import { ChatMessage, MessageItemProps } from "@/src/types";
+import { MessageItemProps } from "@/src/types";
 import { useDeleteMessage } from "@/src/hooks";
 import { Ban, Check, CheckCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -13,6 +13,11 @@ import {
   MessageTextContent,
   DeleteMessageModal,
 } from "./message";
+import {
+  useMyTopReactions,
+  useMessageReactions,
+  useSaveMessageReaction,
+} from "@/src/hooks/useMessageReaction";
 
 export default function MessageItem({
   message,
@@ -24,23 +29,24 @@ export default function MessageItem({
   onForward,
 }: MessageItemProps) {
   const locale = useLocale();
-
   const [deleteError, setDeleteError] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
-  const [messageToForward, setMessageToForward] = useState<ChatMessage | null>(
-    null,
-  );
+  const [showAllGroupReactions, setShowAllGroupReactions] = useState(false);
 
   const { mutateAsync: deleteMessage, isPending: isDeleting } =
     useDeleteMessage();
+  const { mutate: saveReaction } = useSaveMessageReaction();
+
+  const { data: quickReactions = ["👍", "❤️", "😂", "😮", "🙏"] } =
+    useMyTopReactions();
+  const { data: reactionCounts = {} } = useMessageReactions(message.id);
 
   const time = new Date(message.created_at).toLocaleTimeString(locale, {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   });
-
+  const repliedMessage = message.reply_to_message;
   const t = useTranslations("screen.chat.MessageItem");
   const isRead = !!message.read_at || message.status === "read";
 
@@ -53,6 +59,13 @@ export default function MessageItem({
     groupMessages.length > 1;
 
   const isDeleted = message.is_deleted_for_everyone || message.deleted_for_me;
+
+  const handleReaction = (emoji: string) => {
+    saveReaction({
+      messageId: message.id,
+      emoji,
+    });
+  };
 
   const handleEdit = () => {
     if (!isMine || message.message_type !== "text") return;
@@ -168,9 +181,11 @@ export default function MessageItem({
           onEdit={handleEdit}
           isImageGroup={isImageGroup}
           onDelete={handleOpenDeleteModal}
-          onDownloadGroup={handleDownloadImageGroupAsZip}
           onReply={() => onReply(message)}
           onForward={() => onForward(message)}
+          onDownloadGroup={handleDownloadImageGroupAsZip}
+          quickReactions={quickReactions}
+          onReact={handleReaction}
         />
 
         {/* Message bubble */}
@@ -209,36 +224,54 @@ export default function MessageItem({
           ) : (
             <>
               {message.reply_to_message && (
-                <div
-                  className={`mb-2 rounded-md border-l-4 px-3 py-2 ${
+                <button
+                  type="button"
+                  onClick={() => {
+                    document
+                      .getElementById(`message-${message.reply_to_message!.id}`)
+                      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }}
+                  className={`mb-2 flex w-full items-center gap-2 overflow-hidden rounded-md border-l-4 px-3 py-2 text-left ${
                     isMine
                       ? "border-white/70 bg-chart-0"
                       : "border-chart-4 bg-background/70"
                   }`}
                 >
-                  <p
-                    className={`truncate text-xs font-semibold ${
-                      isMine ? "text-white" : "text-chart-4"
-                    }`}
-                  >
-                    {message.reply_to_message.sender_profile?.full_name ||
-                      message.reply_to_message.sender_profile?.username ||
-                      "Unknown user"}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={`truncate text-xs font-semibold ${
+                        isMine ? "text-white" : "text-chart-4"
+                      }`}
+                    >
+                      {message.reply_to_message.sender_profile?.full_name ||
+                        message.reply_to_message.sender_profile?.username ||
+                        "Unknown user"}
+                    </p>
 
-                  <p
-                    className={`line-clamp-2 whitespace-pre-wrap break-words text-xs ${
-                      isMine ? "text-white/80" : "text-muted-foreground"
-                    }`}
-                  >
-                    {message.reply_to_message.is_deleted_for_everyone
-                      ? "This message was deleted"
-                      : message.reply_to_message.content ||
-                        (message.reply_to_message.message_type === "image"
-                          ? "Photo"
-                          : "Attachment")}
-                  </p>
-                </div>
+                    <p
+                      className={`truncate text-xs ${
+                        isMine ? "text-white/80" : "text-muted-foreground"
+                      }`}
+                    >
+                      {message.reply_to_message.message_type === "image"
+                        ? "Photo"
+                        : message.reply_to_message.content || "Attachment"}
+                    </p>
+                  </div>
+
+                  {message.reply_to_message.message_type === "image" && (
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded">
+                      {repliedMessage?.message_type === "image" &&
+                        repliedMessage.attachment_url && (
+                          <img
+                            src={repliedMessage.attachment_url}
+                            alt="Replied image"
+                            className="h-12 w-12 shrink-0 rounded object-cover"
+                          />
+                        )}
+                    </div>
+                  )}
+                </button>
               )}
               {message.forwarded_from_id && (
                 <p className="mb-1 text-xs italic opacity-70">Forwarded</p>
@@ -303,16 +336,39 @@ export default function MessageItem({
         </div>
 
         {/* Reactions */}
-        {message.reactions && message.reactions.length > 0 && (
+        {Object.keys(reactionCounts).length > 0 && (
           <div className="mt-1 flex items-center gap-1">
-            {message.reactions.map((reaction, index) => (
-              <span
-                key={`${message.id}-${index}`}
-                className="rounded-full border border-border bg-background px-2 py-0.5 text-xs shadow-sm"
+            {Object.entries(reactionCounts)
+              .slice(
+                0,
+                isGroup && !showAllGroupReactions
+                  ? 3
+                  : undefined,
+              )
+              .map(([emoji, count]) => (
+              <button
+                key={`${message.id}-${emoji}`}
+                type="button"
+                aria-label={`${count} reactions with ${emoji}`}
+                onClick={() => handleReaction(emoji)}
+                className="flex cursor-pointer items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs shadow-sm transition hover:bg-accent"
               >
-                {reaction}
-              </span>
-            ))}
+                <span>{emoji}</span>
+                {count > 1 && <span>{count}</span>}
+              </button>
+              ))}
+            {isGroup &&
+              !showAllGroupReactions &&
+              Object.keys(reactionCounts).length > 3 && (
+                <button
+                  type="button"
+                  aria-label={`Show ${Object.keys(reactionCounts).length - 3} more reactions`}
+                  onClick={() => setShowAllGroupReactions(true)}
+                  className="flex cursor-pointer items-center rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground shadow-sm transition hover:bg-accent"
+                >
+                  +{Object.keys(reactionCounts).length - 3}
+                </button>
+              )}
           </div>
         )}
 

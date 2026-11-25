@@ -159,14 +159,36 @@ export function useMessages(conversationId: string) {
         (replySenderProfiles ?? []).map((profile) => [profile.id, profile]),
       );
 
-      const replyMessageMap = new Map(
-        (repliedMessages ?? []).map((message) => [
-          message.id,
-          {
+      const replyMessagesWithUrls = await Promise.all(
+        (repliedMessages ?? []).map(async (message) => {
+          let attachmentUrl: string | null = null;
+
+          if (
+            message.attachment_path &&
+            !message.is_deleted_for_everyone &&
+            !hiddenIds.has(message.id)
+          ) {
+            const { data: signedData, error: signedError } = await supabase.storage
+              .from("chat-attachments")
+              .createSignedUrl(message.attachment_path, 3600);
+
+            if (signedError) {
+              console.error("Replied attachment signed URL error:", signedError);
+            }
+
+            attachmentUrl = signedData?.signedUrl ?? null;
+          }
+
+          return {
             ...message,
+            attachment_url: attachmentUrl,
             sender_profile: replySenderMap.get(message.sender_id) ?? null,
-          },
-        ]),
+          };
+        }),
+      );
+
+      const replyMessageMap = new Map(
+        replyMessagesWithUrls.map((message) => [message.id, message]),
       );
 
       return Promise.all(
@@ -893,9 +915,9 @@ export function useForwardMessage() {
         throw new Error("You must be logged in to forward messages.");
       }
 
-      if (originalMessage.message_type !== "text") {
-        throw new Error("Only text messages can be forwarded right now.");
-      }
+      // if (originalMessage.message_type !== "text") {
+      //   throw new Error("Only text messages can be forwarded right now.");
+      // }
 
       const { data, error } = await supabase
         .from("messages")
@@ -903,8 +925,12 @@ export function useForwardMessage() {
           conversation_id: targetConversationId,
           sender_id: user.id,
           content: originalMessage.content,
-          message_type: "text",
+          message_type: originalMessage.message_type ?? "text",
           forwarded_from_id: originalMessage.id,
+          attachment_path: originalMessage.attachment_path,
+          attachment_name: originalMessage.attachment_name,
+          attachment_type: originalMessage.attachment_type,
+          attachment_size: originalMessage.attachment_size,
         })
         .select()
         .single();

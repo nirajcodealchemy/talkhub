@@ -202,7 +202,10 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
   // SEND TEXT MESSAGE
 
   // SEND TEXT MESSAGE
-  async function handleSendFromInput(content: string, replyToId?: string) {
+  async function handleSendFromInput(
+    content: string,
+    replyToId?: string | null,
+  ) {
     if (!selectedId || !content.trim()) return;
 
     try {
@@ -218,8 +221,6 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
       console.error("Message sending failed:", error);
     }
   }
-
-  // SEND IMAGE / FILE ATTACHMENT
 
   // Send one non-image attachment.
   async function handleAttachment(file: File) {

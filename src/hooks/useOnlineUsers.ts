@@ -9,6 +9,7 @@ export function useOnlineUsers(userId: string) {
 
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOnlineUserIds(new Set());
       return;
     }

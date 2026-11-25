@@ -178,9 +178,9 @@ export type MessageInputProps = {
   onSuggestionApplied?: () => void;
   editingMessage: ChatMessage | null;
   onEditSubmit: (content: string) => Promise<void>;
-  onSend: (message: string) => void | Promise<void>;
   onAttachment?: (file: File) => void | Promise<void>;
   onAttachments?: (files: File[], caption?: string) => void;
+  onSend: (content: string, replyToId?: string | null) => void | Promise<void>;
 };
 
 export type MessageItemProps = {
