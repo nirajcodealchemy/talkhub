@@ -27,12 +27,7 @@ export function useDeleteMessage() {
       if (authError || !user) {
         throw new Error("You must be logged in.");
       }
-      console.log("Delete message details:", {
-        messageId,
-        conversationId,
-        deleteForEveryone,
-        loggedInUserId: user.id,
-      });
+
       if (deleteForEveryone) {
         // Only the original sender can delete for everyone.
         const { data, error } = await supabase

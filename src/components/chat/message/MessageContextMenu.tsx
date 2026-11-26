@@ -208,7 +208,7 @@ export default function MessageContextMenu({
 
   if (
     isDeleted ||
-    !["text", "image", "file"].includes(message.message_type ?? "")
+    !["text", "image", "file", "sticker"].includes(message.message_type ?? "")
   ) {
     return null;
   }
@@ -241,16 +241,33 @@ export default function MessageContextMenu({
           <MoreVertical size={17} />
         </button>
 
-        <button
-          type="button"
-          title={t("copyMessage")}
-          aria-label={t("copyMessage")}
-          disabled={!message.content && !message.attachment_url}
-          onClick={() => void handleCopy()}
-          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Copy size={15} />
-        </button>
+        {/* {message.message_type === "file" || "sticker" || "image" ? (
+          ""
+        ) : (
+          <button
+            type="button"
+            title={t("copyMessage")}
+            aria-label={t("copyMessage")}
+            disabled={!message.content && !message.attachment_url}
+            onClick={() => void handleCopy()}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Copy size={15} />
+          </button>
+        )} */}
+        {message.message_type !== "image" &&
+          message.message_type !== "sticker" && (
+            <button
+              type="button"
+              title={t("copyMessage")}
+              aria-label={t("copyMessage")}
+              disabled={!message.content && !message.attachment_url}
+              onClick={() => void handleCopy()}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Copy size={15} />
+            </button>
+          )}
 
         <button
           type="button"

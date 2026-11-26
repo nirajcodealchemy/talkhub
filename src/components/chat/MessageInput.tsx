@@ -223,21 +223,6 @@ export default function MessageInput({
         (file) => !file.type.startsWith("image/"),
       );
 
-      // if (selectedSticker) {
-      //   await onSend(selectedSticker, replyTo?.id, "sticker");
-      // }
-
-      // // Send all images as one group.
-      // if (imageFiles.length > 0) {
-      //   await onAttachments?.(imageFiles, value);
-      // } else if (value) {
-      //   await onSend(value, replyTo?.id);
-      // }
-
-      // // Send other files individually.
-      // for (const file of otherFiles) {
-      //   await onAttachment?.(file);
-      // }
       if (selectedSticker) {
         // Send sticker and caption as one message.
         await onSend(value, replyTo?.id, "sticker", selectedSticker);

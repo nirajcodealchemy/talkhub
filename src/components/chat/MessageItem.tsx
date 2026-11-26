@@ -175,20 +175,20 @@ export default function MessageItem({
     >
       <div className="relative w-fit min-w-30 max-w-[75%]">
         {/* Message context menu */}
-        {message.message_type !== "sticker" && (
-          <MessageContextMenu
-            isMine={isMine}
-            message={message}
-            onEdit={handleEdit}
-            onReact={handleReaction}
-            isImageGroup={isImageGroup}
-            quickReactions={quickReactions}
-            onReply={() => onReply(message)}
-            onDelete={handleOpenDeleteModal}
-            onForward={() => onForward(message)}
-            onDownloadGroup={handleDownloadImageGroupAsZip}
-          />
-        )}
+        {/* {message.message_type !== "sticker" && ( */}
+        <MessageContextMenu
+          isMine={isMine}
+          message={message}
+          onEdit={handleEdit}
+          onReact={handleReaction}
+          isImageGroup={isImageGroup}
+          quickReactions={quickReactions}
+          onReply={() => onReply(message)}
+          onDelete={handleOpenDeleteModal}
+          onForward={() => onForward(message)}
+          onDownloadGroup={handleDownloadImageGroupAsZip}
+        />
+        {/* )} */}
 
         {/* Message bubble */}
         {isGroup && !isMine && (
@@ -300,7 +300,8 @@ export default function MessageItem({
                 )}
               {message.message_type === "sticker" &&
                 message.content &&
-                message.content !== (message.sticker_url || message.content) && (
+                message.content !==
+                  (message.sticker_url || message.content) && (
                   <MessageTextContent message={message} isMine={isMine} />
                 )}
 

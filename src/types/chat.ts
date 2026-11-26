@@ -233,7 +233,14 @@ export type UserListItemProps = {
   lastMessageDeliveredAt?: string | null;
   isDeletedForEveryone: boolean | undefined;
   isDeletedForMe: boolean | undefined;
-  lastMessageType?: "text" | "image" | "file" | "video" | "audio" | null;
+  lastMessageType?:
+    | "text"
+    | "image"
+    | "file"
+    | "video"
+    | "audio"
+    | "sticker"
+    | null;
 };
 
 export type ChatUser = {
