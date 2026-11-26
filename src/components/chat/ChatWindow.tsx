@@ -380,7 +380,6 @@ export default function ChatWindow({
         <MessageInput
           onSend={onSend}
           replyTo={replyTo}
-          onCancelReply={() => onReply(null)}
           isEditing={isEditing}
           onTyping={notifyTyping}
           onStopTyping={stopTyping}
@@ -391,6 +390,7 @@ export default function ChatWindow({
           onEditSubmit={handleEditSubmit}
           suggestedReply={suggestedReply}
           conversationId={conversation.id}
+          onCancelReply={() => onReply(null)}
           onSuggestionApplied={handleSuggestionApplied}
           isBanned={
             !!conversation.is_group &&

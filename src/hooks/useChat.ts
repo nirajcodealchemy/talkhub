@@ -168,12 +168,16 @@ export function useMessages(conversationId: string) {
             !message.is_deleted_for_everyone &&
             !hiddenIds.has(message.id)
           ) {
-            const { data: signedData, error: signedError } = await supabase.storage
-              .from("chat-attachments")
-              .createSignedUrl(message.attachment_path, 3600);
+            const { data: signedData, error: signedError } =
+              await supabase.storage
+                .from("chat-attachments")
+                .createSignedUrl(message.attachment_path, 3600);
 
             if (signedError) {
-              console.error("Replied attachment signed URL error:", signedError);
+              console.error(
+                "Replied attachment signed URL error:",
+                signedError,
+              );
             }
 
             attachmentUrl = signedData?.signedUrl ?? null;
@@ -271,8 +275,9 @@ export function useSendMessage() {
     mutationFn: async (message: {
       conversationId: string;
       content: string;
-      messageType?: "text" | "image" | "file";
+      messageType?: "text" | "image" | "file" | "sticker";
       replyToId?: string | null;
+      stickerUrl?: string | null;
     }) => {
       const {
         data: { user },
@@ -291,6 +296,7 @@ export function useSendMessage() {
           content: message.content,
           message_type: message.messageType || "text",
           reply_to_id: message.replyToId ?? null,
+          sticker_url: message.stickerUrl ?? null,
         })
         .select()
         .single();
@@ -321,6 +327,7 @@ export function useSendMessage() {
         attachment_url: null,
         attachment_path: null,
         attachment_name: null,
+        sticker_url: variables.stickerUrl ?? null,
         sender_id: user?.id ?? "",
         content: variables.content,
         created_at: new Date().toISOString(),

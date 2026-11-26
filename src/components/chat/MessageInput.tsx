@@ -14,6 +14,7 @@ import {
 } from "@/src/constant/attachmentFile";
 import { useMessages } from "@/src/hooks";
 import { MESSAGE_SUGGESTIONS } from "@/src/constant/messageSuggestions";
+import GiphyStickerPicker from "./message-input/GiphyStickerPicker";
 
 export default function MessageInput({
   onSend,
@@ -36,7 +37,12 @@ export default function MessageInput({
   const [isDragging, setIsDragging] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isStickerPickerOpen, setIsStickerPickerOpen] = useState(false);
   const [suggestionsDismissed, setSuggestionsDismissed] = useState(false);
+  const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
+  const [selectedStickerUrl, setSelectedStickerUrl] = useState<string | null>(
+    null,
+  );
 
   const dragCounter = useRef(0);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -68,7 +74,9 @@ export default function MessageInput({
   useEffect(() => {
     setMessage("");
     setSelectedFiles([]);
+    setSelectedSticker(null);
     setAttachmentOpen(false);
+    setIsStickerPickerOpen(false);
 
     setIsDragging(false);
 
@@ -186,6 +194,7 @@ export default function MessageInput({
         await onEditSubmit(value);
         setMessage("");
         setSelectedFiles([]);
+        setSelectedSticker(null);
 
         if (textareaRef.current) {
           textareaRef.current.style.height = "24px";
@@ -200,7 +209,8 @@ export default function MessageInput({
     }
     onStopTyping?.();
 
-    if (isSending || (!value && selectedFiles.length === 0)) return;
+    if (isSending || (!value && selectedFiles.length === 0 && !selectedSticker))
+      return;
 
     setIsSending(true);
 
@@ -213,22 +223,42 @@ export default function MessageInput({
         (file) => !file.type.startsWith("image/"),
       );
 
-      // Send all images as one group.
-      if (imageFiles.length > 0) {
-        await onAttachments?.(imageFiles, value);
-      } else if (value) {
-        await onSend(value, replyTo?.id);
-      }
+      // if (selectedSticker) {
+      //   await onSend(selectedSticker, replyTo?.id, "sticker");
+      // }
 
-      // Send other files individually.
-      for (const file of otherFiles) {
-        await onAttachment?.(file);
+      // // Send all images as one group.
+      // if (imageFiles.length > 0) {
+      //   await onAttachments?.(imageFiles, value);
+      // } else if (value) {
+      //   await onSend(value, replyTo?.id);
+      // }
+
+      // // Send other files individually.
+      // for (const file of otherFiles) {
+      //   await onAttachment?.(file);
+      // }
+      if (selectedSticker) {
+        // Send sticker and caption as one message.
+        await onSend(value, replyTo?.id, "sticker", selectedSticker);
+      } else {
+        // Keep existing image and file behavior when no sticker is selected.
+        if (imageFiles.length > 0) {
+          await onAttachments?.(imageFiles, value);
+        } else if (value) {
+          await onSend(value, replyTo?.id);
+        }
+
+        for (const file of otherFiles) {
+          await onAttachment?.(file);
+        }
       }
       // Hide suggestions after the first successful send
       setSuggestionsDismissed(true);
 
       setMessage("");
       setSelectedFiles([]);
+      setSelectedSticker(null);
 
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
@@ -238,6 +268,12 @@ export default function MessageInput({
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleStickerSelect = (stickerUrl: string) => {
+    if (!stickerUrl) return;
+    setSelectedSticker(stickerUrl);
+    textareaRef.current?.focus();
   };
 
   const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
@@ -274,7 +310,8 @@ export default function MessageInput({
     }
   };
 
-  const canSend = !!message.trim() || selectedFiles.length > 0;
+  const canSend =
+    !!message.trim() || selectedFiles.length > 0 || !!selectedSticker;
 
   if (isBanned) {
     return (
@@ -400,6 +437,23 @@ export default function MessageInput({
           <AttachmentPreviewList files={selectedFiles} onRemove={removeFile} />
 
           {/* Quick Message Suggestions */}
+          {selectedSticker && !editingMessage && (
+            <div className="flex items-center gap-2">
+              <img
+                src={selectedSticker}
+                alt="Sticker preview"
+                className="max-h-20 max-w-20 rounded object-contain"
+              />
+              <button
+                type="button"
+                onClick={() => setSelectedSticker(null)}
+                className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                aria-label="Remove selected sticker"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
           <textarea
             ref={textareaRef}
             value={message}
@@ -517,11 +571,22 @@ export default function MessageInput({
               <button
                 type="button"
                 aria-label={t("sticker")}
-                disabled
-                className="cursor-not-allowed rounded-full p-1 text-grey-400 transition-colors hover:text-grey-600"
+                onClick={() => setIsStickerPickerOpen((open) => !open)}
+                aria-pressed={isStickerPickerOpen}
+                className="rounded-full cursor-pointer p-1 transition-colors hover:text-grey-600"
               >
                 <FileIcon />
               </button>
+              {isStickerPickerOpen && (
+                <div className="absolute bottom-full left-0 z-50 mb-2 w-[min(340px,calc(100vw-24px))] overflow-hidden rounded-xl border bg-background shadow-xl">
+                  <GiphyStickerPicker
+                    onSelect={(stickerUrl) => {
+                      handleStickerSelect(stickerUrl);
+                      setIsStickerPickerOpen(false);
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <button

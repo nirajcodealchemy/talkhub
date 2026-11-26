@@ -37,7 +37,7 @@ export default function MessageItem({
     useDeleteMessage();
   const { mutate: saveReaction } = useSaveMessageReaction();
 
-  const { data: quickReactions = ["👍", "❤️", "😂", "😮", "🙏"] } =
+  const { data: quickReactions = ["👍", "❤️", "😂", "😮", "🙏", "🔥"] } =
     useMyTopReactions();
   const { data: reactionCounts = {} } = useMessageReactions(message.id);
 
@@ -175,18 +175,20 @@ export default function MessageItem({
     >
       <div className="relative w-fit min-w-30 max-w-[75%]">
         {/* Message context menu */}
-        <MessageContextMenu
-          isMine={isMine}
-          message={message}
-          onEdit={handleEdit}
-          isImageGroup={isImageGroup}
-          onDelete={handleOpenDeleteModal}
-          onReply={() => onReply(message)}
-          onForward={() => onForward(message)}
-          onDownloadGroup={handleDownloadImageGroupAsZip}
-          quickReactions={quickReactions}
-          onReact={handleReaction}
-        />
+        {message.message_type !== "sticker" && (
+          <MessageContextMenu
+            isMine={isMine}
+            message={message}
+            onEdit={handleEdit}
+            onReact={handleReaction}
+            isImageGroup={isImageGroup}
+            quickReactions={quickReactions}
+            onReply={() => onReply(message)}
+            onDelete={handleOpenDeleteModal}
+            onForward={() => onForward(message)}
+            onDownloadGroup={handleDownloadImageGroupAsZip}
+          />
+        )}
 
         {/* Message bubble */}
         {isGroup && !isMine && (
@@ -263,6 +265,7 @@ export default function MessageItem({
                     <div className="h-12 w-12 shrink-0 overflow-hidden rounded">
                       {repliedMessage?.message_type === "image" &&
                         repliedMessage.attachment_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={repliedMessage.attachment_url}
                             alt="Replied image"
@@ -284,6 +287,22 @@ export default function MessageItem({
                   groupMessages={groupMessages}
                 />
               )}
+              {message.message_type === "sticker" &&
+                (message.sticker_url || message.content) && (
+                  <div className="max-w-[220px]">
+                    <img
+                      src={message.sticker_url || message.content}
+                      alt="Sticker"
+                      className="block h-auto max-h-[220px] w-auto max-w-full object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+              {message.message_type === "sticker" &&
+                message.content &&
+                message.content !== (message.sticker_url || message.content) && (
+                  <MessageTextContent message={message} isMine={isMine} />
+                )}
 
               {/* File attachment */}
               <MessageAttachment message={message} isMine={isMine} />
@@ -339,23 +358,18 @@ export default function MessageItem({
         {Object.keys(reactionCounts).length > 0 && (
           <div className="mt-1 flex items-center gap-1">
             {Object.entries(reactionCounts)
-              .slice(
-                0,
-                isGroup && !showAllGroupReactions
-                  ? 3
-                  : undefined,
-              )
+              .slice(0, isGroup && !showAllGroupReactions ? 3 : undefined)
               .map(([emoji, count]) => (
-              <button
-                key={`${message.id}-${emoji}`}
-                type="button"
-                aria-label={`${count} reactions with ${emoji}`}
-                onClick={() => handleReaction(emoji)}
-                className="flex cursor-pointer items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs shadow-sm transition hover:bg-accent"
-              >
-                <span>{emoji}</span>
-                {count > 1 && <span>{count}</span>}
-              </button>
+                <button
+                  key={`${message.id}-${emoji}`}
+                  type="button"
+                  aria-label={`${count} reactions with ${emoji}`}
+                  onClick={() => handleReaction(emoji)}
+                  className="flex cursor-pointer items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs shadow-sm transition hover:bg-accent"
+                >
+                  <span>{emoji}</span>
+                  {count > 1 && <span>{count}</span>}
+                </button>
               ))}
             {isGroup &&
               !showAllGroupReactions &&

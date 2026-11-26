@@ -4,6 +4,7 @@ export type MessageType =
   | "video"
   | "audio"
   | "file"
+  | "sticker"
   | undefined;
 
 type GroupEventType =
@@ -36,8 +37,10 @@ export type ChatMessage = {
   attachment_name?: string | null;
   attachment_type?: string | null;
   attachment_size?: number | null;
+  sticker_url?: string | null;
   forwarded_from_id?: string | null;
   is_deleted_for_everyone?: boolean;
+
   reply_to_message?: ChatMessage | null;
   status?: "sent" | "delivered" | "read";
   sender_profile?: MessageSenderProfile | null;
@@ -136,7 +139,12 @@ export type ChatWindowProps = {
   onAttachment?: (file: File) => void;
   // Multiple images as one group
   onAttachments?: (files: File[], caption?: string) => void;
-  onSend: (message: string, replyToId?: string) => void | Promise<void>;
+  onSend: (
+    message: string,
+    replyToId?: string | null,
+    messageType?: "text" | "sticker",
+    stickerUrl?: string | null,
+  ) => void | Promise<void>;
   replyTo: ChatMessage | null;
   onReply: (message: ChatMessage | null) => void;
   onForward: (message: ChatMessage) => void;
@@ -180,7 +188,12 @@ export type MessageInputProps = {
   onEditSubmit: (content: string) => Promise<void>;
   onAttachment?: (file: File) => void | Promise<void>;
   onAttachments?: (files: File[], caption?: string) => void;
-  onSend: (content: string, replyToId?: string | null) => void | Promise<void>;
+  onSend: (
+    content: string,
+    replyToId?: string | null,
+    messageType?: "text" | "sticker",
+    stickerUrl?: string,
+  ) => void | Promise<void>;
 };
 
 export type MessageItemProps = {

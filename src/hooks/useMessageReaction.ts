@@ -67,7 +67,7 @@ export function useMessageReactions(messageId: string) {
   });
 }
 
-const DEFAULT_REACTIONS = ["👍", "❤️", "😂", "😮", "🙏"];
+const DEFAULT_REACTIONS = ["👍", "❤️", "😂", "😮", "🙏", "🔥"];
 
 export function useMyTopReactions() {
   const supabase = createClient();
@@ -78,7 +78,7 @@ export function useMyTopReactions() {
 
       if (error) throw error;
 
-      const topEmojis = (data ?? []).map((row) => row.emoji);
+      const topEmojis = (data ?? []).map((row: { emoji: any }) => row.emoji);
       return [...topEmojis, ...DEFAULT_REACTIONS]
         .filter((emoji, index, all) => all.indexOf(emoji) === index)
         .slice(0, 5);

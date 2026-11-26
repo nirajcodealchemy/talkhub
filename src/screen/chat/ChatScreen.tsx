@@ -200,19 +200,25 @@ export default function ChatScreen({ currentUserId = "" }: ChatScreenProps) {
   }
 
   // SEND TEXT MESSAGE
-
-  // SEND TEXT MESSAGE
   async function handleSendFromInput(
     content: string,
     replyToId?: string | null,
+    messageType: "text" | "sticker" = "text",
+    stickerUrl?: string | null,
   ) {
-    if (!selectedId || !content.trim()) return;
+    if (
+      !selectedId ||
+      (!content.trim() && !(messageType === "sticker" && stickerUrl))
+    ) {
+      return;
+    }
 
     try {
       await sendMessage({
         conversationId: selectedId,
         content: content.trim(),
-        messageType: "text",
+        messageType,
+        stickerUrl,
         replyToId: replyToId ?? null,
       });
 

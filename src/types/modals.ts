@@ -23,3 +23,9 @@ export type AddMembersPanelProps = {
   isUsersLoading: boolean;
   existingMemberIds: string[];
 };
+
+export type GiphyContentType = "stickers" | "gifs";
+
+export type GiphyProps = {
+  onSelect: (url: string) => void;
+};
