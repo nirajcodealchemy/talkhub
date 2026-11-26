@@ -2,11 +2,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { getAvatarUrl } from "@/src/utils";
 import { useTranslations } from "next-intl";
 import { useAddGroupMembers } from "@/src/hooks";
 import { AddMembersPanelProps } from "@/src/types";
 import { ArrowLeft, Search, Users } from "lucide-react";
-import { getAvatarUrl } from "@/src/utils";
 
 export default function AddMembersPanel({
   users,
@@ -176,7 +176,7 @@ export default function AddMembersPanel({
           type="button"
           onClick={handleAddMembers}
           disabled={!selectedIds.length || addMembers.isPending}
-          className="h-10 w-full rounded-lg bg-chart-4 text-sm font-medium text-white transition-colors hover:bg-chart-5 disabled:cursor-not-allowed disabled:opacity-50"
+          className="h-10 w-full cursor-pointer rounded-lg bg-chart-4 text-sm font-medium text-white transition-colors hover:bg-chart-5 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {addMembers.isPending
             ? "Adding Members..."

@@ -2,10 +2,12 @@
 "use client";
 
 import { createClient } from "@/src/lib";
+import { getAvatarUrl } from "@/src/utils";
 import { useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChatConversation } from "@/src/types/chat";
+import { GroupInfoPanelProps, Tab } from "@/src/types/group";
 import {
   useBanGroupMember,
   useUnbanGroupMember,
@@ -25,8 +27,6 @@ import {
   UserPlus,
   MoreVertical,
 } from "lucide-react";
-import { GroupInfoPanelProps, Tab } from "@/src/types/group";
-import { getAvatarUrl } from "@/src/utils";
 
 export default function GroupInfoPanel({
   conversation,
@@ -48,6 +48,7 @@ export default function GroupInfoPanel({
   );
 
   const queryClient = useQueryClient();
+
   const t = useTranslations("screen.chat.GroupInfoPanel");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -263,7 +264,7 @@ export default function GroupInfoPanel({
 "
     >
       {/* Header */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
         <div className="flex items-center gap-2">
           <Users className="size-5 text-foreground" />
           <h2 className="font-semibold text-foreground">{t("groupInfo")}</h2>

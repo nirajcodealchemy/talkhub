@@ -2,15 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Loader2, Trash2 } from "lucide-react";
-
-type Props = {
-  isOpen: boolean;
-  isMine: boolean;
-  isDeleting: boolean;
-  deleteError: string;
-  onClose: () => void;
-  onDelete: (deleteForEveryone: boolean) => void;
-};
+import { DeleteMessageModalProps } from "@/src/types";
 
 export default function DeleteMessageModal({
   isOpen,
@@ -19,7 +11,7 @@ export default function DeleteMessageModal({
   onDelete,
   isDeleting,
   deleteError,
-}: Props) {
+}: DeleteMessageModalProps) {
   const t = useTranslations("screen.chat.DeleteMessageModal");
   if (!isOpen) return null;
   return (

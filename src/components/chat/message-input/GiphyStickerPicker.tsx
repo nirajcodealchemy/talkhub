@@ -1,17 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Grid } from "@giphy/react-components";
 import type { IGif } from "@giphy/js-types";
 import { giphyFetch } from "@/src/lib/giphy";
+import { Grid } from "@giphy/react-components";
+import { GiphyContentType, GiphyProps } from "@/src/types";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-type GiphyContentType = "stickers" | "gifs";
-
-type Props = {
-  onSelect: (url: string) => void;
-};
-
-export default function GiphyStickerPicker({ onSelect }: Props) {
+export default function GiphyStickerPicker({ onSelect }: GiphyProps) {
   const [type, setType] = useState<GiphyContentType>("stickers");
   const [search, setSearch] = useState("");
   const [term, setTerm] = useState("");

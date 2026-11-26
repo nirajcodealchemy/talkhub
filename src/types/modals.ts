@@ -7,8 +7,8 @@ export type ConfirmationType = {
   title: string;
   isOpen: boolean;
   confirm: string;
-  loading?: boolean;
   message?: string;
+  loading?: boolean;
   onClick?: () => void;
   onCancel?: () => void;
   onConfirm?: () => void;
@@ -28,4 +28,13 @@ export type GiphyContentType = "stickers" | "gifs";
 
 export type GiphyProps = {
   onSelect: (url: string) => void;
+};
+
+export type DeleteMessageModalProps = {
+  isOpen: boolean;
+  isMine: boolean;
+  isDeleting: boolean;
+  deleteError: string;
+  onClose: () => void;
+  onDelete: (deleteForEveryone: boolean) => void;
 };

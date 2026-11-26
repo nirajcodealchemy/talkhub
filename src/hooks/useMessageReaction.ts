@@ -19,6 +19,26 @@ export function useSaveMessageReaction() {
       if (userError) throw userError;
       if (!user) throw new Error("You must be logged in to react.");
 
+      const { data: existingReaction, error: existingError } = await supabase
+        .from("message_reactions")
+        .select("emoji")
+        .eq("message_id", messageId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      if (existingReaction?.emoji === emoji) {
+        const { error } = await supabase
+          .from("message_reactions")
+          .delete()
+          .eq("message_id", messageId)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+        return { removed: true };
+      }
+
       const { data, error } = await supabase
         .from("message_reactions")
         .upsert(
@@ -34,7 +54,7 @@ export function useSaveMessageReaction() {
         .single();
 
       if (error) throw error;
-      return data;
+      return { removed: false, reaction: data };
     },
 
     onSuccess: (_data, variables) => {
@@ -52,6 +72,13 @@ export function useMessageReactions(messageId: string) {
     queryKey: ["message-reactions", messageId],
     enabled: !!messageId,
     queryFn: async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) throw userError;
+
       const { data, error } = await supabase
         .from("message_reactions")
         .select("emoji, user_id")
@@ -59,10 +86,18 @@ export function useMessageReactions(messageId: string) {
 
       if (error) throw error;
 
-      return (data ?? []).reduce<Record<string, number>>((counts, row) => {
-        counts[row.emoji] = (counts[row.emoji] ?? 0) + 1;
-        return counts;
+      const rows = data ?? [];
+      const counts = rows.reduce<Record<string, number>>((result, row) => {
+        result[row.emoji] = (result[row.emoji] ?? 0) + 1;
+        return result;
       }, {});
+
+      return {
+        counts,
+        myEmojis: rows
+          .filter((row) => row.user_id === user?.id)
+          .map((row) => row.emoji),
+      };
     },
   });
 }

@@ -39,7 +39,9 @@ export default function MessageItem({
 
   const { data: quickReactions = ["👍", "❤️", "😂", "😮", "🙏", "🔥"] } =
     useMyTopReactions();
-  const { data: reactionCounts = {} } = useMessageReactions(message.id);
+  const { data: reactionData } = useMessageReactions(message.id);
+  const reactionCounts = reactionData?.counts ?? {};
+  const myReactions = reactionData?.myEmojis ?? [];
 
   const time = new Date(message.created_at).toLocaleTimeString(locale, {
     hour: "numeric",
@@ -257,10 +259,13 @@ export default function MessageItem({
                     >
                       {message.reply_to_message.message_type === "image"
                         ? "Photo"
-                        : message.reply_to_message.content || "Attachment"}
+                        : message.reply_to_message.message_type === "sticker"
+                          ? "Sticker"
+                          : message.reply_to_message.content || "Attachment"}
                     </p>
                   </div>
 
+                  {/* Replied image preview */}
                   {message.reply_to_message.message_type === "image" && (
                     <div className="h-12 w-12 shrink-0 overflow-hidden rounded">
                       {repliedMessage?.message_type === "image" &&
@@ -270,6 +275,25 @@ export default function MessageItem({
                             src={repliedMessage.attachment_url}
                             alt="Replied image"
                             className="h-12 w-12 shrink-0 rounded object-cover"
+                          />
+                        )}
+                    </div>
+                  )}
+
+                  {/* Replied sticker preview */}
+                  {message.reply_to_message.message_type === "sticker" && (
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded">
+                      {repliedMessage?.message_type === "sticker" &&
+                        (repliedMessage.sticker_url ||
+                          repliedMessage.content) && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={
+                              repliedMessage.sticker_url ||
+                              repliedMessage.content
+                            }
+                            alt="Replied sticker"
+                            className="h-12 w-12 shrink-0 rounded object-contain"
                           />
                         )}
                     </div>
@@ -365,8 +389,13 @@ export default function MessageItem({
                   key={`${message.id}-${emoji}`}
                   type="button"
                   aria-label={`${count} reactions with ${emoji}`}
+                  aria-pressed={myReactions.includes(emoji)}
                   onClick={() => handleReaction(emoji)}
-                  className="flex cursor-pointer items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs shadow-sm transition hover:bg-accent"
+                  className={`flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-xs shadow-sm transition hover:bg-accent ${
+                    myReactions.includes(emoji)
+                      ? "border-chart-4 bg-chart-4/10 text-chart-4"
+                      : "border-border bg-background"
+                  }`}
                 >
                   <span>{emoji}</span>
                   {count > 1 && <span>{count}</span>}

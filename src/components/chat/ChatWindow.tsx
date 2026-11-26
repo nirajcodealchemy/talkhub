@@ -8,23 +8,16 @@ import GroupInfoPanel from "./GroupInfoPanel";
 import AddMembersPanel from "./AddMembersPanel";
 import { Loader2, Sparkles, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChatMessage, ChatWindowProps } from "@/src/types";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  useEditMessage,
-  useForwardMessage,
-  useTypingIndicator,
-  useUsers,
-} from "@/src/hooks";
-
-type AICacheData = {
-  suggestions: string[];
-  summary: string;
-};
+import { AICacheData, ChatMessage, ChatWindowProps } from "@/src/types";
+import { useUsers, useEditMessage, useTypingIndicator } from "@/src/hooks";
 
 export default function ChatWindow({
   onSend,
   onBack,
+  replyTo,
+  onReply,
+  onForward,
   onLoadOlder,
   conversation,
   onAttachment,
@@ -32,9 +25,6 @@ export default function ChatWindow({
   currentUserId,
   isLoadingOlder,
   hasMoreMessages,
-  replyTo,
-  onReply,
-  onForward,
 }: ChatWindowProps) {
   const queryClient = useQueryClient();
 
@@ -57,12 +47,6 @@ export default function ChatWindow({
     conversation.id,
     currentUserId,
   );
-  const [messageToForward, setMessageToForward] = useState<ChatMessage | null>(
-    null,
-  );
-
-  const { mutateAsync: forwardMessage, isPending: isForwarding } =
-    useForwardMessage();
 
   const aiCache = useRef<Map<string, AICacheData>>(new Map());
 

@@ -1,20 +1,20 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
+import { useMessages } from "@/src/hooks";
 import { useTranslations } from "next-intl";
 import { MessageInputProps } from "@/src/types";
 import { useRef, useState, DragEvent, useEffect } from "react";
 import { FileIcon, MicIcon, PlusIcon, SendIcon } from "../icons";
 import { X, Paperclip, Loader2, ShieldAlert } from "lucide-react";
+import GiphyStickerPicker from "./message-input/GiphyStickerPicker";
+import { MESSAGE_SUGGESTIONS } from "@/src/constant/messageSuggestions";
 import { AttachmentPreviewList, EmojiPickerPopover } from "./message-input";
 import {
   MAX_FILE_SIZE,
   ALLOWED_EXTENSIONS,
   ALLOWED_FILE_TYPES,
 } from "@/src/constant/attachmentFile";
-import { useMessages } from "@/src/hooks";
-import { MESSAGE_SUGGESTIONS } from "@/src/constant/messageSuggestions";
-import GiphyStickerPicker from "./message-input/GiphyStickerPicker";
 
 export default function MessageInput({
   onSend,
@@ -40,9 +40,6 @@ export default function MessageInput({
   const [isStickerPickerOpen, setIsStickerPickerOpen] = useState(false);
   const [suggestionsDismissed, setSuggestionsDismissed] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
-  const [selectedStickerUrl, setSelectedStickerUrl] = useState<string | null>(
-    null,
-  );
 
   const dragCounter = useRef(0);
   const fileRef = useRef<HTMLInputElement>(null);

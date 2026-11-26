@@ -3,10 +3,10 @@
 import { Button } from "../ui";
 import UserListItem from "./UserListItem";
 import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
 import { ChatSideBarProps } from "@/src/types";
-import { useLogout, useUsers } from "@/src/hooks";
 import { formatMessageTime } from "@/src/utils";
+import { useLogout, useUsers } from "@/src/hooks";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ConfirmationModal,

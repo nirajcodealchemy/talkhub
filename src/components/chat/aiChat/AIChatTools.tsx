@@ -1,7 +1,7 @@
 "use client";
 
-import { MessageSquareText, MessagesSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { MessageSquareText, MessagesSquare } from "lucide-react";
 
 type AIAction = "reply" | "summary";
 

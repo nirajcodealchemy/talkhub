@@ -922,10 +922,6 @@ export function useForwardMessage() {
         throw new Error("You must be logged in to forward messages.");
       }
 
-      // if (originalMessage.message_type !== "text") {
-      //   throw new Error("Only text messages can be forwarded right now.");
-      // }
-
       const { data, error } = await supabase
         .from("messages")
         .insert({
@@ -933,6 +929,7 @@ export function useForwardMessage() {
           sender_id: user.id,
           content: originalMessage.content,
           message_type: originalMessage.message_type ?? "text",
+          sticker_url: originalMessage.sticker_url ?? null,
           forwarded_from_id: originalMessage.id,
           attachment_path: originalMessage.attachment_path,
           attachment_name: originalMessage.attachment_name,

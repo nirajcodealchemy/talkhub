@@ -1,17 +1,17 @@
 export type MessageType =
   | "text"
+  | "file"
   | "image"
   | "video"
   | "audio"
-  | "file"
   | "sticker"
   | undefined;
 
 type GroupEventType =
-  | "member_added"
-  | "member_removed"
   | "member_left"
+  | "member_added"
   | "member_banned"
+  | "member_removed"
   | "member_unbanned"
   | "group_name_changed";
 
@@ -31,16 +31,15 @@ export type ChatMessage = {
   reply_to_id: string | null;
   deleted_at?: string | null;
   delivered_at?: string | null;
+  sticker_url?: string | null;
   attachment_url?: string | null;
   media_group_id?: string | null;
   attachment_path?: string | null;
   attachment_name?: string | null;
   attachment_type?: string | null;
   attachment_size?: number | null;
-  sticker_url?: string | null;
   forwarded_from_id?: string | null;
   is_deleted_for_everyone?: boolean;
-
   reply_to_message?: ChatMessage | null;
   status?: "sent" | "delivered" | "read";
   sender_profile?: MessageSenderProfile | null;
@@ -135,9 +134,11 @@ export type ChatWindowProps = {
   onLoadOlder: () => void;
   isLoadingOlder: boolean;
   hasMoreMessages: boolean;
+  replyTo: ChatMessage | null;
   conversation: ChatConversation;
   onAttachment?: (file: File) => void;
-  // Multiple images as one group
+  onForward: (message: ChatMessage) => void;
+  onReply: (message: ChatMessage | null) => void;
   onAttachments?: (files: File[], caption?: string) => void;
   onSend: (
     message: string,
@@ -145,25 +146,22 @@ export type ChatWindowProps = {
     messageType?: "text" | "sticker",
     stickerUrl?: string | null,
   ) => void | Promise<void>;
-  replyTo: ChatMessage | null;
-  onReply: (message: ChatMessage | null) => void;
-  onForward: (message: ChatMessage) => void;
 };
 
 export type MessageSenderProfile = {
   id: string;
-  full_name: string | null;
   username: string | null;
+  full_name: string | null;
   avatar_url: string | null;
 };
 
 export type GroupMember = {
   id: string;
-  full_name: string | null;
-  username: string | null;
-  avatar_url: string | null;
   role: string;
   is_banned?: boolean;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
 };
 
 export type GroupModalProps = {
@@ -201,9 +199,9 @@ export type MessageItemProps = {
   isGroup?: boolean;
   message: ChatMessage;
   groupMessages?: ChatMessage[];
-  onEditRequest: (message: ChatMessage) => void;
   onReply: (message: ChatMessage) => void;
   onForward: (message: ChatMessage) => void;
+  onEditRequest: (message: ChatMessage) => void;
 };
 
 export type MessageListProps = {
@@ -214,9 +212,9 @@ export type MessageListProps = {
   onLoadOlder: () => void;
   hasMoreMessages: boolean;
   isOtherUserTyping?: boolean;
-  onEditMessage: (message: ChatMessage) => void;
   onReply: (message: ChatMessage) => void;
   onForward: (message: ChatMessage) => void;
+  onEditMessage: (message: ChatMessage) => void;
 };
 
 export type UserListItemProps = {
@@ -229,10 +227,10 @@ export type UserListItemProps = {
   lastMessage?: string | null;
   lastMessageAt?: string | null;
   lastMessageReadAt?: string | null;
+  isDeletedForMe: boolean | undefined;
   lastMessageSenderId?: string | null;
   lastMessageDeliveredAt?: string | null;
   isDeletedForEveryone: boolean | undefined;
-  isDeletedForMe: boolean | undefined;
   lastMessageType?:
     | "text"
     | "image"
@@ -283,4 +281,9 @@ export type ConversationSummary = {
 
 export type ChatScreenProps = {
   currentUserId?: string;
+};
+
+export type AICacheData = {
+  suggestions: string[];
+  summary: string;
 };
