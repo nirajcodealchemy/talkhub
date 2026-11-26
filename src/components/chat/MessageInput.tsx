@@ -380,7 +380,7 @@ export default function MessageInput({
               <button
                 type="button"
                 onClick={onCancelReply}
-                className="ml-3 shrink-0 rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="ml-3 shrink-0 cursor-pointer rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                 aria-label="Cancel reply"
               >
                 <X size={18} />
@@ -429,7 +429,7 @@ export default function MessageInput({
               <button
                 type="button"
                 onClick={() => setSelectedSticker(null)}
-                className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="rounded-full p-1 cursor-pointer text-muted-foreground hover:bg-accent hover:text-foreground"
                 aria-label="Remove selected sticker"
               >
                 <X size={16} />
@@ -521,7 +521,6 @@ export default function MessageInput({
                     const error = validateAttachment(file);
 
                     if (error) {
-                      // Replace with your existing toast notification if available.
                       alert(error);
                       e.target.value = "";
                       return;
@@ -586,7 +585,9 @@ export default function MessageInput({
                 <Loader2 size={19} className="animate-spin" />
               ) : (
                 <>
-                  {message.length === 0 && selectedFiles.length === 0 ? (
+                  {message.length === 0 &&
+                  selectedFiles.length === 0 &&
+                  !selectedSticker ? (
                     <SendIcon color={null} />
                   ) : (
                     <SendIcon color="var(--chart-4)" />
